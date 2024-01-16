@@ -1,4 +1,4 @@
-local M = {}
+local Multiverse = {}
 
 -- When activating a workspace, all buffers and windows that
 -- were previously active should re-hydrate.
@@ -31,30 +31,30 @@ local function isInWorkspace()
 	return nil ~= require("workspaces").name()
 end
 
-M.clear = function()
+Multiverse.clear = function()
 	Windows.closeAll()
 	Buffers.closeAll()
 end
 
-M.save = function()
+Multiverse.save = function()
 	if isInWorkspace() then
 		Buffers.saveAll()
 		Windows.saveAll()
 	end
 end
 
-M.hydrate = function()
+Multiverse.hydrate = function()
 	Neotree.hydrate()
 	Buffers.hydrate()
 	Windows.hydrate()
 end
 
-M.setup = function(opts)
+Multiverse.setup = function(config)
 	vim.notify("Setting up Multiverse")
 
-	opts = opts or {} -- todo: do I need this for LazyVim to recognize this?
+	config = config or {} -- todo: do I need this for LazyVim to recognize this?
 	local WorkspacesIntegration = require("integrations.workspaces")
 	WorkspacesIntegration.registerHooks()
 end
 
-return M
+return Multiverse
