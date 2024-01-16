@@ -1,4 +1,4 @@
-local M
+local M = {}
 
 -- When activating a workspace, all buffers and windows that
 -- were previously active should re-hydrate.
