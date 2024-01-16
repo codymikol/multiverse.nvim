@@ -1,57 +1,6 @@
 local Multiverse = {}
 
--- When activating a workspace, all buffers and windows that
--- were previously active should re-hydrate.
---
--- Plugin Integations
--- Neotree
---
--- Telescope
-
--- Our persistance structure will look something like this.
--- /worksapces
---   /hydration
---     /workspace-a
---       buffers.txt
---       windows.txt
---
---  buffers.txt will be a line indexed list of buffers that
---  should be loaded into memory upon hydration.
---
---  windows.txt will be a line indexed list of active windows
---  and their positioning metatdata (todo) that should be opened
---  and populated with their corresponding buffer pointers upon
---  hydration.
-
-local Buffers = require("multiverse.buffers")
-local Windows = require("multiverse.windows")
-local Neotree = require("integrations.neotree")
-
-local function isInWorkspace()
-	return nil ~= require("workspaces").name()
-end
-
-Multiverse.clear = function()
-	Windows.closeAll()
-	Buffers.closeAll()
-end
-
-Multiverse.save = function()
-	if isInWorkspace() then
-		Buffers.saveAll()
-		Windows.saveAll()
-	end
-end
-
-Multiverse.hydrate = function()
-	Neotree.hydrate()
-	Buffers.hydrate()
-	Windows.hydrate()
-end
-
 Multiverse.setup = function(config)
-	vim.notify("Setting up Multiverse")
-
 	config = config or {} -- todo: do I need this for LazyVim to recognize this?
 	local WorkspacesIntegration = require("integrations.workspaces")
 	WorkspacesIntegration.registerHooks()

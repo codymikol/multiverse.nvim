@@ -1,4 +1,4 @@
-local WorkspaceManager = require("multiverse")
+local Workspace = require("multiverse.workspace")
 
 local M = {}
 
@@ -8,11 +8,11 @@ M.registerHooks = function()
 	workspaces.setup({
 		hooks = {
 			open_pre = {
-				WorkspaceManager.save,
-				WorkspaceManager.clear,
+				Workspace.save,
+				Workspace.clear,
 			},
 			open = {
-				WorkspaceManager.hydrate,
+				Workspace.hydrate,
 			},
 		},
 	})
