@@ -1,4 +1,4 @@
-local WorkspaceManager = require("multiverse.multiverse")
+local WorkspaceManager = require("multiverse")
 
 local M = {}
 
