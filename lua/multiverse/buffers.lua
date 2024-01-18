@@ -1,6 +1,7 @@
 local M = {}
 
 local Persistance = require("multiverse.persistance")
+local dlog = require("integrations.dlog")
 local log = dlog("buffer")
 
 local function getCurrentBufferDirLocation()

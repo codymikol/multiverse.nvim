@@ -1,4 +1,4 @@
-local dlog = require("dlog")
+local dlog = require("integrations.dlog")
 local log = dlog("windows")
 
 local M = {}
