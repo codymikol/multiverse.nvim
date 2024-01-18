@@ -24,7 +24,6 @@ function M.logger(logger_name)
 	if has_debuglog then
 		return debuglog.logger_for_shim_only(logger_name)
 	end
-	vim.notify("NOPE!")
 	return noop
 end
 
