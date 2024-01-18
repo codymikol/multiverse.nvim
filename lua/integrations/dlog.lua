@@ -14,28 +14,28 @@ local has_debuglog, debuglog = pcall(require, "debuglog")
 
 local M = {}
 
-local function noop(_)
-end
+local function noop(_) end
 
 ---Returns the logger object if the debuglog plugin installed, or a
 ---no-op function otherwise.
 ---@param logger_name string the name of the logger
 ---@return fun(msg: string, ...): any logger function
 function M.logger(logger_name)
-  if has_debuglog then
-    return debuglog.logger_for_shim_only(logger_name)
-  end
-  return noop
+	if has_debuglog then
+		return debuglog.logger_for_shim_only(logger_name)
+	end
+	vim.notify("NOPE!")
+	return noop
 end
 
 ---Checks if the logger is enabled.
 ---@param logger_name string the name of the logger
 ---@return boolean enabled whether the logger is enabled
 function M.is_enabled(logger_name)
-  if has_debuglog then
-    return debuglog.is_enabled(logger_name)
-  end
-  return false
+	if has_debuglog then
+		return debuglog.is_enabled(logger_name)
+	end
+	return false
 end
 
 return M
