@@ -1,6 +1,7 @@
 local M = {}
 
 local Persistance = require("multiverse.persistance")
+local log = dlog("buffer")
 
 local function getCurrentBufferDirLocation()
 	return Persistance.getDir() .. "/" .. vim.fn.sha256(require("workspaces").name())
@@ -31,7 +32,7 @@ M.saveAll = function()
 	local bufferFile = io.open(bufferFileLocation, "w")
 
 	if nil == bufferFile then
-		vim.notify(
+		log(
 			"Error hydrating workspace state for: "
 				.. currentWorkspace
 				.. ", buffer file could not be opened at: "
@@ -52,7 +53,7 @@ M.saveAll = function()
 end
 
 M.hydrate = function()
-	vim.notify("hydrating from location: " .. getCurrentBufferFileLocation())
+	log("hydrating from location: " .. getCurrentBufferFileLocation())
 
 	local lines = io.lines(getCurrentBufferFileLocation())
 
