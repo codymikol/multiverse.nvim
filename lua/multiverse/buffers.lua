@@ -2,7 +2,7 @@ local M = {}
 
 local Persistance = require("multiverse.persistance")
 local dlog = require("integrations.dlog")
-local log = dlog("buffer")
+local log = dlog.logger("buffer")
 
 local function getCurrentBufferDirLocation()
 	return Persistance.getDir() .. "/" .. vim.fn.sha256(require("workspaces").name())

@@ -1,5 +1,5 @@
 local dlog = require("integrations.dlog")
-local log = dlog("windows")
+local log = dlog.logger("windows")
 
 local M = {}
 
