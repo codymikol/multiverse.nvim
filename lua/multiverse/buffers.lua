@@ -46,7 +46,7 @@ M.saveAll = function()
 	for _, buffer in ipairs(buffers) do
 		if vim.api.nvim_buf_is_loaded(buffer) then
 			local filename = vim.api.nvim_buf_get_name(buffer)
-			log("saving buffer: " .. filename)
+			log("workspace: " .. currentWorkspace .. ", saving buffer: " .. filename)
 			if vim.fn.filereadable(filename) == 1 then
 				bufferFile:write(filename .. "\n")
 			end
