@@ -52,6 +52,7 @@ M.saveAll = function()
 			end
 		end
 	end
+	io.close(bufferFile)
 end
 
 M.hydrate = function()
