@@ -46,6 +46,7 @@ M.saveAll = function()
 	for _, buffer in ipairs(buffers) do
 		if vim.api.nvim_buf_is_loaded(buffer) then
 			local filename = vim.api.nvim_buf_get_name(buffer)
+			log("saving buffer: " .. filename)
 			if vim.fn.filereadable(filename) == 1 then
 				bufferFile:write(filename .. "\n")
 			end
@@ -60,8 +61,11 @@ M.hydrate = function()
 
 	if lines ~= nil then
 		for bufferFileLocation in lines do
+			log("hydrating buffer from" .. bufferFileLocation)
 			vim.api.nvim_command("edit " .. bufferFileLocation)
 		end
+	else
+		log("Found no lines when trying to hdrate windows")
 	end
 end
 
