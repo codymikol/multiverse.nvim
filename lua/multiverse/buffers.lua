@@ -39,6 +39,7 @@ M.saveAll = function()
 				.. ", buffer file could not be opened at: "
 				.. bufferFileLocation
 		)
+		return
 	end
 
 	local buffers = vim.api.nvim_list_bufs()
