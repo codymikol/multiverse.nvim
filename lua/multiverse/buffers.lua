@@ -14,7 +14,28 @@ end
 
 -- This will close all open buffers.
 M.closeAll = function()
-	vim.cmd("silent! %bd")
+	-- vim.cmd("silent! %bd")
+
+	local buffers = vim.api.nvim_list_bufs()
+
+	for _, buffer in ipairs(buffers) do
+		local is_terminal = vim.api.nvim_get_option_value("buftype", { buf = buffer }) == "terminal"
+		if is_terminal then
+			local status, err = pcall(vim.api.nvim_buf_delete, buffer, { force = true })
+			if status then
+				log("successfully deleted buffer " .. buffer)
+			else
+				log("error deleting buffer " .. buffer .. ", error: " .. err)
+			end
+		else
+			local status, err = pcall(vim.api.nvim_buf_delete, buffer, {})
+			if status then
+				log("successfully closed terminal buffer " .. buffer)
+			else
+				log("error deleting terminal buffer " .. buffer .. ", error: " .. err)
+			end
+		end
+	end
 end
 
 -- This will find all buffers that are currently open and persist
