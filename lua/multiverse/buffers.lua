@@ -14,7 +14,7 @@ end
 
 -- This will close all open buffers.
 M.closeAll = function()
-	vim.cmd("%bd")
+	vim.cmd("silent! %bd")
 end
 
 -- This will find all buffers that are currently open and persist
