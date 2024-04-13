@@ -78,15 +78,18 @@ M.saveAll = function()
 end
 
 M.hydrate = function()
-	log("hydrating from location: " .. getCurrentBufferFileLocation())
+	local currentBufferFileLocation = getCurrentBufferFileLocation()
 
-	local lines = io.lines(getCurrentBufferFileLocation())
+	log("hydrating from location: " .. currentBufferFileLocation)
 
-	if lines ~= nil then
-		for bufferFileLocation in lines do
+	local buffer = io.open(currentBufferFileLocation)
+
+	if buffer ~= nil then
+		for bufferFileLocation in buffer:lines() do
 			log("hydrating buffer from" .. bufferFileLocation)
 			vim.api.nvim_command("edit " .. bufferFileLocation)
 		end
+		buffer:close()
 	else
 		log("Found no lines when trying to hdrate windows")
 	end
