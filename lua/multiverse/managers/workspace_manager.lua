@@ -22,31 +22,50 @@ local M = {}
 --  and their positioning metatdata (todo) that should be opened
 --  and populated with their corresponding buffer pointers upon
 --  hydration.
+--
 
-local Buffers = require("multiverse.buffers")
-local Windows = require("multiverse.windows")
+local data = {
+  tabs = {
+    {
+      tab_id = 3223,
+      windows = {
+        {
+          win_id = 1298,
+          buffers = {
+            {
+              buf_id = 123
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+local Buffers = require("multiverse.managers.buffer_manager")
+local Windows = require("multiverse.managers.window_manager")
 local Neotree = require("integrations.neotree")
 
 local function isInWorkspace()
-	return nil ~= require("workspaces").name()
+  return nil ~= require("workspaces").name()
 end
 
 M.clear = function()
-	Windows.closeAll()
-	Buffers.closeAll()
+  Windows.closeAll()
+  Buffers.closeAll()
 end
 
 M.save = function()
-	if isInWorkspace() then
-		Buffers.saveAll()
-		Windows.saveAll()
-	end
+  if isInWorkspace() then
+    Buffers.saveAll()
+    Windows.saveAll()
+  end
 end
 
 M.hydrate = function()
-	Neotree.hydrate()
-	Buffers.hydrate()
-	Windows.hydrate()
+  Neotree.hydrate()
+  Buffers.hydrate()
+  Windows.hydrate()
 end
 
 return M
