@@ -1,6 +1,7 @@
 local dlog = require("integrations.dlog")
 local log = dlog.logger("windows")
 local Window = require("multiverse.data.Window")
+local uuid_manager = require("multiverse.managers.uuid_manager")
 
 local M = {}
 
@@ -37,18 +38,29 @@ M.hydrate = function()
   -- TODO: load saved windows
 end
 
+--- @param universe Universe
+M.hydrateWindowsForUniverse = function(universe)
+
+  for _, tabpage in ipairs(universe.tabpages) do
+
+  end
+
+end
+
+
 --- @param tabpageId number
 M.getAllVisibleWindowsForTabpage = function(tabpageId)
   local editableWindows = {}
 
   local windows = vim.api.nvim_tabpage_list_wins(tabpageId)
 
-  for _, window in ipairs(windows) do
-    local buf = vim.api.nvim_win_get_buf(window)
+  for _, windowId in ipairs(windows) do
+    local buf = vim.api.nvim_win_get_buf(windowId)
     local bufType = vim.api.nvim_get_option_value("buftype", { buf = buf })
     local isEditable = bufType == ""
     if isEditable then
-      local newWindow = Window:new(window)
+      local windowUuid = uuid_manager.create()
+      local newWindow = Window:new(windowUuid, windowId)
       table.insert(editableWindows, newWindow)
     end
   end

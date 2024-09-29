@@ -8,55 +8,42 @@ local UniverseSummary = require("multiverse.data.UniverseSummary")
 local Universe = require("multiverse.data.Universe")
 
 local function normalizeDirectory(directory)
-  local expanded = vim.fn.expand(directory)
-  local trailing_slash_removed = string.gsub(expanded, "/$", "")
-  return trailing_slash_removed
+	local expanded = vim.fn.expand(directory)
+	local trailing_slash_removed = string.gsub(expanded, "/$", "")
+	return trailing_slash_removed
 end
 
 ---@param name string
 ---@param directory string
-M.run = function (name, directory)
+M.run = function(name, directory)
+	local seconds_since_epoch = os.time(os.date("!*t"))
 
-  local seconds_since_epoch = os.time(os.date("!*t"))
+	local normalized_directory = normalizeDirectory(directory)
 
-  local normalized_directory = normalizeDirectory(directory)
+	local new_uuid = uuid_manager.create()
 
-  local new_uuid = uuid_manager.create()
+	local multiverse = multiverse_repository.getMultiverse()
 
-  local multiverse = multiverse_repository.getMultiverse()
+	local existing_universe = multiverse:getUniverseByDirectory(normalized_directory)
 
-  local existing_universe = multiverse:getUniverseByDirectory(normalized_directory)
+	if nil ~= existing_universe then
+		vim.notify("Universe already exists with that directory under the name: " .. existing_universe.name)
+		return
+	end
 
-  vim.notify(vim.inspect(existing_universe))
+	local new_universe = UniverseSummary:new(normalized_directory, new_uuid, name, seconds_since_epoch)
 
-  if nil ~= existing_universe then
-    vim.notify("Universe already exists with that directory under the name: " .. existing_universe.name)
-    return
-  end
+	print("Adding a new universe ." .. vim.inspect(new_universe))
 
-  local new_universe = UniverseSummary:new(
-    normalized_directory,
-    new_uuid,
-    name,
-    seconds_since_epoch
-  )
+	multiverse:addUniverse(new_universe)
 
-  print("Adding a new universe ." .. vim.inspect(new_universe))
+	multiverse_repository.save_multiverse(multiverse)
 
-  multiverse:addUniverse(new_universe)
+	local new_universe = Universe:new(new_uuid, name, normalized_directory)
 
-  multiverse_repository.save_multiverse(multiverse)
+	universe_repository.save_universe(new_universe)
 
-  local new_universe = Universe:new(
-    new_uuid,
-    name,
-    normalized_directory
-  )
-
-  universe_repository.save_universe(new_universe)
-
-  hydration_manager.hydrate(new_universe)
-
+	hydration_manager.hydrate(new_universe)
 end
 
 return M
