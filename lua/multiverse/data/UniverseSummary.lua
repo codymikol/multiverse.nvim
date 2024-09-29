@@ -5,6 +5,7 @@ UniverseSummary.__index = UniverseSummary
 --- @field name string 
 --- @field uuid string
 --- @field lastExplored number
+--- @field directory string
 ---
 --- @param directory string  the directory of the universe
 --- @param uuid string  a unique identifier for the universe

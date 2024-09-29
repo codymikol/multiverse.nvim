@@ -7,7 +7,7 @@ local sorters = require('telescope.sorters')
 local action_state = require('telescope.actions.state')
 
 ---@param universe_summaries UniverseSummary[]
----@param callback fun(selected_universe: UniverseSummary | nil):nil
+---@param callback fun(selected_universe: UniverseSummary | nil)
 ---@return nil
 M.prompt_select_universe = function(universe_summaries, callback)
 
@@ -24,13 +24,12 @@ M.prompt_select_universe = function(universe_summaries, callback)
       end,
     },
     sorter = sorters.get_fzy_sorter(), -- todo(mikol): this should sort by LRU
-    attach_mappings = function(prompt_bufnr, map)
+    attach_mappings = function(prompt_bufnr)
       actions.select_default:replace(function()
+        actions.close(prompt_bufnr)
         local selection = action_state.get_selected_entry()
         callback(selection.value)
-         actions.close(prompt_bufnr)
       end)
-      map("i", "<CR>", actions.select_default)
       return true
     end,
   }):find()

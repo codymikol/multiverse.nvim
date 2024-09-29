@@ -4,6 +4,7 @@ Multiverse.__index = Multiverse
 
 --- @class Multiverse
 --- @field universes table<string, UniverseSummary>  a list of universes
+--- @field getUniverseByDirectory (string): UniverseSummary | nil
 ---
 --- @param universes number the last time the universe was explored
 function Multiverse:new(universes)
@@ -22,8 +23,6 @@ end
 --- @return UniverseSummary | nil
 function Multiverse:getUniverseByDirectory(directory)
   for _, universe in ipairs(self.universes) do
-    vim.notify(vim.inspect(universe))
-    vim.notify("comparing " .. universe.directory .. " with " .. directory)
     if universe.directory == directory then
       return universe
     end

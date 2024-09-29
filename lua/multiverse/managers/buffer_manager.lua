@@ -4,6 +4,7 @@ local Persistance = require("multiverse.repositories.persistance")
 local dlog = require("integrations.dlog")
 local log = dlog.logger("buffer")
 local Buffer = require("multiverse.data.Buffer")
+local uuid_manager = require("multiverse.managers.uuid_manager")
 
 local function getCurrentBufferDirLocation()
   return Persistance.getDir() .. "/" .. vim.fn.sha256(require("workspaces").name())
@@ -100,13 +101,76 @@ M.hydrate = function()
   end
 end
 
---- @param windowId number
---- @return Buffer
-M.getBufferForWindow = function(windowId)
-  local buf = vim.api.nvim_win_get_buf(windowId)
-  local name = vim.api.nvim_buf_get_name(buf)
-  local buffer = Buffer:new(buf, name)
-  return buffer
+--- @param universe Universe
+M.hydrateBuffersForUniverse = function(universe)
+  for _, buffer in ipairs(universe.buffers) do
+      if buffer.bufferName == "" or buffer.bufferName == nil then
+      else
+      vim.api.nvim_command("edit " .. buffer.bufferName)
+      buffer.bufferId = vim.api.nvim_get_current_buf()
+    end
+  end
+end
+
+--- @param buffer Buffer
+local function isScratchBuffer(buffer)
+  return buffer.bufferName == ""
+end
+
+--- @param buffer_id number
+local function isModifiableBuffer(buffer_id)
+ return vim.api.nvim_get_option_value("modifiable", { buf = buffer_id })
+end
+
+--- @param buffer_id number
+local function isReadOnlyBuffer(buffer_id)
+  return vim.api.nvim_get_option_value("readonly", { buf = buffer_id })
+end
+
+--- @param buffer_id number
+local function isNormalBuffer(buffer_id)
+  return vim.api.nvim_get_option_value("buftype", { buf = buffer_id }) == ""
+end
+
+--- @param buffer_id number
+local function isDesiredUniverseBuffer(buffer_id)
+  return vim.api.nvim_buf_is_loaded(buffer_id)
+    and vim.api.nvim_buf_is_valid(buffer_id)
+    and isModifiableBuffer(buffer_id)
+    and not isReadOnlyBuffer(buffer_id)
+    and isNormalBuffer(buffer_id)
+end
+
+M.closeAllBuffers = function()
+  local buffersToClose = M.get_all_buffers()
+  for _, buffer in ipairs(buffersToClose) do
+    local status, err = pcall(vim.api.nvim_buf_delete, buffer.bufferId, {})
+    if status then
+      log("successfully closed buffer " .. buffer.bufferId)
+    else
+      log("error deleting buffer " .. buffer.bufferId .. ", error: " .. err)
+    end
+  end
+end
+
+M.get_all_buffers = function()
+  local bufferList = {}
+  local buffers = vim.api.nvim_list_bufs()
+  for _, buffer_id in ipairs(buffers) do
+
+    if isDesiredUniverseBuffer(buffer_id) then
+
+      local name = vim.api.nvim_buf_get_name(buffer_id)
+      local bufferUuid = uuid_manager.create()
+      local buffer = Buffer:new(bufferUuid, buffer_id, name)
+
+      if not isScratchBuffer(buffer) then
+        table.insert(bufferList, buffer)
+      end
+
+    end
+  end
+  return bufferList
 end
 
 return M

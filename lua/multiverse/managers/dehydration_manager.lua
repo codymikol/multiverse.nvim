@@ -1,35 +1,45 @@
-local Workspace       = require "multiverse.data.Universe"
+local Universe        = require "multiverse.data.Universe"
 local window_manager  = require "multiverse.managers.window_manager"
 local buffer_manager  = require "multiverse.managers.buffer_manager"
 local tabpage_manager = require "multiverse.managers.tabpage_manager"
-local json            = require "multiverse.repositories.json"
+local window_layout_manager = require "multiverse.managers.window_layout_manager"
 
 local M = {}
 
---- Dehydrates all open tabpages, windows, and buffers into a Workspace object.
+--- Dehydrates all open tabpages, windows, and buffers into a universe object.
 
---- @return Workspace
-M.dehydrate = function(workspaceName, workingDirectory)
-  local workspace = Workspace:new(workspaceName, workingDirectory)
+--- @param summary UniverseSummary
+--- @return Universe
+M.dehydrate = function(summary)
+
+  local universe = Universe:new(summary.uuid, summary.name, summary.directory)
 
   local tabpages = tabpage_manager.getTabpages()
+  local buffers = buffer_manager.get_all_buffers()
 
-  workspace:addAllTabpages(tabpages)
+  universe:addAllBuffers(buffers)
+  universe:addAllTabpages(tabpages)
 
   for _, tabpage in pairs(tabpages) do
-    local windows = window_manager.getAllVisibleWindowsForTabpage(tabpage.id)
+
+    local windows = window_manager.getAllVisibleWindowsForTabpage(tabpage.tabpageId)
 
     tabpage:addAllWindows(windows)
 
     for _, window in pairs(windows) do
-      local buffer = buffer_manager.getBufferForWindow(window.id)
-      window:setBuffer(buffer)
+      local windowBufferId = vim.api.nvim_win_get_buf(window.windowId)
+      local windowBuffer = universe: getBufferById(windowBufferId)
+      local windowBufferUuid = windowBuffer.uuid
+      window:setBufferUuid(windowBufferUuid)
     end
+
+    local layout = window_layout_manager.getWindowLayout(tabpage.tabpageId, universe)
+
+    tabpage:setLayout(layout)
+
   end
 
-  return workspace
+  return universe
 end
 
 return M
-
--- todo(mikol): program a new hydration method that can take a workspace and load everything into view.
