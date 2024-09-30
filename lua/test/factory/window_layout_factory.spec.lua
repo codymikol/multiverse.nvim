@@ -137,8 +137,9 @@ end)
 
 describe("window_layout_factory makeFromJson", function()
 	local window_layout_factory = require("multiverse.factory.window_layout_factory")
+	local json = require("multiverse.repositories.json")
 
-	local json = [[
+	local jsonString = [[
       {
         "children": [
           {
@@ -177,10 +178,16 @@ describe("window_layout_factory makeFromJson", function()
       }
   ]]
 
-	local result = window_layout_factory.makeFromJson(json)
+	local manifest = json.decode(jsonString)
+
+	local result = window_layout_factory.makeFromJson(manifest)
 
 	it("should return a non-nil result", function()
 		assert.is_not.Nil(result)
+	end)
+
+	it("should be a window layout", function()
+		assert.are.equal("window_layout", result.type)
 	end)
 
 	it("should have a children list", function()
@@ -189,5 +196,72 @@ describe("window_layout_factory makeFromJson", function()
 
 	it("should have one child", function()
 		assert.are.equal(1, #result.children)
+	end)
+
+	local firstChild = result.children[1]
+
+	it("should have a row as the first child", function()
+		assert.are.equal("row", firstChild.type)
+	end)
+
+	it("should have two children on the first row", function()
+		assert.are.equal(2, #firstChild.children)
+	end)
+
+	local firstRowChild = firstChild.children[1]
+	local secondRowChild = firstChild.children[2]
+
+	it("should have a leaf as the first row child", function()
+		assert.are.equal("leaf", firstRowChild.type)
+	end)
+
+	it("should have the correct windowUuid for the first row child", function()
+		assert.are.equal("87b7e150-f9bf-4928-9982-f36744d7cc5f", firstRowChild.windowUuid)
+	end)
+
+	it("should have a column as the second row child", function()
+		assert.are.equal("column", secondRowChild.type)
+	end)
+
+	it("should have two children on the column", function()
+		assert.are.equal(2, #secondRowChild.children)
+	end)
+
+	local columnChildOne = secondRowChild.children[1]
+	local columnChildTwo = secondRowChild.children[2]
+
+	it("should have a leaf as the first column child", function()
+		assert.are.equal("leaf", columnChildOne.type)
+	end)
+
+	it("should have the correct windowUuid for the first column child", function()
+		assert.are.equal("b4835583-7192-4a0a-a637-f10ad7a79faa", columnChildOne.windowUuid)
+	end)
+
+	it("should have a row as the second column child", function()
+		assert.are.equal("row", columnChildTwo.type)
+	end)
+
+	it("should have two children on the second column child", function()
+		assert.are.equal(2, #columnChildTwo.children)
+	end)
+
+	local columnChildTwoFirstChild = columnChildTwo.children[1]
+	local columnChildTwoSecondChild = columnChildTwo.children[2]
+
+	it("should have a leaf as the first row child", function()
+		assert.are.equal("leaf", columnChildTwoFirstChild.type)
+	end)
+
+	it("should have the correct windowUuid for the first row child", function()
+		assert.are.equal("d217cf15-5d8f-411e-b8ef-9776d70e69f6", columnChildTwoFirstChild.windowUuid)
+	end)
+
+	it("should have a leaf as the second row child", function()
+		assert.are.equal("leaf", columnChildTwoSecondChild.type)
+	end)
+
+	it("should have the correct windowUuid for the second row child", function()
+		assert.are.equal("7ca91b10-a88f-4454-84a5-0adb8a1dcf38", columnChildTwoSecondChild.windowUuid)
 	end)
 end)

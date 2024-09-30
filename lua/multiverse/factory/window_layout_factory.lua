@@ -83,14 +83,12 @@ end
 --- @return WindowLayout
 M.makeFromJson = function(jsonManifest)
 	local windowLayout = WindowLayout:new()
-	local windowLayoutFirstNode = Row:new()
-	windowLayout:addChild(windowLayoutFirstNode)
 
 	local manifestFirstRow = jsonManifest.children[1] -- The root node of the manifest
 
 	local unexplored_nodes = {
 		{
-			cursor = windowLayoutFirstNode,
+			cursor = windowLayout,
 			manifest = manifestFirstRow,
 		},
 	}
