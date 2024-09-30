@@ -6,6 +6,7 @@ local universe_repository = require("multiverse.repositories.universe_repository
 local hydration_manager = require("multiverse.managers.hydration_manager")
 local dehydration_manager = require("multiverse.managers.dehydration_manager")
 local cleanup_manager = require("multiverse.managers.cleanup_manager")
+local plugin_manager = require("multiverse.managers.plugin_manager")
 
 M.run = function()
 	local multiverse = multiverse_repository.getMultiverse()
@@ -27,16 +28,22 @@ M.run = function()
 
 		local current_universe_summary = multiverse:getUniverseByDirectory(current_directory)
 
-		vim.cmd("Neotree close") -- This must happen prior to dehydration `beforeDehyrate`...
+		plugin_manager.beforeDehydrate()
 
 		if current_universe_summary ~= nil then
 			local dehydrated_universe = dehydration_manager.dehydrate(current_universe_summary)
 			universe_repository.save_universe(dehydrated_universe)
 		end
 
+		plugin_manager.afterDehydrate()
+
 		cleanup_manager.cleanup()
 
+		plugin_manager.beforeHydrate()
+
 		hydration_manager.hydrate(selected_universe)
+
+		plugin_manager.afterHydrate()
 	end)
 end
 

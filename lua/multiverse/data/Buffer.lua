@@ -11,11 +11,11 @@ Buffer.__index = Buffer
 --- @param bufferId number
 --- @param bufferName string
 function Buffer:new(uuid, bufferId, bufferName)
-  local self = setmetatable({}, Buffer)
-  self.uuid = uuid
-  self.bufferId = bufferId
-  self.bufferName = bufferName
-  return self
+	local self = setmetatable({}, Buffer)
+	self.uuid = uuid
+	self.bufferId = bufferId
+	self.bufferName = bufferName
+	return self
 end
 
 return Buffer
