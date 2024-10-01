@@ -4,134 +4,179 @@ describe("window_layout_factory make", function()
 	local Window = require("multiverse.data.Window")
 	local Tabpage = require("multiverse.data.Tabpage")
 
-	local universe = Universe:new("", "example", "/home/foo")
+	describe("a complex window layout with rows, columns and leaves", function()
+		local universe = Universe:new("", "example", "/home/foo")
 
-	local tabpage = Tabpage:new()
+		local tabpage = Tabpage:new()
 
-	local uuid1 = "258ca574-a7f2-47ad-a843-250a617ba634"
-	local uuid2 = "beb59ba6-b646-4a03-9a84-a53adaaaf4b0"
-	local uuid3 = "2eeb7904-9216-4ec4-abd0-b3d40d125b9e"
-	local uuid4 = "61551161-55df-4f73-87a4-94956a313446"
+		local uuid1 = "258ca574-a7f2-47ad-a843-250a617ba634"
+		local uuid2 = "beb59ba6-b646-4a03-9a84-a53adaaaf4b0"
+		local uuid3 = "2eeb7904-9216-4ec4-abd0-b3d40d125b9e"
+		local uuid4 = "61551161-55df-4f73-87a4-94956a313446"
 
-	local windowOne = Window:new(uuid1, 1)
-	local windowTwo = Window:new(uuid2, 2)
-	local windowThree = Window:new(uuid3, 3)
-	local windowFour = Window:new(uuid4, 4)
+		local windowOne = Window:new(uuid1, 1)
+		local windowTwo = Window:new(uuid2, 2)
+		local windowThree = Window:new(uuid3, 3)
+		local windowFour = Window:new(uuid4, 4)
 
-	tabpage:addAllWindows({ windowOne, windowTwo, windowThree, windowFour })
+		tabpage:addAllWindows({ windowOne, windowTwo, windowThree, windowFour })
 
-	universe:addTabpage(tabpage)
+		universe:addTabpage(tabpage)
 
-	local nvimLayout = {
-		"row",
-		{
-			{ "leaf", 1 },
-			{ "leaf", 2 },
+		local nvimLayout = {
+			"row",
 			{
-				"col",
+				{ "leaf", 1 },
+				{ "leaf", 2 },
 				{
-					{ "leaf", 3 },
+					"col",
 					{
-						"row",
+						{ "leaf", 3 },
 						{
-							{ "leaf", 4 },
-							{ "leaf", 1 }, -- Because a buffer can be on multiple windows...
+							"row",
+							{
+								{ "leaf", 4 },
+								{ "leaf", 1 }, -- Because a buffer can be on multiple windows...
+							},
 						},
 					},
 				},
 			},
-		},
-	}
+		}
 
-	local window_layout = window_layout_factory.make(nvimLayout, universe)
+		local window_layout = window_layout_factory.make(nvimLayout, universe)
 
-	it("should return a window layout", function()
-		assert.is_not.Nil(window_layout)
+		it("should return a window layout", function()
+			assert.is_not.Nil(window_layout)
+		end)
+
+		it("should contain a children list", function()
+			assert.is_not.Nil(window_layout.children)
+		end)
+
+		it("should have one item at the fist node", function()
+			assert.are.equal(1, #window_layout.children)
+		end)
+
+		local firstRow = window_layout.children[1]
+
+		it("should be a row as the first child", function()
+			assert.are.equal("row", firstRow.type)
+		end)
+
+		it("should have three children on the first row", function()
+			assert.are.equal(3, #firstRow.children)
+		end)
+
+		local firstRowChild = firstRow.children[1]
+		local secondRowChild = firstRow.children[2]
+		local thirdRowChild = firstRow.children[3]
+
+		it("should have the correct types for the first row child", function()
+			assert.are.equal("leaf", firstRowChild.type)
+		end)
+
+		it("should have the correct windowUuid for the first row child", function()
+			assert.are.equal(uuid1, firstRowChild.windowUuid)
+		end)
+
+		it("should have the correct types for the second row child", function()
+			assert.are.equal("leaf", secondRowChild.type)
+		end)
+
+		it("should have the correct windowUuid for the second row child", function()
+			assert.are.equal(uuid2, secondRowChild.windowUuid)
+		end)
+
+		it("should have the correct types for the third row child", function()
+			assert.are.equal("column", thirdRowChild.type)
+		end)
+
+		local thirdRowColumnChildren = thirdRowChild.children
+
+		it("should have the correct number of children on the column", function()
+			assert.are.equal(2, #thirdRowColumnChildren)
+		end)
+
+		local thirdRowColumnFirstChild = thirdRowColumnChildren[1]
+		local thirdRowColumnSecondChild = thirdRowColumnChildren[2]
+
+		it("should have the correct types for the first column child", function()
+			assert.are.equal("leaf", thirdRowColumnFirstChild.type)
+		end)
+
+		it("should have the correct window uuid for the first column child", function()
+			assert.are.equal(uuid3, thirdRowColumnFirstChild.windowUuid)
+		end)
+
+		it("should have the correct types for the second column child", function()
+			assert.are.equal("row", thirdRowColumnSecondChild.type)
+		end)
+
+		it("should have the correct number of children on the second row", function()
+			assert.are.equal(2, #thirdRowColumnSecondChild.children)
+		end)
+
+		local thirdRowColumnSecondChildFirstRowChild = thirdRowColumnSecondChild.children[1]
+
+		it("should have the correct types for the first row child", function()
+			assert.are.equal("leaf", thirdRowColumnSecondChildFirstRowChild.type)
+		end)
+
+		it("should have the correct window uuid for the first row child", function()
+			assert.are.equal(uuid4, thirdRowColumnSecondChildFirstRowChild.windowUuid)
+		end)
+
+		it("should have the correct types for the second row child", function()
+			assert.are.equal("leaf", thirdRowColumnSecondChild.children[2].type)
+		end)
+
+		it("should have the correct window uuid for the second row child", function()
+			assert.are.equal(uuid1, thirdRowColumnSecondChild.children[2].windowUuid)
+		end)
 	end)
 
-	it("should contain a children list", function()
-		assert.is_not.Nil(window_layout.children)
-	end)
+	describe("a window layout with a single leaf node", function()
+		local universe = Universe:new("", "example", "/home/foo")
 
-	it("should have one item at the fist node", function()
-		assert.are.equal(1, #window_layout.children)
-	end)
+		local tabpage = Tabpage:new()
 
-	local firstRow = window_layout.children[1]
+		local uuid1 = "258ca574-a7f2-47ad-a843-250a617ba634"
 
-	it("should be a row as the first child", function()
-		assert.are.equal("row", firstRow.type)
-	end)
+		local windowOne = Window:new(uuid1, 1000)
 
-	it("should have three children on the first row", function()
-		assert.are.equal(3, #firstRow.children)
-	end)
+		tabpage:addAllWindows({ windowOne })
 
-	local firstRowChild = firstRow.children[1]
-	local secondRowChild = firstRow.children[2]
-	local thirdRowChild = firstRow.children[3]
+		universe:addTabpage(tabpage)
+		local nvimLayout = { "leaf", 1000 }
 
-	it("should have the correct types for the first row child", function()
-		assert.are.equal("leaf", firstRowChild.type)
-	end)
+		local window_layout = window_layout_factory.make(nvimLayout, universe)
 
-	it("should have the correct windowUuid for the first row child", function()
-		assert.are.equal(uuid1, firstRowChild.windowUuid)
-	end)
+		it("should return a window layout", function()
+			assert.is_not.Nil(window_layout)
+		end)
 
-	it("should have the correct types for the second row child", function()
-		assert.are.equal("leaf", secondRowChild.type)
-	end)
+		it("should contain the correct type", function()
+			assert.are.equal("window_layout", window_layout.type)
+		end)
 
-	it("should have the correct windowUuid for the second row child", function()
-		assert.are.equal(uuid2, secondRowChild.windowUuid)
-	end)
+		it("should contain the correct number of children", function()
+			assert.are.equal(1, #window_layout.children)
+		end)
 
-	it("should have the correct types for the third row child", function()
-		assert.are.equal("column", thirdRowChild.type)
-	end)
+		local firstChild = window_layout.children[1]
 
-	local thirdRowColumnChildren = thirdRowChild.children
+		it("should contain the correct type for the first child", function()
+			assert.are.equal("leaf", firstChild.type)
+		end)
 
-	it("should have the correct number of children on the column", function()
-		assert.are.equal(2, #thirdRowColumnChildren)
-	end)
+		it("should contain the correct windowUuid for the first child", function()
+			assert.are.equal(uuid1, firstChild.windowUuid)
+		end)
 
-	local thirdRowColumnFirstChild = thirdRowColumnChildren[1]
-	local thirdRowColumnSecondChild = thirdRowColumnChildren[2]
-
-	it("should have the correct types for the first column child", function()
-		assert.are.equal("leaf", thirdRowColumnFirstChild.type)
-	end)
-
-	it("should have the correct window uuid for the first column child", function()
-		assert.are.equal(uuid3, thirdRowColumnFirstChild.windowUuid)
-	end)
-
-	it("should have the correct types for the second column child", function()
-		assert.are.equal("row", thirdRowColumnSecondChild.type)
-	end)
-
-	it("should have the correct number of children on the second row", function()
-		assert.are.equal(2, #thirdRowColumnSecondChild.children)
-	end)
-
-	local thirdRowColumnSecondChildFirstRowChild = thirdRowColumnSecondChild.children[1]
-
-	it("should have the correct types for the first row child", function()
-		assert.are.equal("leaf", thirdRowColumnSecondChildFirstRowChild.type)
-	end)
-
-	it("should have the correct window uuid for the first row child", function()
-		assert.are.equal(uuid4, thirdRowColumnSecondChildFirstRowChild.windowUuid)
-	end)
-
-	it("should have the correct types for the second row child", function()
-		assert.are.equal("leaf", thirdRowColumnSecondChild.children[2].type)
-	end)
-
-	it("should have the correct window uuid for the second row child", function()
-		assert.are.equal(uuid1, thirdRowColumnSecondChild.children[2].windowUuid)
+		it("should contain the correct windowId for the first child", function()
+			assert.are.equal(1000, firstChild.windowId)
+		end)
 	end)
 end)
 
