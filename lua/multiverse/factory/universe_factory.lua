@@ -15,7 +15,7 @@ function M.make(jsonString)
 
 	if universe_json.buffers ~= nil then
 		for _, buffer_json in pairs(universe_json.buffers) do
-			local uuid = uuid_manager.create()
+			local uuid = buffer_json.uuid
 			local buffer = Buffer:new(uuid, nil, buffer_json.bufferName)
 			universe:addBuffer(buffer)
 		end
@@ -24,12 +24,22 @@ function M.make(jsonString)
 	for _, tabpage_json in pairs(universe_json.tabpages) do
 		local tabpage = Tabpage:new(tabpage_json.uuid, nil, 0) -- todo(mikol): we need to hydrate the active window uuid here.
 
-		tabpage.layout = window_layout_factory.makeFromJson(tabpage_json.layout)
+    local layout = tabpage_json.layout
+
+    if layout == nil then
+      vim.notify("Tabpage layout is nil, creating default horizontal layout", vim.log.levels.WARN)
+      layout = {
+        type = "horizontal",
+        children = {}
+      }
+    end
+
+		tabpage.layout = window_layout_factory.makeFromJson(layout)
 
 		universe:addTabpage(tabpage)
 
 		for _, window_json in pairs(tabpage_json.windows) do
-			local window = Window:new(window_json.uuid, nil)
+			local window = Window:new(window_json.uuid, window_json.bufferUuid, nil)
 			tabpage:addWindow(window)
 		end
 	end

@@ -96,6 +96,13 @@ M.makeFromJson = function(jsonManifest)
 	while #unexplored_nodes > 0 do
 		local node = table.remove(unexplored_nodes, 1) -- pulls from the end
 
+    local manifest = node.manifest
+
+    if manifest == nil then
+      vim.notify("Node manifest is nil, skipping node: " .. vim.inspect(node))
+      goto continue
+    end
+
 		local type = node.manifest.type
 
 		if type == "row" or type == "column" then -- todo(mikol): refactor column -> col so the neovim format and our format are the same...
@@ -119,6 +126,7 @@ M.makeFromJson = function(jsonManifest)
 			local leaf = Leaf:new(node.manifest.windowUuid, nil)
 			node.cursor:addChild(leaf)
 		end
+	    ::continue::
 	end
 
 	return windowLayout

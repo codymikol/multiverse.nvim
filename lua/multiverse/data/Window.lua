@@ -10,12 +10,13 @@ Window.__index = Window
 --- @field bufferUuid string The neovim id for the buffer on this window that is NOT persisted.
 --- @field windowId number | nil The neovim id for this window that is NOT persisted.
 --- @param uuid string
---- @param windowId number
-function Window:new(uuid, windowId)
+--- @param bufferUuid string The uuid of the buffer that this window is displaying.
+--- @param windowId number | nil
+function Window:new(uuid, bufferUuid, windowId)
 	local self = setmetatable({}, Window)
 	self.uuid = uuid
 	self.windowId = windowId
-	self.bufferUuid = nil
+	self.bufferUuid = bufferUuid
 	self.bufferId = nil
 	return self
 end

@@ -2,11 +2,7 @@ local M = {}
 
 local telescope_integration = require("integrations.telescope")
 local multiverse_repository = require("multiverse.repositories.multiverse_repository")
-local universe_repository = require("multiverse.repositories.universe_repository")
-local hydration_manager = require("multiverse.managers.hydration_manager")
-local dehydration_manager = require("multiverse.managers.dehydration_manager")
-local cleanup_manager = require("multiverse.managers.cleanup_manager")
-local plugin_manager = require("multiverse.managers.plugin_manager")
+local multiverse_manager = require("multiverse.managers.multiverse_manager")
 
 M.run = function()
 	local multiverse = multiverse_repository.getMultiverse()
@@ -24,26 +20,7 @@ M.run = function()
 			return
 		end
 
-		local current_directory = vim.fn.getcwd()
-
-		local current_universe_summary = multiverse:getUniverseByDirectory(current_directory)
-
-		plugin_manager.beforeDehydrate()
-
-		if current_universe_summary ~= nil then
-			local dehydrated_universe = dehydration_manager.dehydrate(current_universe_summary)
-			universe_repository.save_universe(dehydrated_universe)
-		end
-
-		plugin_manager.afterDehydrate()
-
-		cleanup_manager.cleanup()
-
-		plugin_manager.beforeHydrate()
-
-		hydration_manager.hydrate(selected_universe)
-
-		plugin_manager.afterHydrate()
+		multiverse_manager.load_universe(multiverse, selected_universe)
 	end)
 end
 

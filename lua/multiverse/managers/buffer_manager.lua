@@ -105,6 +105,7 @@ end
 M.hydrateBuffersForUniverse = function(universe)
   for _, buffer in ipairs(universe.buffers) do
       if buffer.bufferName == "" or buffer.bufferName == nil then
+      -- If the buffer name is empty, we assume it's a scratch buffer and does not need to be hydrated.
       else
       vim.api.nvim_command("edit " .. buffer.bufferName)
       buffer.bufferId = vim.api.nvim_get_current_buf()

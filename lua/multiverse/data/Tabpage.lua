@@ -14,7 +14,7 @@ Tabpage.__index = Tabpage
 --- @field getWindowByUuid (string): Window | nil
 
 --- @param uuid string
---- @param tabpageId number
+--- @param tabpageId number | nil
 --- @param activeWindowUuid string
 function Tabpage:new(uuid, tabpageId, activeWindowUuid)
   local self = setmetatable({}, Tabpage)
