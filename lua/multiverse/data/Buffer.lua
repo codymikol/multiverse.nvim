@@ -8,7 +8,7 @@ Buffer.__index = Buffer
 --- @field bufferName string
 
 --- @param uuid string
---- @param bufferId number
+--- @param bufferId number | nil
 --- @param bufferName string
 function Buffer:new(uuid, bufferId, bufferName)
 	local self = setmetatable({}, Buffer)

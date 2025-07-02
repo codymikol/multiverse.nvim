@@ -34,6 +34,7 @@ end
 
 
 ---@param universe Universe
+---
 ---@return boolean, string | nil
 M.deleteUniverse = function(universe)
 

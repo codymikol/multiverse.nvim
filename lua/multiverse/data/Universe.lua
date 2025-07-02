@@ -11,8 +11,10 @@ Universe.__index = Universe
 --- @field currentTabpage Tabpage
 --- @field addTabpage (Tabpage) -> nil
 --- @field addAllTabpages (Tabpage[]) -> nil
+--- @field addBuffer (Buffer) -> nil
 --- @field addAllBuffers (Buffer[]) -> nil
 --- @field getBufferById (number) -> Buffer
+--- @field getBufferByUuid (string) -> Buffer
 
 --- @param uuid string
 --- @param name string
@@ -69,6 +71,17 @@ function Universe:getBufferById(bufferId)
 		end
 	end
 	return nil
+end
+
+--- @param bufferUuid string
+--- @return Buffer | nil
+function Universe:getBufferByUuid(bufferUuid)
+  for _, buffer in pairs(self.buffers) do
+    if buffer.uuid == bufferUuid then
+      return buffer
+    end
+  end
+  return nil
 end
 
 --- @param windowId number

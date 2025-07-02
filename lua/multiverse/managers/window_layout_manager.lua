@@ -7,11 +7,13 @@ local window_layout_factory = require("multiverse.factory.window_layout_factory"
 --- @return WindowLayout
 M.getWindowLayout = function(tabpageId, universe)
 	local layout = vim.fn.winlayout(tabpageId)
+	vim.notify(vim.inspect(layout))
 	return window_layout_factory.make(layout, universe)
 end
 
+--- @param universe Universe
 --- @param tabpage Tabpage
-local function hydrateTabpage(tabpage)
+local function hydrateTabpage(universe, tabpage)
 	vim.api.nvim_set_current_tabpage(tabpage.tabpageId)
 
 	local layout = tabpage.layout
@@ -25,13 +27,18 @@ local function hydrateTabpage(tabpage)
 			vim.api.nvim_set_current_win(node.windowId)
 		end
 
+		if nil == node.children then
+			vim.notify("Node has no children: " .. vim.inspect(node))
+			goto continue
+		end
+
 		for idx, child in ipairs(node.children) do
 			if idx ~= 1 then
 				if node.type == "column" then
 					vim.cmd("split")
 				end
 				if node.type == "row" then
-					vim.cmd("vsplit")
+ 					vim.cmd("vsplit")
 				end
 			end
 
@@ -44,27 +51,36 @@ local function hydrateTabpage(tabpage)
 
 				if window ~= nil then
 					window:setWindowId(activeWindowId)
-					if nil ~= window.bufferId then
-						vim.api.nvim_set_current_buf(window.bufferId)
-					else
-						-- todo(mikol): this should be fixed with #21
-						-- vim.notify("No buffer id found for window: " .. vim.inspect(window))
-					end
+
+          if nil ~= window.bufferUuid then
+            local buffer = universe:getBufferByUuid(window.bufferUuid)
+					  if nil ~= buffer then
+              vim.notify("Found window buffer with uuid: " .. vim.inspect(buffer.bufferUuid))
+						  vim.api.nvim_set_current_buf(buffer.bufferId)
+					  else
+						  vim.notify("Buffer uuid: " .. vim.inspect(window.bufferUuid) .. "not found in universe buffers, available buffers: " .. vim.inspect(universe.buffers))
+					  end
+
+            else
+            vim.notify("Window has no buffer uuid: " .. vim.inspect(window))
+          end
+
 				else
-					-- todo(mikol): this should be fixed with #21
-					-- vim.notify("Could not find window with uuid: " .. vim.inspect(child.windowUuid))
+					vim.notify("Could not find window with uuid: " .. vim.inspect(child.windowUuid))
 				end
 			else
 				table.insert(unexplored_layout, child)
 			end
 		end
+
+		::continue::
 	end
 end
 
 --- @param universe Universe
 M.hydrate = function(universe)
 	for _, tabpage in ipairs(universe.tabpages) do
-		hydrateTabpage(tabpage)
+		hydrateTabpage(universe, tabpage)
 	end
 end
 
