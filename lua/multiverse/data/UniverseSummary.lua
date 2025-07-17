@@ -2,10 +2,10 @@ local UniverseSummary = {}
 UniverseSummary.__index = UniverseSummary
 
 --- @class UniverseSummary
---- @field name string 
---- @field uuid string
---- @field lastExplored number
 --- @field directory string
+--- @field uuid string
+--- @field name string 
+--- @field lastExplored number
 ---
 --- @param directory string  the directory of the universe
 --- @param uuid string  a unique identifier for the universe
