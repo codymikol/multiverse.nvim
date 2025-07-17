@@ -6,7 +6,7 @@ Window.__index = Window
 --- @class Window
 --- @field new fun(uuid: string): Window
 --- @field uuid number A unique immutable identifier for this window that is persisted and rehydrated.
---- @field bufferId number The neovim id for the buffer on this window that is NOT persisted.
+--- @field bufferId number | nil The neovim id for the buffer on this window that is NOT persisted.
 --- @field bufferUuid string The neovim id for the buffer on this window that is NOT persisted.
 --- @field windowId number | nil The neovim id for this window that is NOT persisted.
 --- @param uuid string
