@@ -5,6 +5,7 @@ Multiverse.__index = Multiverse
 --- @class Multiverse
 --- @field universes table<string, UniverseSummary>  a list of universes
 --- @field getUniverseByDirectory (string): UniverseSummary | nil
+--- @field getUniverseByName (string): UniverseSummary | nil
 ---
 --- @param universes number the last time the universe was explored
 function Multiverse:new(universes)
@@ -24,6 +25,17 @@ end
 function Multiverse:getUniverseByDirectory(directory)
   for _, universe in ipairs(self.universes) do
     if universe.directory == directory then
+      return universe
+    end
+  end
+  return nil
+end
+
+--- @param name string
+--- @return UniverseSummary | nil
+function Multiverse:getUniverseByName(name)
+  for _, universe in ipairs(self.universes) do
+    if universe.name == name then
       return universe
     end
   end

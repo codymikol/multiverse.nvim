@@ -2,6 +2,7 @@ local M = {}
 
 local addNewUniverseUsecase = require("multiverse.usecases.addNewUniverseUsecase")
 local promptSelectUniverseUsecase = require("multiverse.usecases.promptSelectUniverseUsecase")
+local removeUniverseUsecase = require("multiverse.usecases.removeUniverseUsecase")
 
 M.registerCommands = function ()
 
@@ -19,7 +20,7 @@ M.registerCommands = function ()
   vim.api.nvim_create_user_command(
     "MultiverseRemove",
     function (opts)
-      vim.notify("MultiverseRemove" .. vim.inspect(opts))
+      removeUniverseUsecase.run(opts.fargs[1])
     end,
     { nargs = '*' }
   )
