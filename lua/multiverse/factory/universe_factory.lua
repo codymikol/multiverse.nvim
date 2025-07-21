@@ -27,7 +27,7 @@ function M.make(jsonString)
     local layout = tabpage_json.layout
 
     if layout == nil then
-      vim.notify("Tabpage layout is nil, creating default horizontal layout", vim.log.levels.WARN)
+      -- Tabpage layout is nil, creating default horizontal layout, I think this happens when there just is no layout...
       layout = {
         type = "horizontal",
         children = {}

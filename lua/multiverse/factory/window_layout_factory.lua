@@ -99,7 +99,7 @@ M.makeFromJson = function(jsonManifest)
     local manifest = node.manifest
 
     if manifest == nil then
-      vim.notify("Node manifest is nil, skipping node: " .. vim.inspect(node))
+      -- Node manifest is nil, skipping node...
       goto continue
     end
 
