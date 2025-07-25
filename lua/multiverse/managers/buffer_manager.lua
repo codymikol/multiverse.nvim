@@ -103,7 +103,11 @@ end
 
 --- @param universe Universe
 M.hydrateBuffersForUniverse = function(universe)
+
+  --log("Hydrating buffers for universe: " .. universe.uuid)
+
   for _, buffer in ipairs(universe.buffers) do
+    --log("Hydrating buffer: " .. buffer.bufferName .. " with ID: " .. buffer.bufferId)
       if buffer.bufferName == "" or buffer.bufferName == nil then
       -- If the buffer name is empty, we assume it's a scratch buffer and does not need to be hydrated.
       else

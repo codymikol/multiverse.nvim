@@ -5,8 +5,8 @@ local cli = require("multiverse.managers.cli_manager")
 local Multiverse = {}
 
 Multiverse.setup = function(config)
-	Workspaces.registerHooks()
-	Listeners.register()
+	-- Workspaces.registerHooks()
+	-- Listeners.register()
   cli.registerCommands()
 end
 
