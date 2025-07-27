@@ -7,7 +7,6 @@ local window_layout_factory = require("multiverse.factory.window_layout_factory"
 --- @return WindowLayout
 M.getWindowLayout = function(tabpageId, universe)
 	local layout = vim.fn.winlayout(tabpageId)
-	vim.notify(vim.inspect(layout))
 	return window_layout_factory.make(layout, universe)
 end
 
