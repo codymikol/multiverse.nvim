@@ -69,10 +69,10 @@ M.make = function(neovimWindowLayout, universe)
 
 			if window ~= nil then
 				windowUuid = window.uuid
+        local leaf = Leaf:new(windowUuid, windowId)
+        node.cursor:addChild(leaf)
 			end
 
-			local leaf = Leaf:new(windowUuid, windowId)
-			node.cursor:addChild(leaf)
 		end
 	end
 
