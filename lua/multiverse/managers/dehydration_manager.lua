@@ -20,8 +20,6 @@ M.dehydrate = function(summary)
 	local tabpages = tabpage_manager.getTabpages()
 	local buffers = buffer_manager.get_all_buffers()
 
-  vim.notify("buffers" .. vim.inspect(buffers))
-
 	universe:addAllBuffers(buffers)
 	universe:addAllTabpages(tabpages)
 

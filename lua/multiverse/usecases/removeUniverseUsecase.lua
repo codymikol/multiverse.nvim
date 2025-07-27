@@ -32,7 +32,6 @@ M.run = function(name)
 
   multiverse_repository.save_multiverse(multiverse)
 
-  vim.notify(name)
 end
 
 return M

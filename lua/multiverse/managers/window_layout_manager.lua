@@ -27,7 +27,6 @@ local function hydrateTabpage(universe, tabpage)
 		end
 
 		if nil == node.children then
-			vim.notify("Node has no children: " .. vim.inspect(node))
 			goto continue
 		end
 
@@ -54,18 +53,12 @@ local function hydrateTabpage(universe, tabpage)
           if nil ~= window.bufferUuid then
             local buffer = universe:getBufferByUuid(window.bufferUuid)
 					  if nil ~= buffer then
-              vim.notify("Found window buffer with uuid: " .. vim.inspect(buffer.bufferUuid))
 						  vim.api.nvim_set_current_buf(buffer.bufferId)
 					  else
-						  vim.notify("Buffer uuid: " .. vim.inspect(window.bufferUuid) .. "not found in universe buffers, available buffers: " .. vim.inspect(universe.buffers))
 					  end
-
             else
-            vim.notify("Window has no buffer uuid: " .. vim.inspect(window))
           end
-
 				else
-					vim.notify("Could not find window with uuid: " .. vim.inspect(child.windowUuid))
 				end
 			else
 				table.insert(unexplored_layout, child)

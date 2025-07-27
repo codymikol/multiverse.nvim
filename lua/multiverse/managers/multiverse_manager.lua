@@ -37,8 +37,6 @@ M.save = function()
 
 	local current_universe_summary = multiverse:getUniverseByDirectory(current_directory)
 
---  vim.notify("Saving universe summary " .. vim.inspect(current_universe_summary))
-
 	if current_universe_summary ~= nil then
 		local dehydrated_universe = dehydration_manager.dehydrate(current_universe_summary)
 		universe_repository.save_universe(dehydrated_universe)
