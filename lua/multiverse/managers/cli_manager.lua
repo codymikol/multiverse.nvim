@@ -3,6 +3,7 @@ local M = {}
 local addNewUniverseUsecase = require("multiverse.usecases.addNewUniverseUsecase")
 local promptSelectUniverseUsecase = require("multiverse.usecases.promptSelectUniverseUsecase")
 local removeUniverseUsecase = require("multiverse.usecases.removeUniverseUsecase")
+local openUniverseUsecase   = require("multiverse.usecases.openUniverseUsecase")
 
 M.registerCommands = function ()
 
@@ -15,6 +16,14 @@ M.registerCommands = function ()
       nargs = '*',
       complete = 'file'
     }
+  )
+
+  vim.api.nvim_create_user_command(
+    "MultiverseOpen",
+    function (opts)
+      openUniverseUsecase.run(opts.fargs[1])
+    end,
+    { nargs = '*' }
   )
 
   vim.api.nvim_create_user_command(
