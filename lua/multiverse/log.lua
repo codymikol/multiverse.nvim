@@ -26,6 +26,10 @@ local function log(message, level)
 
 end
 
+function M.get_log_file()
+  return log_file
+end
+
 function M.set_debug(value)
   debug = value
 end
