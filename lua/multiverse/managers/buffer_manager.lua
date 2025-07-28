@@ -1,10 +1,9 @@
 local M = {}
 
 local Persistance = require("multiverse.repositories.persistance")
-local dlog = require("integrations.dlog")
-local log = dlog.logger("buffer")
 local Buffer = require("multiverse.data.Buffer")
 local uuid_manager = require("multiverse.managers.uuid_manager")
+local log = require("multiverse.log")
 
 local function getCurrentBufferDirLocation()
   return Persistance.getDir() .. "/" .. vim.fn.sha256(require("workspaces").name())
@@ -14,7 +13,6 @@ local function getCurrentBufferFileLocation()
   return getCurrentBufferDirLocation() .. "/buffer.txt"
 end
 
--- This will close all open buffers.
 M.closeAll = function()
 
   local buffers = vim.api.nvim_list_bufs()
@@ -24,16 +22,16 @@ M.closeAll = function()
     if is_terminal then
       local status, err = pcall(vim.api.nvim_buf_delete, buffer, { force = true })
       if status then
-        log("successfully deleted terminal buffer " .. buffer)
+        log.debug("successfully deleted terminal buffer " .. vim.inspect(buffer))
       else
-        log("error deleting buffer " .. buffer .. ", error: " .. err)
+        log.error("error deleting terminal buffer " .. vim.inspect(buffer) .. ", error: " .. vim.inspect(err))
       end
     else
       local status, err = pcall(vim.api.nvim_buf_delete, buffer, {})
       if status then
-        log("successfully closed buffer " .. buffer)
+        log.info("successfully closed buffer " .. vim.inspect(buffer))
       else
-        log("error deleting buffer " .. buffer .. ", error: " .. err)
+        log.error("error deleting non terminal buffer " .. vim.inspect(buffer) .. ", error: " .. vim.inspect(err))
       end
     end
   end
@@ -56,11 +54,11 @@ M.saveAll = function()
   local bufferFile = io.open(bufferFileLocation, "w")
 
   if nil == bufferFile then
-    log(
+    log.error(
       "Error hydrating workspace state for: "
-      .. currentWorkspace
+      .. vim.inspect(currentWorkspace)
       .. ", buffer file could not be opened at: "
-      .. bufferFileLocation
+      .. vim.inspect(bufferFileLocation)
     )
     return
   end
@@ -74,7 +72,7 @@ M.saveAll = function()
         and vim.api.nvim_buf_get_option(buffer, "modifiable")
     then
       local filename = vim.api.nvim_buf_get_name(buffer)
-      log("workspace: " .. currentWorkspace .. ", saving buffer: " .. vim.inspect(filename))
+      log.debug("workspace: " .. vim.inspect(currentWorkspace) .. ", saving buffer: " .. vim.inspect(filename))
       if vim.fn.filereadable(filename) == 1 then
         bufferFile:write(filename .. "\n")
       end
@@ -86,35 +84,39 @@ end
 M.hydrate = function()
   local currentBufferFileLocation = getCurrentBufferFileLocation()
 
-  log("hydrating from location: " .. currentBufferFileLocation)
+  log.debug("hydrating from location: " .. vim.inspect(currentBufferFileLocation))
 
   local buffer = io.open(currentBufferFileLocation)
 
   if buffer ~= nil then
     for bufferFileLocation in buffer:lines() do
-      log("hydrating buffer from" .. bufferFileLocation)
+      log.debug("hydrating buffer from" .. log.inspect(bufferFileLocation))
       vim.api.nvim_command("edit " .. bufferFileLocation)
     end
     buffer:close()
   else
-    log("Found no lines when trying to hdrate windows")
+    log.debug("Found no lines when trying to hdrate windows")
   end
 end
 
 --- @param universe Universe
 M.hydrateBuffersForUniverse = function(universe)
 
-  --log("Hydrating buffers for universe: " .. universe.uuid)
+  log.debug("Hydrating buffers for universe: " .. vim.inspect(universe.uuid))
 
   for _, buffer in ipairs(universe.buffers) do
-    --log("Hydrating buffer: " .. buffer.bufferName .. " with ID: " .. buffer.bufferId)
-      if buffer.bufferName == "" or buffer.bufferName == nil then
-      -- If the buffer name is empty, we assume it's a scratch buffer and does not need to be hydrated.
-      else
+
+    log.debug("Hydrating buffer: " .. vim.inspect(buffer.bufferName))
+
+    if buffer.bufferName == "" or buffer.bufferName == nil then
+      log.debug("Buffer name is empty, assuming it's a scratch buffer and not opening: " .. vim.inspect(buffer.bufferId))
+    else
       vim.api.nvim_command("edit " .. buffer.bufferName)
       buffer.bufferId = vim.api.nvim_get_current_buf()
     end
+
   end
+
 end
 
 --- @param buffer Buffer
@@ -151,9 +153,9 @@ M.closeAllBuffers = function()
   for _, buffer in ipairs(buffersToClose) do
     local status, err = pcall(vim.api.nvim_buf_delete, buffer.bufferId, {})
     if status then
-      log("successfully closed buffer " .. buffer.bufferId)
+      log.debug("successfully closed buffer " .. vim.inspect(buffer.bufferId))
     else
-      log("error deleting buffer " .. buffer.bufferId .. ", error: " .. err)
+      log.error("error deleting buffer " .. vim.inspect(buffer.bufferId) .. ", error: " .. err)
     end
   end
 end
