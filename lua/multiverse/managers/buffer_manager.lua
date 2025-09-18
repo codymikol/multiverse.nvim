@@ -111,8 +111,9 @@ M.hydrateBuffersForUniverse = function(universe)
     if buffer.bufferName == "" or buffer.bufferName == nil then
       log.debug("Buffer name is empty, assuming it's a scratch buffer and not opening: " .. vim.inspect(buffer.bufferId))
     else
-      vim.api.nvim_command("edit " .. buffer.bufferName)
-      buffer.bufferId = vim.api.nvim_get_current_buf()
+      vim.api.nvim_command("badd " .. buffer.bufferName)
+      local buffer_number = vim.fn.bufnr(buffer.bufferName, true)
+      buffer.bufferId = buffer_number
     end
 
   end
