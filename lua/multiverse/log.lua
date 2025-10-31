@@ -4,9 +4,16 @@ local debug = true
 
 local log_file = vim.fn.stdpath("cache") .. "/multiverse.log"
 
-vim.notify("Multiverse logging initialized at " .. log_file, vim.log.levels.INFO)
+local function log(message, level, ...)
 
-local function log(message, level)
+  local parts = {}
+
+  for i = 1, select("#", ...) do
+    local substitution = select(i, ...)
+    table.insert(parts, vim.inspect(substitution))
+  end
+
+  local formatted_message = string.format(message, unpack(parts))
 
   local f = io.open(log_file, "a")
   if not f then
@@ -14,14 +21,13 @@ local function log(message, level)
     return
   end
 
-  local log_entry = {
-    ts = os.date("!%Y-%m-%dT%H:%M:%SZ"), -- ISO 8601 UTC
-    level = level,
-    msg = message,
-    logger = "multiverse",
-  }
+  local log_message = string.format("%s %s %s",
+    os.date("!%Y-%m-%dT%H:%M:%SZ"), -- ISO 8601 UTC
+    level:upper(),
+    formatted_message
+  )
 
-  f:write(vim.fn.json_encode(log_entry) .. "\n")
+  f:write(log_message .. "\n")
   f:close()
 
 end
@@ -34,23 +40,34 @@ function M.set_debug(value)
   debug = value
 end
 
-function M.info(message)
-  log(message, "info")
+---@param message string message to log, can be formatted with string.format
+---@return nil
+---@param ... any varags that will be sent to string.format
+function M.info(message, ...)
+  log(message, "info", ...)
 end
 
-function M.warn(message)
-    log(message, "warn")
+---@param message string message to log, can be formatted with string.format
+---@return nil
+---@param ... any varags that will be sent to string.format
+function M.warn(message, ...)
+    log(message, "warn", ...)
 end
 
-function M.error(message)
-    log(message, "error")
+---@param message string message to log, can be formatted with string.format
+---@return nil
+---@param ... any varags that will be sent to string.format
+function M.error(message, ...)
+    log(message, "error", ...)
 end
 
-function M.debug(message)
+---@param message string message to log, can be formatted with string.format
+---@return nil
+---@param ... any varags that will be sent to string.format
+function M.debug(message, ...)
   if debug then
-    log(message, "debug")
+    log(message, "debug", ...)
   end
 end
-
 
 return M

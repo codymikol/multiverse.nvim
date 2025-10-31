@@ -1,11 +1,12 @@
 local M = {}
 
 local multiverse_repository = require("multiverse.repositories.multiverse_repository")
+local multiverse_manager = require("multiverse.managers.multiverse_manager")
 local universe_repository = require("multiverse.repositories.universe_repository")
-local hydration_manager = require("multiverse.managers.hydration_manager")
 local uuid_manager = require("multiverse.managers.uuid_manager")
 local UniverseSummary = require("multiverse.data.UniverseSummary")
 local Universe = require("multiverse.data.Universe")
+local log = require("multiverse.log")
 
 local function normalizeDirectory(directory)
 	local expanded = vim.fn.expand(directory)
@@ -16,34 +17,40 @@ end
 ---@param name string
 ---@param directory string
 M.run = function(name, directory)
-	local seconds_since_epoch = os.time(os.date("!*t"))
+	local success, err = pcall(function()
+		local seconds_since_epoch = os.time(os.date("!*t"))
 
-	local normalized_directory = normalizeDirectory(directory)
+		local normalized_directory = normalizeDirectory(directory)
 
-	local new_uuid = uuid_manager.create()
+		local new_uuid = uuid_manager.create()
 
-	local multiverse = multiverse_repository.getMultiverse()
+		local multiverse = multiverse_repository.getMultiverse()
 
-	local existing_universe = multiverse:getUniverseByDirectory(normalized_directory)
+		local existing_universe = multiverse:getUniverseByDirectory(normalized_directory)
 
-	if nil ~= existing_universe then
-		vim.notify("Universe already exists with that directory under the name: " .. existing_universe.name)
-		return
-	end
+		if nil ~= existing_universe then
+			vim.notify("Universe already exists with that directory under the name: " .. existing_universe.name)
+			return
+		end
 
-	local new_universe = UniverseSummary:new(normalized_directory, new_uuid, name, seconds_since_epoch)
+		local new_universe_summary = UniverseSummary:new(normalized_directory, new_uuid, name, seconds_since_epoch)
 
-	print("Adding a new universe ." .. vim.inspect(new_universe))
+		print("Adding a new universe ." .. vim.inspect(new_universe_summary))
 
-	multiverse:addUniverse(new_universe)
+		multiverse:addUniverse(new_universe_summary)
 
-	multiverse_repository.save_multiverse(multiverse)
+		multiverse_repository.save_multiverse(multiverse)
 
-	local new_universe = Universe:new(new_uuid, name, normalized_directory)
+		local new_universe = Universe:new(new_uuid, name, normalized_directory)
 
-	universe_repository.save_universe(new_universe)
+		universe_repository.save_universe(new_universe)
 
-	hydration_manager.hydrate(new_universe)
+		multiverse_manager.load_universe(multiverse, new_universe_summary)
+	end)
+  if not success then
+    vim.notify("Failed to add new universe, check MultiverseLog for more information", vim.log.levels.ERROR)
+    log.error("Error adding new universe: " .. vim.inspect(err))
+  end
 end
 
 return M
