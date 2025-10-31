@@ -25,6 +25,11 @@ M.run = function()
 			return
 		end
 
+    table.sort(multiverse.universes, function(a, b)
+      vim.notify(vim.inspect(a))
+      return a.lastExplored > b.lastExplored
+    end)
+
 		telescope_integration.prompt_select_universe(multiverse.universes, function(selected_universe)
 			if selected_universe == nil then
 				log.error("No selected universe was returned by telescope.")
