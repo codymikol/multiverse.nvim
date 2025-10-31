@@ -61,26 +61,36 @@ M.add_new_universe = function(name, directory)
 end
 
 --- @param multiverse Multiverse
---- @param selected_universe UniverseSummary
-M.load_universe = function(multiverse, selected_universe)
+--- @param selected_universe_summary UniverseSummary
+M.load_universe = function(multiverse, selected_universe_summary)
 
-  log.debug("Loading universe: " .. selected_universe.name)
+  log.debug("Loading universe: " .. selected_universe_summary.name)
 
   is_loading_multiverse = true
 
-  local success, _ = pcall(function()
+  local success, err = pcall(function()
+    
+    selected_universe_summary.lastExplored = timestamp_manager.now()
+    multiverse_repository.save_multiverse(multiverse)
 
     local current_directory = vim.fn.getcwd()
 
-    log.debug("load universe current directory: " .. current_directory)
-
     local current_universe_summary = multiverse:getUniverseByDirectory(current_directory)
 
-    log.debug("load universe searching multiverse for matching directory and found: " .. vim.inspect(current_universe_summary))
-
-    plugin_manager.beforeDehydrate()
-
     if current_universe_summary ~= nil then
+
+      local current_universe, err = universe_repository.get_universe_by_uuid(current_universe_summary.uuid)
+
+      if current_universe == nil then
+        log.error("Error dehydrating universe: " .. current_universe_summary.uuid .. ", error details: " .. vim.inspect(err))
+        return
+      end
+
+      log.debug("load universe searching multiverse for matching directory and found: " .. vim.inspect(current_universe_summary))
+
+      plugin_manager.beforeDehydrate({
+        universe = current_universe
+      })
 
       log.debug("Working directory is part of a universe, proceeding with dehydration.")
 
@@ -90,24 +100,27 @@ M.load_universe = function(multiverse, selected_universe)
         universe_repository.save_universe(dehydrated_universe)
       end
 
+      plugin_manager.afterDehydrate({
+        universe = current_universe
+      })
+
     else
       log.debug("Working directory is not part of a universe, proceeding with loading the selected universe and skipping dehydration.")
     end
 
-    plugin_manager.afterDehydrate()
-
     cleanup_manager.cleanup()
 
-    plugin_manager.beforeHydrate()
+    plugin_manager.beforeHydrate({ universe = current_universe })
 
-    hydration_manager.hydrate(selected_universe)
+    hydration_manager.hydrate(selected_universe_summary)
 
-    plugin_manager.afterHydrate()
+    plugin_manager.afterHydrate({ universe = current_universe })
 
   end)
 
   if not success then
-    vim.notify("Error loading universe: " .. selected_universe.name, vim.log.levels.ERROR)
+    log.error("Error loading universe: " .. selected_universe_summary.name .. ", error details: " .. vim.json.encode(err))
+    vim.notify("Error loading universe: " .. selected_universe_summary.name, vim.log.levels.ERROR)
   end
 
   is_loading_multiverse = false
