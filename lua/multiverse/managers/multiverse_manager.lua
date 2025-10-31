@@ -61,14 +61,17 @@ M.add_new_universe = function(name, directory)
 end
 
 --- @param multiverse Multiverse
---- @param selected_universe UniverseSummary
-M.load_universe = function(multiverse, selected_universe)
+--- @param selected_universe_summary UniverseSummary
+M.load_universe = function(multiverse, selected_universe_summary)
 
-  log.debug("Loading universe: " .. selected_universe.name)
+  log.debug("Loading universe: " .. selected_universe_summary.name)
 
   is_loading_multiverse = true
 
   local success, err = pcall(function()
+    
+    selected_universe_summary.lastExplored = timestamp_manager.now()
+    multiverse_repository.save_multiverse(multiverse)
 
     local current_directory = vim.fn.getcwd()
 
@@ -109,15 +112,15 @@ M.load_universe = function(multiverse, selected_universe)
 
     plugin_manager.beforeHydrate({ universe = current_universe })
 
-    hydration_manager.hydrate(selected_universe)
+    hydration_manager.hydrate(selected_universe_summary)
 
     plugin_manager.afterHydrate({ universe = current_universe })
 
   end)
 
   if not success then
-    log.error("Error loading universe: " .. selected_universe.name .. ", error details: " .. vim.json.encode(err))
-    vim.notify("Error loading universe: " .. selected_universe.name, vim.log.levels.ERROR)
+    log.error("Error loading universe: " .. selected_universe_summary.name .. ", error details: " .. vim.json.encode(err))
+    vim.notify("Error loading universe: " .. selected_universe_summary.name, vim.log.levels.ERROR)
   end
 
   is_loading_multiverse = false

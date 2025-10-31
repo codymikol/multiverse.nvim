@@ -26,7 +26,6 @@ M.run = function()
 		end
 
     table.sort(multiverse.universes, function(a, b)
-      vim.notify(vim.inspect(a))
       return a.lastExplored > b.lastExplored
     end)
 
