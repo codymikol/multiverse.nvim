@@ -5,6 +5,7 @@ Multiverse.__index = Multiverse
 --- @class Multiverse
 --- @field universes table<string, UniverseSummary>  a list of universes
 --- @field getUniverseByDirectory (string): UniverseSummary | nil
+--- @field addUniverse (Universe): nil
 --- @field getUniverseByName (string): UniverseSummary | nil
 ---
 --- @param universes number the last time the universe was explored
