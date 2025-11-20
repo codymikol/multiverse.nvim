@@ -1,6 +1,5 @@
-local dlog = require("integrations.dlog")
-local log = dlog.logger("windows")
 local Window = require("multiverse.data.Window")
+local log = require("multiverse.log")
 local uuid_manager = require("multiverse.managers.uuid_manager")
 
 local M = {}
@@ -20,9 +19,9 @@ M.closeAll = function()
       local status, err = pcall(vim.api.nvim_win_close, window, true)
 
       if status then
-        log("successfully closed window " .. window)
+        log.info("successfully closed window " .. window)
       else
-        log("error closing window " .. window .. ", error: " .. err)
+        log.info("error closing window " .. window .. ", error: " .. err)
       end
 
     end
