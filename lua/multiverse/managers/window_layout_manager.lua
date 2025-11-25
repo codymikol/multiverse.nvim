@@ -1,5 +1,6 @@
 local M = {}
 
+local log = require("multiverse.log")
 local window_layout_factory = require("multiverse.factory.window_layout_factory")
 
 --- @param tabpageId number
@@ -15,15 +16,24 @@ end
 local function hydrateTabpage(universe, tabpage)
 	vim.api.nvim_set_current_tabpage(tabpage.tabpageId)
 
+  log.debug("Hydrating tabpage " .. vim.inspect(tabpage.tabpageId) .. " with layout " .. vim.inspect(tabpage.layout))
+
 	local layout = tabpage.layout
 
 	local unexplored_layout = { layout.children[1] } -- start at the first row rather than the window layout root
+
+  if #unexplored_layout == 0 then
+    log.warn("Tabpage " .. vim.inspect(tabpage.tabpageId) .. " has no layout children to hydrate")
+    return
+  end
 
 	while #unexplored_layout > 0 do
 		local node = table.remove(unexplored_layout, 1)
 
 		if node.windowId ~= nil then
 			vim.api.nvim_set_current_win(node.windowId)
+    else
+      log.warn("No windowId set for layout node " .. vim.inspect(node.uuid) .. "; setting current window to tabpage's current window")
 		end
 
 		if nil == node.children then
@@ -53,12 +63,16 @@ local function hydrateTabpage(universe, tabpage)
           if nil ~= window.bufferUuid then
             local buffer = universe:getBufferByUuid(window.bufferUuid)
 					  if nil ~= buffer then
+              log.debug("Setting window " .. vim.inspect(activeWindowId) .. " to buffer " .. vim.inspect(buffer.bufferId) .. " (" .. vim.inspect(buffer.bufferName) .. ")")
 						  vim.api.nvim_set_current_buf(buffer.bufferId)
 					  else
+              log.warn("Could not find buffer with uuid " .. vim.inspect(window.bufferUuid) .. " for window " .. vim.inspect(window.uuid))
 					  end
-            else
+          else
+            log.warn("Window " .. vim.inspect(window.uuid) .. " has no associated buffer")
           end
 				else
+          log.warn("Could not find window with uuid " .. vim.inspect(child.windowUuid) .. " in tabpage " .. vim.inspect(tabpage.tabpageId))
 				end
 			else
 				table.insert(unexplored_layout, child)

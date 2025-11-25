@@ -13,8 +13,6 @@ local M = {}
 --- @return Universe
 M.dehydrate = function(summary)
 
-  log.debug("Dehydrating universe with summary: " .. vim.inspect(summary))
-
 	local universe = Universe:new(summary.uuid, summary.name, summary.directory)
 
 	local tabpages = tabpage_manager.getTabpages()
@@ -44,6 +42,19 @@ M.dehydrate = function(summary)
 
 		tabpage:setLayout(layout)
 	end
+
+  for i, tabpage in ipairs(universe.tabpages) do
+    log.debug("Tabpage: " .. vim.inspect(i))
+    for j, window in ipairs(tabpage.windows) do
+      log.debug("  Window: " .. vim.inspect(j) .. " Buffer UUID: " .. vim.inspect(window.bufferUuid))
+      local buffer = universe:getBufferByUuid(window.bufferUuid)
+      if buffer then
+        log.debug("    Buffer: " .. vim.inspect(buffer.bufferId) .. " Name: " .. vim.inspect(buffer.bufferName))
+      else
+        log.debug("    Buffer not found for UUID: " .. vim.inspect(window.bufferUuid))
+      end
+    end
+  end
 
 	return universe
 end

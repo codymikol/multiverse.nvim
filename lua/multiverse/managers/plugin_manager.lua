@@ -1,5 +1,5 @@
 local NeoTreePlugin = require("plugins.neotree_plugin")
-local Plugin = require("multiverse.data.plugin.Plugin")
+local CopilotChatPlugin = require("plugins.copilot_chat_plugin")
 
 local M = {}
 
