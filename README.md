@@ -28,6 +28,8 @@ The aim of this project is to increase productivity when context switching betwe
   - **Description**: Opens a *Telescope* picker that lists all *Universes* and loads one upon selection.
   - **Arguments**: None.
 
+
+
 ## Integrations
 
 - **`Neotree`**

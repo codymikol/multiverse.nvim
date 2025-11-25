@@ -29,6 +29,9 @@ M.hydrate = function(selected_universe)
 	window_layout_manager.hydrate(universe)
 
 	neotree_integration.hydrate()
+
+  buffer_manager.close_generated_nofile_scratch_buffers()
+
 end
 
 return M

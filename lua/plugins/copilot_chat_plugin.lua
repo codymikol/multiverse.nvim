@@ -18,8 +18,9 @@ return plugin:new({
     if chat then
       chat.start()
       chat.load(afterHydrateContext.universe.name)
-      -- todo(mikol): Load the chat history for this plugin.
     end
   end,
+
+
 
 })
