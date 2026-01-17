@@ -19,7 +19,7 @@ M.save_multiverse = function(multiverse)
 
   local file, _ = io.open(multiverse_file, "w")
   if file == nil then
-    vim.notify("Failed to open multiverse.json")
+    vim.notify("Failed to open multiverse.json", vim.log.levels.ERROR)
     return nil
   end
 
