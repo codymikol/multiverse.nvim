@@ -3,18 +3,11 @@ local M = {}
 local telescope_integration = require("integrations.telescope")
 local multiverse_repository = require("multiverse.repositories.multiverse_repository")
 local multiverse_manager = require("multiverse.managers.multiverse_manager")
-local workspaces_to_multiverse_migration_manager =
-	require("multiverse.managers.workspaces_to_multiverse_migration_manager")
 local log = require("multiverse.log")
 
-local has_attempted_migration = false
 
 M.run = function()
 	local success, err = pcall(function()
-		if not has_attempted_migration then
-			workspaces_to_multiverse_migration_manager.run()
-			has_attempted_migration = true
-		end
 
 		local multiverse = multiverse_repository.getMultiverse()
 
