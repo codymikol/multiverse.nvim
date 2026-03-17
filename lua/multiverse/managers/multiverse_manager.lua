@@ -12,14 +12,12 @@ local plugin_manager = require("multiverse.managers.plugin_manager")
 local log            = require("multiverse.log")
 local state_store    = require("multiverse.store.state_store")
 
--- We need to not save data from triggers while we are loading a multiverse.
-local is_loading_multiverse = false
-
 M.save = function()
 
   local success, err = pcall(function()
-    if is_loading_multiverse then
-      vim.notify("Cannot save while loading a multiverse.")
+
+    if state_store.get_current_state() ~= state_store.STATES.IDLE then
+      vim.notify("Cannot save universe while in state: " .. state_store.get_current_state())
       return
     end
 
@@ -36,6 +34,7 @@ M.save = function()
 
     if current_multiverse_summary == nil then
       vim.notify("No universe found for current directory: " .. current_directory)
+      state_store.set_current_state(state_store.STATES.IDLE)
       return
     end
 
@@ -47,6 +46,7 @@ M.save = function()
 
       if current_universe == nil then
         log.error("Error dehydrating universe: " .. current_universe_summary.uuid .. ", error details: " .. vim.inspect(err))
+        state_store.set_current_state(state_store.STATES.IDLE)
         return
       end
 
@@ -96,11 +96,7 @@ M.load_universe = function(multiverse, selected_universe_summary)
 
   log.debug("Loading universe: " .. selected_universe_summary.name)
 
-  is_loading_multiverse = true
-
   local success, err = pcall(function()
-
-    state_store.set_current_state(state_store.STATES.DEHYDRATION)
 
     selected_universe_summary.lastExplored = timestamp_manager.now()
     multiverse_repository.save_multiverse(multiverse)
@@ -146,8 +142,6 @@ M.load_universe = function(multiverse, selected_universe_summary)
   end
 
   state_store.set_current_state(state_store.STATES.IDLE)
-
-  is_loading_multiverse = false
 
 end
 
