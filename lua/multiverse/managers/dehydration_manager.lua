@@ -30,12 +30,12 @@ M.dehydrate = function(summary)
 			local windowBufferId = vim.api.nvim_win_get_buf(window.windowId)
 			local windowBuffer = universe:getBufferById(windowBufferId)
 
-      if not windowBuffer then
-        vim.notify("Error: Buffer with ID " .. windowBufferId .. " not found in universe " .. universe.uuid .. vim.inspect(universe), vim.log.levels.ERROR)
-      end
-
-			local windowBufferUuid = windowBuffer.uuid
-			window:setBufferUuid(windowBufferUuid)
+			if not windowBuffer then
+				vim.notify("Error: Buffer with ID " .. windowBufferId .. " not found in universe " .. universe.uuid .. vim.inspect(universe), vim.log.levels.ERROR)
+			else
+				local windowBufferUuid = windowBuffer.uuid
+				window:setBufferUuid(windowBufferUuid)
+			end
 		end
 
 		local layout = window_layout_manager.getWindowLayout(tabpage.tabpageId, universe)

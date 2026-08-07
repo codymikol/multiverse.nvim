@@ -1,6 +1,7 @@
 local Window = require("multiverse.data.Window")
 local log = require("multiverse.log")
 local uuid_manager = require("multiverse.managers.uuid_manager")
+local buffer_manager = require("multiverse.managers.buffer_manager")
 
 local M = {}
 
@@ -55,8 +56,7 @@ M.getAllVisibleWindowsForTabpage = function(tabpageId)
 
   for _, windowId in ipairs(windows) do
     local buf = vim.api.nvim_win_get_buf(windowId)
-    local bufType = vim.api.nvim_get_option_value("buftype", { buf = buf })
-    local isEditable = bufType == ""
+    local isEditable = buffer_manager.isUniverseBuffer(buf)
     if isEditable then
       local windowUuid = uuid_manager.create()
       -- todo(mikol): I think we can just do this here, not in the external loop, come back to this...

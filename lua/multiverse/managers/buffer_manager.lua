@@ -187,6 +187,28 @@ local function isDesiredUniverseBuffer(buffer_id)
     and isNormalBuffer(buffer_id) ]]
 end
 
+--- @param buffer_id number
+--- @return boolean
+M.isUniverseBuffer = function(buffer_id)
+  if not vim.api.nvim_buf_is_valid(buffer_id) then
+    return false
+  end
+
+  if not isDesiredUniverseBuffer(buffer_id) then
+    return false
+  end
+
+  if not vim.api.nvim_get_option_value("buflisted", { buf = buffer_id }) then
+    return false
+  end
+
+  if isScratchBuffer({ bufferName = vim.api.nvim_buf_get_name(buffer_id) }) then
+    return false
+  end
+
+  return true
+end
+
 M.closeAllBuffers = function()
   local buffersToClose = M.get_all_buffers()
   for _, buffer in ipairs(buffersToClose) do
@@ -206,15 +228,13 @@ M.get_all_buffers = function()
 
     local buffer_id = buf.bufnr
 
-    if isDesiredUniverseBuffer(buffer_id) then
+    if M.isUniverseBuffer(buffer_id) then
 
       local name = vim.api.nvim_buf_get_name(buffer_id)
       local bufferUuid = uuid_manager.create()
       local buffer = Buffer:new(bufferUuid, buffer_id, name)
 
-      if not isScratchBuffer(buffer) then
-        table.insert(bufferList, buffer)
-      end
+      table.insert(bufferList, buffer)
 
     end
   end
