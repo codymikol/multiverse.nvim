@@ -20,9 +20,12 @@ local window_manager = require("multiverse.managers.window_manager")
 
 local tabpageId = vim.api.nvim_get_current_tabpage()
 
--- Scenario 1: netrw-like buffer (buftype="", buflisted=false, modifiable=false)
--- should be excluded from the visible windows for the tabpage. Reuse the
--- current window by pointing it at this buffer.
+-- Scenario 1: a buffer with the option combination netrw's directory
+-- listing exhibits when unlisted and non-modifiable (buftype="",
+-- buflisted=false, modifiable=false) should be excluded from the visible
+-- windows for the tabpage. Reuse the current window by pointing it at this
+-- buffer. (Real netrw buffers are typically buftype="nofile"; buftype=""
+-- here isolates the buflisted/modifiable exclusion this test targets.)
 local netrw_buf = vim.api.nvim_create_buf(false, false)
 vim.api.nvim_set_option_value("buftype", "", { buf = netrw_buf })
 vim.api.nvim_set_option_value("modifiable", false, { buf = netrw_buf })
