@@ -1,13 +1,15 @@
 -- Regression test for GitHub issue #101 (crash when opening nvim directly on
 -- a directory).
 --
--- This is NOT a busted-style spec. It exercises real `vim.api` calls
--- (buffers, windows, options) that busted/luarocks cannot provide, so it
--- must be run inside an actual nvim instance rather than via the busted
--- test runner used by the other files under lua/test/**/*.spec.lua.
+-- This is NOT a busted-style spec, and is deliberately NOT named
+-- `*.spec.lua` so a busted runner globbing this tree never collects it: it
+-- exercises real `vim.api` calls (buffers, windows, options) that
+-- busted/luarocks cannot provide, calls `os.exit()`, and must be run inside
+-- an actual nvim instance rather than via the busted test runner used by
+-- the other files under lua/test/**/*.spec.lua.
 --
 -- Run from the repository root with:
---   nvim --headless -u NONE -l lua/test/managers/window_manager.spec.lua
+--   nvim --headless -u NONE -l lua/test/managers/window_manager.headless.lua
 --
 -- The script prints "PASS" and exits 0 on success, or raises a Lua error
 -- (via `assert`) and exits non-zero on failure.
