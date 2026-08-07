@@ -190,11 +190,15 @@ end
 --- @param buffer_id number
 --- @return boolean
 M.isUniverseBuffer = function(buffer_id)
-  if not vim.api.nvim_get_option_value("buflisted", { buf = buffer_id }) then
+  if not vim.api.nvim_buf_is_valid(buffer_id) then
     return false
   end
 
   if not isDesiredUniverseBuffer(buffer_id) then
+    return false
+  end
+
+  if not vim.api.nvim_get_option_value("buflisted", { buf = buffer_id }) then
     return false
   end
 
