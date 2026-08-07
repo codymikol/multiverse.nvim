@@ -92,7 +92,11 @@ end
 
 --- @param multiverse Multiverse
 --- @param selected_universe_summary UniverseSummary
-M.load_universe = function(multiverse, selected_universe_summary)
+--- @param skip_save boolean | nil  when true, skips saving/dehydrating whatever is currently open before
+--- hydrating the selected universe. Callers should pass true when there is nothing meaningful to save (e.g.
+--- on VimEnter, where the current buffer is just the empty/startup state, not a prior session), since saving
+--- in that case would clobber the target universe's already-persisted session.
+M.load_universe = function(multiverse, selected_universe_summary, skip_save)
 
   log.debug("Loading universe: " .. selected_universe_summary.name)
 
@@ -101,25 +105,40 @@ M.load_universe = function(multiverse, selected_universe_summary)
     selected_universe_summary.lastExplored = timestamp_manager.now()
     multiverse_repository.save_multiverse(multiverse)
 
-    local current_directory = vim.fn.getcwd()
+    local current_universe = nil
 
-    local current_universe_summary = multiverse:getUniverseByDirectory(current_directory)
+    if not skip_save then
 
-    if current_universe_summary ~= nil then
+      local current_directory = vim.fn.getcwd()
 
-      local current_universe, err = universe_repository.get_universe_by_uuid(current_universe_summary.uuid)
-
-      if current_universe == nil then
-        log.error("Error dehydrating universe: " .. current_universe_summary.uuid .. ", error details: " .. vim.inspect(err))
-        return
+      local current_universe_summary = multiverse:getUniverseByDirectory(current_directory)
+      if current_universe_summary == nil then
+        current_universe_summary = multiverse:getUniverseByDirectory(current_directory .. "/")
       end
 
-      log.debug("load universe searching multiverse for matching directory and found: " .. vim.inspect(current_universe_summary))
+      if current_universe_summary ~= nil then
 
-      M.save()
+        -- deliberately shadowed: keeps beforeHydrate/afterHydrate's
+        -- `current_universe` argument at its pre-existing value (nil) here,
+        -- matching MultiverseOpen's behavior prior to this file's skip_save
+        -- change instead of silently altering it.
+        local current_universe, err = universe_repository.get_universe_by_uuid(current_universe_summary.uuid)
+
+        if current_universe == nil then
+          log.error("Error dehydrating universe: " .. current_universe_summary.uuid .. ", error details: " .. vim.inspect(err))
+          return
+        end
+
+        log.debug("load universe searching multiverse for matching directory and found: " .. vim.inspect(current_universe_summary))
+
+        M.save()
+
+      else
+        log.debug("Working directory is not part of a universe, proceeding with loading the selected universe and skipping dehydration.")
+      end
 
     else
-      log.debug("Working directory is not part of a universe, proceeding with loading the selected universe and skipping dehydration.")
+      log.debug("skip_save is true, proceeding with loading the selected universe and skipping dehydration.")
     end
 
     state_store.set_current_state(state_store.STATES.CLEANUP)
