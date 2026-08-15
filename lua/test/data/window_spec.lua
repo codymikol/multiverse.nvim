@@ -1,0 +1,15 @@
+local Window = require("multiverse.data.Window")
+
+describe("Window", function()
+	it("new should set uuid, bufferUuid and windowId", function()
+		local w = Window:new("uuid-1", "buf-uuid-1", 1)
+		assert.are.equal("uuid-1", w.uuid)
+		assert.are.equal("buf-uuid-1", w.bufferUuid)
+		assert.are.equal(1, w.windowId)
+	end)
+
+	it("should not expose a setBufferId method", function()
+		local w = Window:new("uuid-1", "buf-uuid-1", 1)
+		assert.is_nil(w.setBufferId)
+	end)
+end)
