@@ -3,17 +3,6 @@ local uuid_manager = require "multiverse.managers.uuid_manager"
 
 local M = {}
 
-M.closeAll = function()
-
-  local tabpages = vim.api.nvim_list_tabpages()
-
-  for _, tab in ipairs(tabpages) do
-    vim.api.nvim_set_current_tabpage(tab)
-    vim.cmd('tabclose')
-  end
-
-end
-
 --- @return Tabpage[]
 M.getTabpages = function()
   local tabpages = {}
