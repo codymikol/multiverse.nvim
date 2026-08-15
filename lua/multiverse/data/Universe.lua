@@ -1,4 +1,3 @@
-local json = require("multiverse.repositories.json")
 local Universe = {}
 Universe.__index = Universe
 
@@ -57,10 +56,6 @@ function Universe:addAllTabpages(tabpages)
 	for _, tabpage in pairs(tabpages) do
 		self:addTabpage(tabpage)
 	end
-end
-
-function Universe:toJsonString()
-	return json.encode(self)
 end
 
 --- @param bufferId number
