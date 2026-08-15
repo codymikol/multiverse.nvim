@@ -43,6 +43,11 @@
               name = "bot";
               email = "hi@codymikol.com";
             };
+ 
+            settings = {
+              concurrency = { maxParallel = 1; };
+            };
+
           };
 
           devShells.default = pkgs.mkShell {
