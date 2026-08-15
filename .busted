@@ -1,6 +1,0 @@
-return {
-  _all = {
-    lpath = "lua/?.lua;lua/?/init.lua;;",
-    pattern = "%.spec%.lua$",
-  },
-}

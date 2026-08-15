@@ -1,0 +1,29 @@
+name: Busted
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  specs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: rhysd/action-setup-vim@v1
+        with:
+          neovim: true
+
+      - name: Install plenary + plugin
+        run: |
+
+          mkdir -p ${XDG_DATA_HOME:-$HOME/.local/share}/nvim/site/pack/packer/start
+          
+          git clone https://github.com/nvim-lua/plenary.nvim \
+            ${XDG_DATA_HOME:-$HOME/.local/share}/nvim/site/pack/packer/start/plenary.nvim
+
+          git clone $GITHUB_WORKSPACE \
+            ${XDG_DATA_HOME:-$HOME/.local/share}/nvim/site/pack/packer/start/multiverse.nvim
+
+      - name: Run plenary tests
+        run: nvim --headless -u $GITHUB_WORKSPACE/ci/minimal_config.lua -c 'PlenaryBustedDirectory lua/test {timeout = 10000}'

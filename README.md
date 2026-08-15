@@ -30,6 +30,11 @@ The aim of this project is to increase productivity when context switching betwe
 
 
 
+## Startup Behavior
+
+- **Automatic hydration on directory entry**
+  - **Description**: Opening Neovim directly on a directory that matches a registered *Universe* (e.g. `nvim .` or `nvim /path/to/project`) automatically hydrates that *Universe* on startup, equivalent to running `:MultiverseOpen <name>`. No action is required from the user.
+
 ## Integrations
 
 - **`Neotree`**
