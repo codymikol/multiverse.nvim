@@ -12,7 +12,6 @@ local log = require("multiverse.log")
 
 local ns_id = vim.api.nvim_create_namespace("Multiverse")
 
-vim.api.nvim_set_hl(ns_id, "MyCustomGroup", { fg = "#ff0000", bg = "#000000", bold = true })
 -- Custom highlight groups
 vim.api.nvim_set_hl(0, "MultiverseFilename", { fg = "#7BAAF7" }) -- blue for filenames
 vim.api.nvim_set_hl(0, "MultiverseRowCol", { fg = "#6C757D", italic = true }) -- grey for rows/columns
@@ -201,16 +200,6 @@ local function get_universe_preview(universe_summary)
 
 					local leaf_line = get_node_indent(child, is_last_child) .. window_description
 					table.insert(lines, leaf_line)
-
-					local window = tabpage:getWindowByUuid(child.windowUuid)
-
-					if window ~= nil then
-						if nil ~= window.bufferUuid then
-							local buffer = universe:getBufferByUuid(window.bufferUuid)
-							if nil ~= buffer then
-							end
-						end
-					end
 				else
 					table.insert(unexplored_layout, child)
 				end
