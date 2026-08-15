@@ -52,6 +52,8 @@ local function hydrateTabpage(universe, tabpage)
 
 			local activeWindowId = vim.api.nvim_get_current_win()
 
+			-- BUG: should assign to non-leaf `child` (guarded), not `node` -- can leave
+			-- a window on the wrong buffer for nested layouts, see GH #175.
 			node:setWindowId(activeWindowId)
 
 			if child.type == "leaf" then
