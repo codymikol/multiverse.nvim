@@ -155,6 +155,16 @@ describe("addNewUniverseUsecase.run", function()
 			assert.are.equal(vim.env.HOME .. "/some/dir", saved_summary.directory)
 		end)
 
+		it("should normalize a relative user-supplied directory to an absolute path", function()
+			addNewUniverseUsecase.run("myname", "some/relative/dir")
+
+			assert.is_not_nil(save_multiverse_called_with)
+			local saved_summary = save_multiverse_called_with.universes[1]
+
+			assert.are.equal(1, string.find(saved_summary.directory, "/", 1, true))
+			assert.is_true(vim.endswith(saved_summary.directory, "/some/relative/dir"))
+		end)
+
 		local marker_path = vim.fn.tempname() .. "_multiverse_pwned_marker"
 
 		it("does not execute backtick-quoted shell commands embedded in the directory", function()
@@ -164,7 +174,7 @@ describe("addNewUniverseUsecase.run", function()
 			addNewUniverseUsecase.run("foo", malicious_directory)
 
 			assert.stub(save_universe_stub).was.called(1)
-			assert.are.equal(malicious_directory, save_universe_called_with.workingDirectory)
+			assert.are.equal(vim.fn.getcwd() .. "/" .. malicious_directory, save_universe_called_with.workingDirectory)
 			assert.is_nil(vim.loop.fs_stat(marker_path))
 			os.remove(marker_path)
 		end)
@@ -254,6 +264,8 @@ describe("addNewUniverseUsecase.run", function()
 		local load_universe_stub
 		local save_stub
 		local getcwd_stub
+		local log_debug_stub
+		local expand_stub
 
 		local save_multiverse_called_with
 		local save_universe_called_with
@@ -284,6 +296,10 @@ describe("addNewUniverseUsecase.run", function()
 			getcwd_stub = stub(vim.fn, "getcwd", function()
 				return "/fake/cwd"
 			end)
+
+			log_debug_stub = stub(log, "debug")
+
+			expand_stub = stub(vim.fn, "expand")
 		end)
 
 		after_each(function()
@@ -294,6 +310,8 @@ describe("addNewUniverseUsecase.run", function()
 			load_universe_stub:revert()
 			save_stub:revert()
 			getcwd_stub:revert()
+			log_debug_stub:revert()
+			expand_stub:revert()
 		end)
 
 		it("should default the directory to the current working directory", function()
@@ -307,6 +325,39 @@ describe("addNewUniverseUsecase.run", function()
 
 			assert.is_not_nil(save_universe_called_with)
 			assert.are.equal("/fake/cwd", save_universe_called_with.workingDirectory)
+		end)
+
+		it("should not glob-expand the current working directory when directory is omitted", function()
+			getcwd_stub:revert()
+			getcwd_stub = stub(vim.fn, "getcwd", function()
+				return "/fake/cwd*starred"
+			end)
+
+			addNewUniverseUsecase.run("myname")
+
+			assert.stub(expand_stub).was_not_called()
+
+			assert.is_not_nil(save_multiverse_called_with)
+			local saved_summary = save_multiverse_called_with.universes[1]
+			assert.are.equal("/fake/cwd*starred", saved_summary.directory)
+		end)
+
+		it("should default the directory to '/' when the current working directory is the filesystem root", function()
+			getcwd_stub:revert()
+			getcwd_stub = stub(vim.fn, "getcwd", function()
+				return "/"
+			end)
+
+			addNewUniverseUsecase.run("myname")
+
+			assert.stub(save_multiverse_stub).was.called(1)
+			assert.is_not_nil(save_multiverse_called_with)
+
+			local saved_summary = save_multiverse_called_with.universes[1]
+			assert.are.equal("/", saved_summary.directory)
+
+			assert.is_not_nil(save_universe_called_with)
+			assert.are.equal("/", save_universe_called_with.workingDirectory)
 		end)
 	end)
 

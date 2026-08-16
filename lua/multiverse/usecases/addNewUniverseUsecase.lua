@@ -11,13 +11,18 @@ local log = require("multiverse.log")
 
 local function normalizeDirectory(directory)
 	-- vim.fn.expand executes backtick-quoted shell commands (injection risk); vim.fs.normalize does not.
-	local expanded = vim.fs.normalize(directory)
-	local trailing_slash_removed = string.gsub(expanded, "/$", "")
+	local expanded = directory and vim.fs.normalize(directory) or vim.fn.getcwd()
+	-- fnamemodify(":p") is pure string manipulation (no shell/glob), so it can't reintroduce the injection risk above.
+	local absolute = vim.fn.fnamemodify(expanded, ":p")
+	local trailing_slash_removed = string.gsub(absolute, "/$", "")
+	if trailing_slash_removed == "" then
+		return "/"
+	end
 	return trailing_slash_removed
 end
 
 ---@param name string
----@param directory string
+---@param directory string|nil
 M.run = function(name, directory)
 	local success, err = pcall(function()
 		local seconds_since_epoch = timestamp_manager.now()
