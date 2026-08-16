@@ -59,7 +59,7 @@ M.run = function(name, directory)
 	end)
   if not success then
     vim.notify("Failed to add new universe, check MultiverseLog for more information", vim.log.levels.ERROR)
-    log.error("Error adding new universe: " .. vim.inspect(err))
+    log.error("Error adding new universe: %s", err)
   end
 end
 

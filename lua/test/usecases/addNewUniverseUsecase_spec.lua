@@ -368,5 +368,23 @@ describe("addNewUniverseUsecase.run", function()
 
 			assert.stub(log_error_stub).was.called(1)
 		end)
+
+		it("should log the error without raising when the collaborator's error contains a percent sign", function()
+			local spy = require("luassert.spy")
+
+			log_error_stub:revert()
+			log_error_stub = spy.on(log, "error")
+
+			uuid_create_stub:revert()
+			uuid_create_stub = stub(uuid_manager, "create", function()
+				error("boom %d exploded")
+			end)
+
+			assert.has_no.errors(function()
+				addNewUniverseUsecase.run("myname", "/some/dir")
+			end)
+
+			assert.spy(log_error_stub).was.called()
+		end)
 	end)
 end)
