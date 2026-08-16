@@ -9,13 +9,22 @@ local Universe = require("multiverse.data.Universe")
 local log = require("multiverse.log")
 
 local function normalizeDirectory(directory)
-	local expanded = vim.fn.expand(directory)
-	local trailing_slash_removed = string.gsub(expanded, "/$", "")
+	local base
+	if directory then
+		local expanded = vim.fn.expand(directory)
+		base = vim.fn.fnamemodify(expanded, ":p")
+	else
+		base = vim.fn.getcwd()
+	end
+	local trailing_slash_removed = string.gsub(base, "/$", "")
+	if trailing_slash_removed == "" then
+		return "/"
+	end
 	return trailing_slash_removed
 end
 
 ---@param name string
----@param directory string
+---@param directory string|nil
 M.run = function(name, directory)
 	local success, err = pcall(function()
 		local seconds_since_epoch = os.time(os.date("!*t"))
