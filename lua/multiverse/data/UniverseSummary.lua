@@ -1,10 +1,16 @@
 local UniverseSummary = {}
 UniverseSummary.__index = UniverseSummary
 
+-- :new below is a positional constructor with no arg validation —
+-- transposing any two args (e.g. calling with directory/name swapped) does
+-- not raise here; it silently returns a corrupted instance whose symptom
+-- may only surface much later, at an unrelated call site once persisted
+-- (e.g. a bad lastExplored breaking the preview date formatting in the
+-- telescope picker). See #188.
 --- @class UniverseSummary
 --- @field directory string
 --- @field uuid string
---- @field name string 
+--- @field name string
 --- @field lastExplored number
 ---
 --- @param directory string  the directory of the universe
