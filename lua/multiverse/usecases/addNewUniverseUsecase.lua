@@ -4,6 +4,7 @@ local multiverse_repository = require("multiverse.repositories.multiverse_reposi
 local multiverse_manager = require("multiverse.managers.multiverse_manager")
 local universe_repository = require("multiverse.repositories.universe_repository")
 local uuid_manager = require("multiverse.managers.uuid_manager")
+local timestamp_manager = require("multiverse.managers.timestamp_manager")
 local UniverseSummary = require("multiverse.data.UniverseSummary")
 local Universe = require("multiverse.data.Universe")
 local log = require("multiverse.log")
@@ -27,7 +28,7 @@ end
 ---@param directory string|nil
 M.run = function(name, directory)
 	local success, err = pcall(function()
-		local seconds_since_epoch = os.time(os.date("!*t"))
+		local seconds_since_epoch = timestamp_manager.now()
 
 		local normalized_directory = normalizeDirectory(directory)
 
@@ -44,7 +45,7 @@ M.run = function(name, directory)
 
 		local new_universe_summary = UniverseSummary:new(normalized_directory, new_uuid, name, seconds_since_epoch)
 
-		print("Adding a new universe ." .. vim.inspect(new_universe_summary))
+		log.debug("Adding a new universe: %s", new_universe_summary)
 
 		multiverse:addUniverse(new_universe_summary)
 
