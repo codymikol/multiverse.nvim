@@ -17,12 +17,8 @@ local function ensure_local_directory_exists()
   end
 end
 
-local function ensure_catalog_exists() 
-end
-
 M.run = function()
   ensure_local_directory_exists()
-  ensure_catalog_exists()
 end
 
 return M
