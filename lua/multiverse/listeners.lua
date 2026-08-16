@@ -1,4 +1,3 @@
-local workspace = require("multiverse.managers.workspace_manager")
 local multiverse_manager = require("multiverse.managers.multiverse_manager")
 local log                = require("multiverse.log")
 
