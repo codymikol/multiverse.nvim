@@ -4,6 +4,21 @@ Hop between projects, preserving the state of your open tabpages, windows, and b
 
 The aim of this project is to increase productivity when context switching between many projects.
 
+## Installation
+
+Using [lazy.nvim](https://github.com/folke/lazy.nvim). `setup()` registers a `VimEnter` autocmd that automatically hydrates a matching *Universe* on startup (see [Startup Behavior](#startup-behavior)), so the plugin must load eagerly (`lazy = false`) rather than on a command or event that could fire after `VimEnter`:
+
+```lua
+{
+  "codymikol/multiverse.nvim",
+  dependencies = { "nvim-telescope/telescope.nvim" },
+  lazy = false,
+  config = function()
+    require("multiverse").setup()
+  end,
+}
+```
+
 ## CLI
 
 - **`MultiverseAdd`**
