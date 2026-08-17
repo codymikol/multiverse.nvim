@@ -2,7 +2,7 @@ local M = {}
 
 ---@return number
 M.now = function()
-  return os.time(os.date("!*t"))
+  return os.time()
 end
 
 return M
