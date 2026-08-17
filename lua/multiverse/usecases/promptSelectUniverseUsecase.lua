@@ -6,6 +6,10 @@ local multiverse_manager = require("multiverse.managers.multiverse_manager")
 local log = require("multiverse.log")
 
 
+local function lastExplored(universe)
+	return type(universe.lastExplored) == "number" and universe.lastExplored or 0
+end
+
 M.run = function()
 	local success, err = pcall(function()
 
@@ -18,9 +22,9 @@ M.run = function()
 			return
 		end
 
-    table.sort(multiverse.universes, function(a, b)
-      return a.lastExplored > b.lastExplored
-    end)
+		table.sort(multiverse.universes, function(a, b)
+			return lastExplored(a) > lastExplored(b)
+		end)
 
 		telescope_integration.prompt_select_universe(multiverse.universes, function(selected_universe)
 			if selected_universe == nil then
