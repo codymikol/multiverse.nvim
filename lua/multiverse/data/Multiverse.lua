@@ -3,19 +3,19 @@ local Multiverse = {}
 Multiverse.__index = Multiverse
 
 --- @class Multiverse
---- @field universes table<string, UniverseSummary>  a list of universes
---- @field getUniverseByDirectory (string): UniverseSummary | nil
---- @field addUniverse (Universe): nil
---- @field getUniverseByName (string): UniverseSummary | nil
+--- @field universes UniverseSummary[]  the known universes in this multiverse
+--- @field getUniverseByDirectory fun(directory: string): UniverseSummary | nil
+--- @field addUniverse fun(universe: UniverseSummary): nil
+--- @field getUniverseByName fun(name: string): UniverseSummary | nil
 ---
---- @param universes number the last time the universe was explored
+--- @param universes UniverseSummary[]  the initial set of known universes
 function Multiverse:new(universes)
   local self = setmetatable({}, Multiverse)
   self.universes = universes
   return self
 end
 
---- @param universe Universe
+--- @param universe UniverseSummary
 --- @return nil
 function Multiverse:addUniverse(universe)
   table.insert(self.universes, universe)
