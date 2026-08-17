@@ -2,7 +2,6 @@ local WindowLayout = require("multiverse.data.layout.WindowLayout")
 local Column = require("multiverse.data.layout.Column")
 local Row = require("multiverse.data.layout.Row")
 local Leaf = require("multiverse.data.layout.Leaf")
-local json = require("multiverse.repositories.json")
 
 local M = {}
 
