@@ -1,5 +1,5 @@
-local PluginContext = {}
-PluginContext.__index = PluginContext
+--- Types-only module: not required anywhere; do not add one.
+--- These LuaCATS annotations exist purely for editor/type tooling.
 
 --- @class BeforeDehydrateContext
 --- @field universe Universe
@@ -19,11 +19,3 @@ PluginContext.__index = PluginContext
 --- @field afterDehydrate? fun(AfterDehydrateContext): nil
 --- @field beforeHydrate? fun(BeforeHydrateContext): nil
 --- @field afterHydrate? fun(AfterHydrateContext): nil
-
---- @return PluginContext
-function PluginContext:new()
-	local self = setmetatable({}, PluginContext)
-	return self
-end
-
-return PluginContext
