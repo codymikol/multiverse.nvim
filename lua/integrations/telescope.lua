@@ -85,6 +85,9 @@ local function apply_markup_highlighting(bufnr)
 		::continue::
 	end
 end
+
+---@param universe_summary UniverseSummary
+---@return string[]
 local function get_universe_preview(universe_summary)
 	local lines = {
 		"" .. universe_summary.name .. " " .. universe_summary.directory,
@@ -145,7 +148,7 @@ local function get_universe_preview(universe_summary)
 		local unexplored_layout = { layout.children[1] } -- start at the first row rather than the window layout root
 
     if #unexplored_layout == 0 then
-      return lines
+      goto continue_tabpage
     end
 
 		unexplored_layout[1].depth = 0 -- initialize depth for the root node
@@ -207,6 +210,8 @@ local function get_universe_preview(universe_summary)
 
 			::continue::
 		end
+
+		::continue_tabpage::
 	end
 
 	local buffers_not_displayed = {}
@@ -229,6 +234,8 @@ local function get_universe_preview(universe_summary)
 
 	return lines
 end
+
+M.get_universe_preview = get_universe_preview
 
 ---@param universe_summaries UniverseSummary[]
 ---@param callback fun(selected_universe: UniverseSummary | nil)
