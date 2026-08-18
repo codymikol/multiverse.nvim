@@ -157,4 +157,30 @@ describe("multiverse_manager.load_universe", function()
 			assert.stub(log_error_stub).was.called()
 		end)
 	end)
+
+	describe("when the current directory's universe matches an existing universe in the multiverse", function()
+		it("calls beforeHydrate/afterHydrate with the real current universe, not nil", function()
+			local cwd = "/tmp/multiverse-manager-spec/real-universe"
+			local shared_uuid = "current-uuid"
+			local fake_universe = { uuid = shared_uuid, name = "current-universe" }
+
+			local current_universe_summary =
+				UniverseSummary:new({ directory = cwd, uuid = shared_uuid, name = "current-universe" })
+			local selected_universe_summary =
+				UniverseSummary:new({ directory = "/tmp/multiverse-manager-spec/selected", uuid = "selected-uuid", name = "selected-universe" })
+			local multiverse = Multiverse:new({ current_universe_summary, selected_universe_summary })
+
+			getcwd_stub = stub(vim.fn, "getcwd", function() return cwd end)
+			get_universe_by_uuid_stub.returns(fake_universe)
+			save_stub = stub(multiverse_manager, "save")
+
+			multiverse_manager.load_universe(multiverse, selected_universe_summary, false)
+
+			assert.stub(beforeHydrate_stub).was.called(1)
+			assert.stub(afterHydrate_stub).was.called(1)
+
+			assert.are.equal(fake_universe, beforeHydrate_stub.calls[1].refs[1].universe)
+			assert.are.equal(fake_universe, afterHydrate_stub.calls[1].refs[1].universe)
+		end)
+	end)
 end)
