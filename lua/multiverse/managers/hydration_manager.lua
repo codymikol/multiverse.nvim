@@ -1,6 +1,5 @@
 local universe_repository = require("multiverse.repositories.universe_repository")
 local buffer_manager = require("multiverse.managers.buffer_manager")
-local neotree_integration = require("integrations.neotree")
 local tabpage_manager = require("multiverse.managers.tabpage_manager")
 local window_layout_manager = require("multiverse.managers.window_layout_manager")
 local M = {}
@@ -27,8 +26,6 @@ M.hydrate = function(selected_universe)
 	tabpage_manager.hydrate(universe)
 
 	window_layout_manager.hydrate(universe)
-
-	neotree_integration.hydrate()
 
   buffer_manager.close_generated_nofile_scratch_buffers()
 
