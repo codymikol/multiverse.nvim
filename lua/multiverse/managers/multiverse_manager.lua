@@ -100,11 +100,11 @@ M.load_universe = function(multiverse, selected_universe_summary, skip_save)
 
       if current_universe_summary ~= nil then
 
-        -- deliberately shadowed: keeps beforeHydrate/afterHydrate's
-        -- `current_universe` argument at its pre-existing value (nil) here,
-        -- matching MultiverseOpen's behavior prior to this file's skip_save
-        -- change instead of silently altering it.
-        local current_universe, err = universe_repository.get_universe_by_uuid(current_universe_summary.uuid)
+        -- must assign the outer `current_universe`/`err` here, not `local`
+        -- redeclare them, so beforeHydrate/afterHydrate below receive the
+        -- resolved universe instead of always seeing nil.
+        local err
+        current_universe, err = universe_repository.get_universe_by_uuid(current_universe_summary.uuid)
 
         if current_universe == nil then
           log.error("Error dehydrating universe: " .. current_universe_summary.uuid .. ", error details: " .. vim.inspect(err))
