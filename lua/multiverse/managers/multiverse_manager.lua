@@ -25,41 +25,36 @@ M.save = function()
 
     local current_directory = vim.fn.getcwd()
 
-    local current_multiverse_summary = multiverse:getUniverseByDirectory(current_directory)
-    if current_multiverse_summary == nil then
-      current_multiverse_summary = multiverse:getUniverseByDirectory(current_directory .. "/")
+    local current_universe_summary = multiverse:getUniverseByDirectory(current_directory)
+    if current_universe_summary == nil then
+      current_universe_summary = multiverse:getUniverseByDirectory(current_directory .. "/")
     end
 
-    if current_multiverse_summary == nil then
+    if current_universe_summary == nil then
       vim.notify("No universe found for current directory: " .. current_directory)
       state_store.set_current_state(state_store.STATES.IDLE)
       return
     end
 
-    local current_universe_summary = multiverse:getUniverseByDirectory(current_directory)
+    local current_universe, err = universe_repository.get_universe_by_uuid(current_universe_summary.uuid)
 
-    if current_universe_summary ~= nil then
-
-      local current_universe, err = universe_repository.get_universe_by_uuid(current_universe_summary.uuid)
-
-      if current_universe == nil then
-        log.error("Error dehydrating universe: " .. current_universe_summary.uuid .. ", error details: " .. vim.inspect(err))
-        state_store.set_current_state(state_store.STATES.IDLE)
-        return
-      end
-
-      plugin_manager.beforeDehydrate({
-        universe = current_universe
-      })
-
-      local dehydrated_universe = dehydration_manager.dehydrate(current_universe_summary)
-
-      plugin_manager.afterDehydrate({
-        universe = current_universe
-      })
-
-      universe_repository.save_universe(dehydrated_universe)
+    if current_universe == nil then
+      log.error("Error dehydrating universe: " .. current_universe_summary.uuid .. ", error details: " .. vim.inspect(err))
+      state_store.set_current_state(state_store.STATES.IDLE)
+      return
     end
+
+    plugin_manager.beforeDehydrate({
+      universe = current_universe
+    })
+
+    local dehydrated_universe = dehydration_manager.dehydrate(current_universe_summary)
+
+    plugin_manager.afterDehydrate({
+      universe = current_universe
+    })
+
+    universe_repository.save_universe(dehydrated_universe)
   end)
 
   if not success then

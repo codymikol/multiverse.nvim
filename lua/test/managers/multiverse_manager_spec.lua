@@ -6,6 +6,8 @@ local universe_repository = require("multiverse.repositories.universe_repository
 local multiverse_repository = require("multiverse.repositories.multiverse_repository")
 local hydration_manager = require("multiverse.managers.hydration_manager")
 local cleanup_manager = require("multiverse.managers.cleanup_manager")
+local dehydration_manager = require("multiverse.managers.dehydration_manager")
+local state_store = require("multiverse.store.state_store")
 local Multiverse = require("multiverse.data.Multiverse")
 local UniverseSummary = require("multiverse.data.UniverseSummary")
 
@@ -62,6 +64,71 @@ describe("multiverse_manager.load_universe", function()
 
 			assert.are.equal(fake_universe, beforeHydrate_stub.calls[1].refs[1].universe)
 			assert.are.equal(fake_universe, afterHydrate_stub.calls[1].refs[1].universe)
+		end)
+	end)
+end)
+
+describe("multiverse_manager.save", function()
+	local getMultiverse_stub
+	local get_universe_by_uuid_stub
+	local beforeDehydrate_stub
+	local afterDehydrate_stub
+	local dehydrate_stub
+	local save_universe_stub
+	local getcwd_stub
+	local getUniverseByDirectory_stub
+
+	local test_directory = "/tmp/multiverse-test-save-dir"
+	local fake_universe
+	local fake_dehydrated_universe
+
+	before_each(function()
+		state_store.set_current_state(state_store.STATES.IDLE)
+
+		fake_universe = { uuid = "current-uuid", name = "current-universe" }
+		fake_dehydrated_universe = { uuid = "current-uuid", name = "current-universe" }
+
+		local current_universe_summary = UniverseSummary:new(test_directory, "current-uuid", "current-universe", 1)
+		local multiverse = Multiverse:new({ current_universe_summary })
+
+		getMultiverse_stub = stub(multiverse_repository, "getMultiverse")
+		getMultiverse_stub.returns(multiverse)
+
+		getUniverseByDirectory_stub = stub(multiverse, "getUniverseByDirectory")
+		getUniverseByDirectory_stub.returns(current_universe_summary)
+
+		get_universe_by_uuid_stub = stub(universe_repository, "get_universe_by_uuid")
+		get_universe_by_uuid_stub.returns(fake_universe)
+
+		beforeDehydrate_stub = stub(plugin_manager, "beforeDehydrate")
+		afterDehydrate_stub = stub(plugin_manager, "afterDehydrate")
+
+		dehydrate_stub = stub(dehydration_manager, "dehydrate")
+		dehydrate_stub.returns(fake_dehydrated_universe)
+
+		save_universe_stub = stub(universe_repository, "save_universe")
+
+		getcwd_stub = stub(vim.fn, "getcwd")
+		getcwd_stub.returns(test_directory)
+	end)
+
+	after_each(function()
+		getMultiverse_stub:revert()
+		get_universe_by_uuid_stub:revert()
+		beforeDehydrate_stub:revert()
+		afterDehydrate_stub:revert()
+		dehydrate_stub:revert()
+		save_universe_stub:revert()
+		getcwd_stub:revert()
+
+		state_store.set_current_state(state_store.STATES.IDLE)
+	end)
+
+	describe("when the current working directory matches an existing universe in the multiverse", function()
+		it("should only look up the current universe by directory once", function()
+			multiverse_manager.save()
+
+			assert.stub(getUniverseByDirectory_stub).was.called(1)
 		end)
 	end)
 end)
