@@ -120,14 +120,15 @@ describe("multiverse_manager.save", function()
 	local test_directory = "/tmp/multiverse-test-save-dir"
 	local fake_universe
 	local fake_dehydrated_universe
+	local current_universe_summary
 
 	before_each(function()
 		state_store.set_current_state(state_store.STATES.IDLE)
 
 		fake_universe = { uuid = "current-uuid", name = "current-universe" }
-		fake_dehydrated_universe = { uuid = "current-uuid", name = "current-universe" }
+		fake_dehydrated_universe = { uuid = "current-uuid", name = "current-universe", dehydrated = true }
 
-		local current_universe_summary = UniverseSummary:new(test_directory, "current-uuid", "current-universe", 1)
+		current_universe_summary = UniverseSummary:new(test_directory, "current-uuid", "current-universe", 1)
 		local multiverse = Multiverse:new({ current_universe_summary })
 
 		getMultiverse_stub = stub(multiverse_repository, "getMultiverse")
@@ -153,6 +154,7 @@ describe("multiverse_manager.save", function()
 
 	after_each(function()
 		getMultiverse_stub:revert()
+		getUniverseByDirectory_stub:revert()
 		get_universe_by_uuid_stub:revert()
 		beforeDehydrate_stub:revert()
 		afterDehydrate_stub:revert()
@@ -164,10 +166,19 @@ describe("multiverse_manager.save", function()
 	end)
 
 	describe("when the current working directory matches an existing universe in the multiverse", function()
-		it("should only look up the current universe by directory once", function()
+		it("should look up the current universe by directory only once, then dehydrate and save it", function()
 			multiverse_manager.save()
 
 			assert.stub(getUniverseByDirectory_stub).was.called(1)
+
+			assert.stub(dehydrate_stub).was.called(1)
+			assert.are.equal(current_universe_summary, dehydrate_stub.calls[1].refs[1])
+
+			assert.stub(save_universe_stub).was.called(1)
+			assert.are.equal(fake_dehydrated_universe, save_universe_stub.calls[1].refs[1])
+
+			assert.are.equal(fake_universe, beforeDehydrate_stub.calls[1].refs[1].universe)
+			assert.are.equal(fake_universe, afterDehydrate_stub.calls[1].refs[1].universe)
 		end)
 	end)
 end)
