@@ -80,12 +80,15 @@ describe("multiverse_manager.load_universe", function()
 			multiverse_manager.load_universe(multiverse, selected_universe_summary, true)
 
 			assert.stub(get_universe_by_uuid_stub).was_not.called()
+			assert.stub(save_stub).was_not.called()
 
 			assert.stub(beforeHydrate_stub).was.called(1)
 			assert.stub(afterHydrate_stub).was.called(1)
 
 			assert.is_nil(beforeHydrate_stub.calls[1].refs[1].universe)
 			assert.is_nil(afterHydrate_stub.calls[1].refs[1].universe)
+
+			assert.stub(hydrate_stub).was.called_with(selected_universe_summary)
 		end)
 	end)
 
@@ -179,6 +182,33 @@ describe("multiverse_manager.save", function()
 
 			assert.are.equal(fake_universe, beforeDehydrate_stub.calls[1].refs[1].universe)
 			assert.are.equal(fake_universe, afterDehydrate_stub.calls[1].refs[1].universe)
+		end)
+	end)
+
+	describe("when the current working directory does not match any universe", function()
+		it("should notify, reset state to IDLE, and not dehydrate or save anything", function()
+			getUniverseByDirectory_stub.returns(nil)
+			local notify_stub = stub(vim, "notify")
+
+			multiverse_manager.save()
+
+			notify_stub:revert()
+
+			assert.stub(dehydrate_stub).was_not.called()
+			assert.stub(save_universe_stub).was_not.called()
+			assert.are.equal(state_store.STATES.IDLE, state_store.get_current_state())
+		end)
+	end)
+
+	describe("when the current universe fails to load by uuid", function()
+		it("should log an error, reset state to IDLE, and not dehydrate or save anything", function()
+			get_universe_by_uuid_stub.returns(nil, "boom")
+
+			multiverse_manager.save()
+
+			assert.stub(dehydrate_stub).was_not.called()
+			assert.stub(save_universe_stub).was_not.called()
+			assert.are.equal(state_store.STATES.IDLE, state_store.get_current_state())
 		end)
 	end)
 end)
