@@ -95,8 +95,8 @@ M.load_universe = function(multiverse, selected_universe_summary, skip_save)
 
       if current_universe_summary ~= nil then
 
-        -- must assign the outer `current_universe`/`err` here, not `local`
-        -- redeclare them, so beforeHydrate/afterHydrate below receive the
+        -- must assign the outer `current_universe` here, not `local`
+        -- redeclare it, so beforeHydrate/afterHydrate below receive the
         -- resolved universe instead of always seeing nil.
         local err
         current_universe, err = universe_repository.get_universe_by_uuid(current_universe_summary.uuid)
