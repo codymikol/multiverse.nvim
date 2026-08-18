@@ -8,6 +8,7 @@ local previewers = require("telescope.previewers")
 local action_state = require("telescope.actions.state")
 local utils = require("telescope.previewers.utils")
 local universe_repository = require("multiverse.repositories.universe_repository")
+local UniverseSummary = require("multiverse.data.UniverseSummary")
 local log = require("multiverse.log")
 
 local ns_id = vim.api.nvim_create_namespace("Multiverse")
@@ -88,7 +89,7 @@ end
 local function get_universe_preview(universe_summary)
 	local lines = {
 		"" .. universe_summary.name .. " " .. universe_summary.directory,
-		"last explored: " .. os.date("%Y-%m-%d %H:%M:%S", universe_summary.lastExplored),
+		"last explored: " .. os.date("%Y-%m-%d %H:%M:%S", UniverseSummary.lastExploredOrZero(universe_summary)),
 		"",
 	}
 
@@ -230,6 +231,25 @@ local function get_universe_preview(universe_summary)
 	return lines
 end
 
+---@param fuzzy_sorter table
+---@return table
+local function build_lru_sorter(fuzzy_sorter)
+	return sorters.Sorter:new({
+		scoring_function = function(_, prompt, ordinal, entry)
+			if prompt == "" then
+				-- No filter typed yet: order the browsing view by recency instead of
+				-- telescope's default (finder insertion order) empty-prompt behavior.
+				return 1 / (UniverseSummary.lastExploredOrZero(entry.value) + 1)
+			end
+
+			return fuzzy_sorter.scoring_function(fuzzy_sorter, prompt, ordinal, entry)
+		end,
+		highlighter = function(_, prompt, display)
+			return fuzzy_sorter.highlighter(fuzzy_sorter, prompt, display)
+		end,
+	})
+end
+
 ---@param universe_summaries UniverseSummary[]
 ---@param callback fun(selected_universe: UniverseSummary | nil)
 ---@return nil
@@ -247,7 +267,7 @@ M.prompt_select_universe = function(universe_summaries, callback)
 					}
 				end,
 			}),
-			sorter = sorters.get_generic_fuzzy_sorter(), -- todo(mikol): this should sort by LRU
+			sorter = build_lru_sorter(sorters.get_generic_fuzzy_sorter()),
 			attach_mappings = function(prompt_bufnr)
 				actions.select_default:replace(function()
 					actions.close(prompt_bufnr)

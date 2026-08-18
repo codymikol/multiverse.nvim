@@ -3,12 +3,8 @@ local M = {}
 local telescope_integration = require("integrations.telescope")
 local multiverse_repository = require("multiverse.repositories.multiverse_repository")
 local multiverse_manager = require("multiverse.managers.multiverse_manager")
+local UniverseSummary = require("multiverse.data.UniverseSummary")
 local log = require("multiverse.log")
-
-
-local function lastExplored(universe)
-	return type(universe.lastExplored) == "number" and universe.lastExplored or 0
-end
 
 M.run = function()
 	local success, err = pcall(function()
@@ -23,7 +19,7 @@ M.run = function()
 		end
 
 		table.sort(multiverse.universes, function(a, b)
-			return lastExplored(a) > lastExplored(b)
+			return UniverseSummary.lastExploredOrZero(a) > UniverseSummary.lastExploredOrZero(b)
 		end)
 
 		telescope_integration.prompt_select_universe(multiverse.universes, function(selected_universe)
