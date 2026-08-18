@@ -1,8 +1,6 @@
 local M = {}
 
 local timestamp_manager = require("multiverse.managers.timestamp_manager")
-local Universe = require("multiverse.data.Universe")
-local UniverseSummary = require("multiverse.data.UniverseSummary")
 local multiverse_repository = require("multiverse.repositories.multiverse_repository")
 local universe_repository = require("multiverse.repositories.universe_repository")
 local hydration_manager = require("multiverse.managers.hydration_manager")
@@ -72,22 +70,6 @@ M.save = function()
 
   state_store.set_current_state(state_store.STATES.IDLE)
 
-end
-
-M.add_new_universe = function(name, directory)
-	local multiverse = multiverse_repository.getMultiverse()
-
-	local current_utc_timestamp = timestamp_manager.now()
-
-	local universe_summary = UniverseSummary:new(current_utc_timestamp, name, directory)
-
-	table.insert(multiverse.universes, universe_summary)
-
-	multiverse_repository.saveMultiverse(multiverse)
-
-	local universe = Universe:new(universe_summary.name, universe_summary.directory)
-
-	universe_repository.addUniverse(universe)
 end
 
 --- @param multiverse Multiverse
