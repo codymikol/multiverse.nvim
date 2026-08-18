@@ -22,14 +22,19 @@ describe("multiverse_manager.load_universe", function()
 	local getcwd_stub
 
 	local test_directory = "/tmp/multiverse-test-dir"
-	local fake_universe
+	local fake_current_universe
 
 	before_each(function()
-		fake_universe = { uuid = "current-uuid", name = "current-universe" }
+		fake_current_universe = { uuid = "current-uuid", name = "current-universe" }
 
 		save_multiverse_stub = stub(multiverse_repository, "save_multiverse")
 		get_universe_by_uuid_stub = stub(universe_repository, "get_universe_by_uuid")
-		get_universe_by_uuid_stub.returns(fake_universe)
+		get_universe_by_uuid_stub.invokes(function(uuid)
+			if uuid == fake_current_universe.uuid then
+				return fake_current_universe
+			end
+			return nil, "unexpected uuid: " .. tostring(uuid)
+		end)
 		hydrate_stub = stub(hydration_manager, "hydrate")
 		cleanup_stub = stub(cleanup_manager, "cleanup")
 		beforeHydrate_stub = stub(plugin_manager, "beforeHydrate")
@@ -62,8 +67,42 @@ describe("multiverse_manager.load_universe", function()
 			assert.stub(beforeHydrate_stub).was.called(1)
 			assert.stub(afterHydrate_stub).was.called(1)
 
-			assert.are.equal(fake_universe, beforeHydrate_stub.calls[1].refs[1].universe)
-			assert.are.equal(fake_universe, afterHydrate_stub.calls[1].refs[1].universe)
+			assert.are.equal(fake_current_universe, beforeHydrate_stub.calls[1].refs[1].universe)
+			assert.are.equal(fake_current_universe, afterHydrate_stub.calls[1].refs[1].universe)
+		end)
+	end)
+
+	describe("when skip_save is true", function()
+		it("should call beforeHydrate/afterHydrate with universe = nil, without looking up a current universe", function()
+			local selected_universe_summary = UniverseSummary:new("/tmp/multiverse-selected-dir", "selected-uuid", "selected-universe", 2)
+			local multiverse = Multiverse:new({ selected_universe_summary })
+
+			multiverse_manager.load_universe(multiverse, selected_universe_summary, true)
+
+			assert.stub(get_universe_by_uuid_stub).was_not.called()
+
+			assert.stub(beforeHydrate_stub).was.called(1)
+			assert.stub(afterHydrate_stub).was.called(1)
+
+			assert.is_nil(beforeHydrate_stub.calls[1].refs[1].universe)
+			assert.is_nil(afterHydrate_stub.calls[1].refs[1].universe)
+		end)
+	end)
+
+	describe("when the current working directory is not part of any universe", function()
+		it("should call beforeHydrate/afterHydrate with universe = nil", function()
+			local selected_universe_summary = UniverseSummary:new("/tmp/multiverse-selected-dir", "selected-uuid", "selected-universe", 2)
+			local multiverse = Multiverse:new({ selected_universe_summary })
+
+			multiverse_manager.load_universe(multiverse, selected_universe_summary, false)
+
+			assert.stub(get_universe_by_uuid_stub).was_not.called()
+
+			assert.stub(beforeHydrate_stub).was.called(1)
+			assert.stub(afterHydrate_stub).was.called(1)
+
+			assert.is_nil(beforeHydrate_stub.calls[1].refs[1].universe)
+			assert.is_nil(afterHydrate_stub.calls[1].refs[1].universe)
 		end)
 	end)
 end)
