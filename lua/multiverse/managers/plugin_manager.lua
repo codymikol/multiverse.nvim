@@ -1,21 +1,16 @@
 local NeoTreePlugin = require("plugins.neotree_plugin")
+-- CopilotChatPlugin is required but missing from the `plugins` list below --
+-- a known bug tracked in
+-- https://github.com/codymikol/multiverse.nvim/issues/237, not dead code.
+-- Leave this require in place; it's needed once that issue's fix lands.
 local CopilotChatPlugin = require("plugins.copilot_chat_plugin")
 
 local M = {}
-
---- This plugin registration system allows users to register their own plugins that
---- have lifecycle hooks.
 
 --- @type Plugin[] this is a list of out of the box plugins that are supported by default.
 local plugins = {
 	NeoTreePlugin,
 }
-
---- @param plugin PluginContext --- The plugin to register and handle lifecycle events with.
---- @return nil
-M.register = function(plugin)
-	table.insert(plugins, plugin)
-end
 
 --- The first lifecycle event called. This is called before the state of the universe
 --- is saved into persistence. Here when required is a good time to drive the related plugin to saves its own
