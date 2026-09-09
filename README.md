@@ -54,6 +54,7 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim). `setup()` registers a `Vi
 
 - **`Neotree`**
   - Automatically syncs to the working directory of the loaded universe.
+  - Set `vim.g.multiverse_neotree_width` to a number of columns to control the Neotree sidebar width; defaults to `36`. Invalid values (non-numbers, non-integers, zero, negative) fall back to the default.
 
 ## Contributing
 

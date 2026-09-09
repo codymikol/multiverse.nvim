@@ -23,7 +23,7 @@ local universe_repository = require("multiverse.repositories.universe_repository
 
 describe("telescope.get_universe_preview", function()
 	local telescope
-	local getUniverseByUuid_stub
+	local get_universe_by_uuid_stub
 
 	before_each(function()
 		package.loaded["integrations.telescope"] = nil
@@ -31,9 +31,9 @@ describe("telescope.get_universe_preview", function()
 	end)
 
 	after_each(function()
-		if getUniverseByUuid_stub then
-			getUniverseByUuid_stub:revert()
-			getUniverseByUuid_stub = nil
+		if get_universe_by_uuid_stub then
+			get_universe_by_uuid_stub:revert()
+			get_universe_by_uuid_stub = nil
 		end
 		package.loaded["integrations.telescope"] = nil
 	end)
@@ -66,8 +66,8 @@ describe("telescope.get_universe_preview", function()
 		universe:addBuffer(shownBuffer)
 		universe:addBuffer(hiddenBuffer)
 
-		getUniverseByUuid_stub = stub(universe_repository, "getUniverseByUuid")
-		getUniverseByUuid_stub.returns(nil, universe)
+		get_universe_by_uuid_stub = stub(universe_repository, "get_universe_by_uuid")
+		get_universe_by_uuid_stub.returns(universe, nil)
 
 		local universe_summary = {
 			uuid = "universe-uuid",
