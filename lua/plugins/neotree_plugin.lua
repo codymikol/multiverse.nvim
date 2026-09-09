@@ -24,10 +24,8 @@ return Plugin:new({
     -- Get the current window ID
     local win_id = vim.api.nvim_get_current_win()
 
-    -- Calculate 30% of the total columns
-
     -- Set the window width
-    vim.api.nvim_win_set_width(win_id, 36)
+    vim.api.nvim_win_set_width(win_id, vim.g.multiverse_neotree_width or 36)
 
 		vim.cmd("Neotree reveal current " .. cwd)
 
