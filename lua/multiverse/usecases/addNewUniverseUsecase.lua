@@ -10,7 +10,8 @@ local Universe = require("multiverse.data.Universe")
 local log = require("multiverse.log")
 
 local function normalizeDirectory(directory)
-	local expanded = vim.fn.expand(directory)
+	-- vim.fn.expand executes backtick-quoted shell commands (injection risk); vim.fs.normalize does not.
+	local expanded = vim.fs.normalize(directory)
 	local trailing_slash_removed = string.gsub(expanded, "/$", "")
 	return trailing_slash_removed
 end
