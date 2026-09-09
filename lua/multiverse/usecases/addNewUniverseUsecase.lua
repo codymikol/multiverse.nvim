@@ -10,13 +10,22 @@ local Universe = require("multiverse.data.Universe")
 local log = require("multiverse.log")
 
 local function normalizeDirectory(directory)
-	local expanded = vim.fn.expand(directory)
-	local trailing_slash_removed = string.gsub(expanded, "/$", "")
+	local base
+	if directory then
+		local expanded = vim.fn.expand(directory)
+		base = vim.fn.fnamemodify(expanded, ":p")
+	else
+		base = vim.fn.getcwd()
+	end
+	local trailing_slash_removed = string.gsub(base, "/$", "")
+	if trailing_slash_removed == "" then
+		return "/"
+	end
 	return trailing_slash_removed
 end
 
 ---@param name string
----@param directory string
+---@param directory string|nil
 M.run = function(name, directory)
 	local success, err = pcall(function()
 		local seconds_since_epoch = timestamp_manager.now()
@@ -36,7 +45,7 @@ M.run = function(name, directory)
 
 		local new_universe_summary = UniverseSummary:new(normalized_directory, new_uuid, name, seconds_since_epoch)
 
-		print("Adding a new universe ." .. vim.inspect(new_universe_summary))
+		log.debug("Adding a new universe: %s", new_universe_summary)
 
 		multiverse:addUniverse(new_universe_summary)
 
@@ -50,7 +59,7 @@ M.run = function(name, directory)
 	end)
   if not success then
     vim.notify("Failed to add new universe, check MultiverseLog for more information", vim.log.levels.ERROR)
-    log.error("Error adding new universe: " .. vim.inspect(err))
+    log.error("Error adding new universe: %s", err)
   end
 end
 

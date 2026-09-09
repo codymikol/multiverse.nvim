@@ -25,7 +25,8 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim). `setup()` registers a `Vi
   - **Description**: Adds a new *Universe* to the *Multiverse*.
   - **Arguments**: 
     - `name` (string): The name of the universe to add.
-  - **Completion**: Supports auto-completion for existing *Universes*.
+    - `directory` (string, optional): The directory for the universe. Defaults to the current working directory.
+  - **Completion**: Supports file-path completion for the `directory` argument.
 
 - **`MultiverseOpen`**
   - **Description**: Opens a specified *Universe*.
