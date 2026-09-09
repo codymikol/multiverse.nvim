@@ -42,7 +42,10 @@ M.on_vim_enter = function()
 end
 
 M.register = function()
+  local augroup = vim.api.nvim_create_augroup("multiverse_on_vim_enter", { clear = true })
+
   vim.api.nvim_create_autocmd("VimEnter", {
+    group = augroup,
     callback = M.on_vim_enter,
   })
 end
