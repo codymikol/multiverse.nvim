@@ -7,7 +7,7 @@ local M = {}
 
 ---@param universe Universe
 local function setCwd(universe)
-	vim.api.nvim_command("cd " .. universe.workingDirectory)
+	vim.api.nvim_command("cd " .. vim.fn.fnameescape(universe.workingDirectory))
 end
 
 --- Hydrates the current neovim environment with the contents of a given universe.

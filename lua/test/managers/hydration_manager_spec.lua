@@ -83,6 +83,38 @@ describe("hydration_manager", function()
 
 				assert.stub(notify_stub).was_not.called()
 			end)
+
+			describe("when the universe's working directory contains characters that require escaping", function()
+				before_each(function()
+					universe.workingDirectory = "/some/dir with spaces"
+				end)
+
+				it("should escape the working directory before passing it to the :cd command", function()
+					hydration_manager.hydrate({ uuid = "abc" })
+
+					assert.stub(nvim_command_stub).was.called_with("cd /some/dir\\ with\\ spaces")
+
+					assert.stub(hydrateBuffersForUniverse_stub).was.called_with(universe)
+					assert.stub(tabpage_hydrate_stub).was.called_with(universe)
+					assert.stub(window_layout_hydrate_stub).was.called_with(universe)
+					assert.stub(neotree_hydrate_stub).was.called()
+					assert.stub(close_generated_nofile_scratch_buffers_stub).was.called()
+
+					assert.stub(notify_stub).was_not.called()
+				end)
+			end)
+
+			describe("when the universe's working directory contains an Ex command separator", function()
+				before_each(function()
+					universe.workingDirectory = "/some/dir|qall!"
+				end)
+
+				it("should escape the working directory so it cannot inject a second Ex command", function()
+					hydration_manager.hydrate({ uuid = "abc" })
+
+					assert.stub(nvim_command_stub).was.called_with("cd /some/dir\\|qall\\!")
+				end)
+			end)
 		end)
 	end)
 end)
