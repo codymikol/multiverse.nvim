@@ -4,6 +4,7 @@ local multiverse_repository = require("multiverse.repositories.multiverse_reposi
 local multiverse_manager = require("multiverse.managers.multiverse_manager")
 local universe_repository = require("multiverse.repositories.universe_repository")
 local uuid_manager = require("multiverse.managers.uuid_manager")
+local timestamp_manager = require("multiverse.managers.timestamp_manager")
 local UniverseSummary = require("multiverse.data.UniverseSummary")
 local Universe = require("multiverse.data.Universe")
 local log = require("multiverse.log")
@@ -18,7 +19,7 @@ end
 ---@param directory string
 M.run = function(name, directory)
 	local success, err = pcall(function()
-		local seconds_since_epoch = os.time(os.date("!*t"))
+		local seconds_since_epoch = timestamp_manager.now()
 
 		local normalized_directory = normalizeDirectory(directory)
 
