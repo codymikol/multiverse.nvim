@@ -120,9 +120,9 @@ M.hydrateBuffersForUniverse = function(universe)
 
 end
 
---- @param buffer Buffer
-local function isScratchBuffer(buffer)
-  return buffer.bufferName == ""
+--- @param name string
+local function isScratchBuffer(name)
+  return name == ""
 end
 
 --- @param buffer_id number
@@ -148,20 +148,10 @@ local function get_buf_desc(bufnr)
 
 end
 
---- @param buffer_id number
+--- @param buffer_id number assumed valid; callers must check nvim_buf_is_valid first (see isUniverseBuffer)
 local function isDesiredUniverseBuffer(buffer_id)
 
   -- buffers can be unloaded, but still a part of the universe, they aren't "loaded" until the user clicks on that buffer.
-
-  --[[ if not vim.api.nvim_buf_is_loaded(buffer_id) then
-    log.debug("buffer " .. get_buf_desc(buffer_id) .. " is not loaded, not closing...")
-    return false
-  end
-]]
-  if not vim.api.nvim_buf_is_valid(buffer_id) then
-    log.debug("buffer " .. get_buf_desc(buffer_id) .. " is not valid, not closing...")
-    return false
-  end
 
   if not isModifiableBuffer(buffer_id) then
     log.debug("buffer " .. get_buf_desc(buffer_id) .. " is not modifiable, not closing...")
@@ -169,7 +159,7 @@ local function isDesiredUniverseBuffer(buffer_id)
   end
 
   if isReadOnlyBuffer(buffer_id) then
-    log.debug("buffer " .. get_buf_desc(buffer_id) .. " is read only, not closing...")
+    log.debug("buffer " .. get_buf_desc(buffer_id) .. " is read only, considered desired here (isUniverseBuffer may still exclude it)...")
     return true
   end
 
@@ -179,12 +169,6 @@ local function isDesiredUniverseBuffer(buffer_id)
   end
 
   return true
-
-  --[[ return vim.api.nvim_buf_is_loaded(buffer_id)
-    and vim.api.nvim_buf_is_valid(buffer_id)
-    and isModifiableBuffer(buffer_id)
-    and not isReadOnlyBuffer(buffer_id)
-    and isNormalBuffer(buffer_id) ]]
 end
 
 --- @param buffer_id number
@@ -202,7 +186,7 @@ M.isUniverseBuffer = function(buffer_id)
     return false
   end
 
-  if isScratchBuffer({ bufferName = vim.api.nvim_buf_get_name(buffer_id) }) then
+  if isScratchBuffer(vim.api.nvim_buf_get_name(buffer_id)) then
     return false
   end
 
