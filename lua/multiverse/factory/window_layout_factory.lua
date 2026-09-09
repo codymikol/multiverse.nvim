@@ -2,7 +2,6 @@ local WindowLayout = require("multiverse.data.layout.WindowLayout")
 local Column = require("multiverse.data.layout.Column")
 local Row = require("multiverse.data.layout.Row")
 local Leaf = require("multiverse.data.layout.Leaf")
-local json = require("multiverse.repositories.json")
 
 local M = {}
 
@@ -40,7 +39,7 @@ M.make = function(neovimWindowLayout, universe)
 	}
 
 	while #unexplored_nodes > 0 do
-		local node = table.remove(unexplored_nodes, 1) -- pulls from the end
+		local node = table.remove(unexplored_nodes, 1) -- BFS: pop the front
 
 		local type = node.layout[1]
 
@@ -94,7 +93,7 @@ M.makeFromJson = function(jsonManifest)
 	}
 
 	while #unexplored_nodes > 0 do
-		local node = table.remove(unexplored_nodes, 1) -- pulls from the end
+		local node = table.remove(unexplored_nodes, 1) -- BFS: pop the front
 
     local manifest = node.manifest
 
