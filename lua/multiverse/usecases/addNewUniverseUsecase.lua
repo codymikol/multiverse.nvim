@@ -15,9 +15,14 @@ local function normalizeDirectory(directory)
 	return trailing_slash_removed
 end
 
----@param name string
+---@param name string|nil
 ---@param directory string
 M.run = function(name, directory)
+	if name == nil or name == "" then
+		vim.notify("Universe name is required", vim.log.levels.ERROR)
+		return
+	end
+
 	local success, err = pcall(function()
 		local seconds_since_epoch = timestamp_manager.now()
 
@@ -35,8 +40,6 @@ M.run = function(name, directory)
 		end
 
 		local new_universe_summary = UniverseSummary:new(normalized_directory, new_uuid, name, seconds_since_epoch)
-
-		print("Adding a new universe ." .. vim.inspect(new_universe_summary))
 
 		multiverse:addUniverse(new_universe_summary)
 

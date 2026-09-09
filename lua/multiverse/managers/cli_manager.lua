@@ -14,13 +14,16 @@ local function complete_universe(arglead, cmdline, cursorpos)
 
 	local completions = {}
 	for _, universe in ipairs(universes) do
-		if universe.name:find(arglead, 1, true) then
+		if universe.name and universe.name:find(arglead, 1, true) then
 			table.insert(completions, universe.name)
 		end
 	end
 
 	return completions
 end
+
+-- Exported for tests only; command registration below uses the local directly.
+M.complete_universe = complete_universe
 
 M.registerCommands = function()
 	vim.api.nvim_create_user_command("MultiverseAdd", function(opts)
