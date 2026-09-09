@@ -33,7 +33,7 @@ M.save_universe = function(universe)
 end
 
 
----@param universe Universe
+---@param universe Universe | UniverseSummary
 ---
 ---@return boolean, string | nil
 M.deleteUniverse = function(universe)

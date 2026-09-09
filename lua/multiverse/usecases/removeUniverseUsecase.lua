@@ -1,7 +1,7 @@
 local M = {}
 
 local multiverse_repository = require("multiverse.repositories.multiverse_repository")
-local persistence = require("multiverse.repositories.persistance")
+local universe_repository = require("multiverse.repositories.universe_repository")
 local log = require("multiverse.log")
 
 M.run = function(name)
@@ -15,16 +15,15 @@ M.run = function(name)
 			return
 		end
 
+		local ok, del_err = universe_repository.deleteUniverse(universe)
+		if not ok then
+			vim.notify(del_err, vim.log.levels.ERROR)
+			return
+		end
+
 		-- remove the catalog entry for the universe
 		for i, v in ipairs(multiverse.universes) do
-			if v.name == name then
-				local universe_file = persistence.getDir() .. "/universe-" .. v.uuid .. ".json"
-
-				local success, err = os.remove(universe_file)
-				if not success then
-					vim.notify("Failed to remove universe file: " .. err, vim.log.levels.ERROR)
-					return
-				end
+			if v == universe then
 				table.remove(multiverse.universes, i)
 				break
 			end
@@ -32,11 +31,10 @@ M.run = function(name)
 
 		multiverse_repository.save_multiverse(multiverse)
 	end)
-  if not success then
-    vim.notify("Failed to remove universe, check MultiverseLog for more information", vim.log.levels.ERROR)
-    log.error("Error removing universe: " .. vim.inspect(err))
-  end
-
+	if not success then
+		vim.notify("Failed to remove universe, check MultiverseLog for more information", vim.log.levels.ERROR)
+		log.error("Error removing universe: " .. vim.inspect(err))
+	end
 end
 
 return M
