@@ -66,8 +66,8 @@ describe("telescope.get_universe_preview", function()
 		universe:addBuffer(shownBuffer)
 		universe:addBuffer(hiddenBuffer)
 
-		getUniverseByUuid_stub = stub(universe_repository, "getUniverseByUuid")
-		getUniverseByUuid_stub.returns(nil, universe)
+		getUniverseByUuid_stub = stub(universe_repository, "get_universe_by_uuid")
+		getUniverseByUuid_stub.returns(universe, nil)
 
 		local universe_summary = {
 			uuid = "universe-uuid",
