@@ -16,9 +16,14 @@ local function normalizeDirectory(directory)
 	return trailing_slash_removed
 end
 
----@param name string
+---@param name string|nil
 ---@param directory string
 M.run = function(name, directory)
+	if name == nil or name == "" then
+		vim.notify("Universe name is required", vim.log.levels.ERROR)
+		return
+	end
+
 	local success, err = pcall(function()
 		local seconds_since_epoch = timestamp_manager.now()
 

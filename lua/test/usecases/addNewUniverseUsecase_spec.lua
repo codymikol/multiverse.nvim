@@ -150,4 +150,27 @@ describe("addNewUniverseUsecase.run", function()
 
 		assert.are.equal("/tmp/some/project", saved_universe.workingDirectory)
 	end)
+
+	for _, case in ipairs({
+		{ description = "when name is nil", name = nil },
+		{ description = "when name is an empty string", name = "" },
+	}) do
+		describe(case.description, function()
+			it("notifies an ERROR and does not save the universe or multiverse", function()
+				addNewUniverseUsecase.run(case.name, "/tmp/foo")
+
+				assert.stub(notify_stub).was.called_with("Universe name is required", vim.log.levels.ERROR)
+				assert.stub(save_multiverse_stub).was_not.called()
+				assert.stub(save_universe_stub).was_not.called()
+				assert.stub(save_stub).was_not.called()
+				assert.stub(load_universe_stub).was_not.called()
+			end)
+		end)
+	end
+
+	it("does not notify the name-required error for a valid name", function()
+		addNewUniverseUsecase.run("foo", "/tmp/foo")
+
+		assert.stub(notify_stub).was_not.called_with("Universe name is required", vim.log.levels.ERROR)
+	end)
 end)
