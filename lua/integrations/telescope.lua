@@ -95,7 +95,7 @@ local function get_universe_preview(universe_summary)
 		"",
 	}
 
-	local err, universe = universe_repository.getUniverseByUuid(universe_summary.uuid)
+	local universe, err = universe_repository.get_universe_by_uuid(universe_summary.uuid)
 
 	if err then
 		vim.notify("Error fetching universe for preview: " .. err, vim.log.levels.ERROR)

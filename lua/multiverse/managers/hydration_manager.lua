@@ -13,10 +13,10 @@ end
 --- Hydrates the current neovim environment with the contents of a given universe.
 ---@param selected_universe UniverseSummary
 M.hydrate = function(selected_universe)
-	local _, universe = universe_repository.getUniverseByUuid(selected_universe.uuid)
+	local universe, err = universe_repository.get_universe_by_uuid(selected_universe.uuid)
 
 	if universe == nil then
-		vim.notify("Universe not found")
+		vim.notify("Universe not found: " .. tostring(err or "unknown error"))
 		return
 	end
 

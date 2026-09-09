@@ -54,46 +54,21 @@ end
 ---@return Universe | nil, string | nil
 M.get_universe_by_uuid = function(uuid)
 
-local universe_file = getFilename(uuid)
+  local universe_file = getFilename(uuid)
 
-local file, err = io.open(universe_file, "r")
+  local file, err = io.open(universe_file, "r")
 
-if not file then
-  return nil, "Failed to open universe file: " .. universe_file .. ", os returned error - " .. err
-end
+  if not file then
+    return nil, "Failed to open universe file: " .. universe_file .. ", os returned error - " .. err
+  end
 
-local json_string = file:read("*a")
+  local json_string = file:read("*a")
 
-file:close()
+  file:close()
 
-local universe = universe_factory.make(json_string)
+  local universe = universe_factory.make(json_string)
 
-return universe, nil
--- todo(mikol): We need to build a Universe from the json table containing universe data.
-
-end
-
----@param uuid string
----@return string | nil, Universe | nil
----@deprecated use get_universe_by_uuid instead
-M.getUniverseByUuid = function(uuid)
-  
-local universe_file = getFilename(uuid)
-
-local file, err = io.open(universe_file, "r")
-
-if not file then
-  return "Failed to open universe file: " .. universe_file .. ", os returned error - " .. err, nil
-end
-
-local json_string = file:read("*a")
-
-file:close()
-
-local universe = universe_factory.make(json_string)
-
-return nil, universe
--- todo(mikol): We need to build a Universe from the json table containing universe data.
+  return universe, nil
 
 end
 
