@@ -1,6 +1,7 @@
 local NeoTreePlugin = require("plugins.neotree_plugin")
 local CopilotChatPlugin = require("plugins.copilot_chat_plugin")
 local ZellijPlugin = require("plugins.zellij_plugin")
+local log = require("multiverse.log")
 
 local M = {}
 
@@ -13,9 +14,20 @@ local plugins = {
 	ZellijPlugin,
 }
 
---- @param plugin PluginContext --- The plugin to register and handle lifecycle events with.
+--- @param plugin Plugin --- The plugin to register and handle lifecycle events with.
 --- @return nil
 M.register = function(plugin)
+	if type(plugin) ~= "table" or type(plugin.context) ~= "table" then
+		log.warn("plugin_manager.register was given a malformed plugin (missing a .context table), got: %s", plugin)
+		return
+	end
+
+	for _, registered in ipairs(plugins) do
+		if registered == plugin then
+			return
+		end
+	end
+
 	table.insert(plugins, plugin)
 end
 
