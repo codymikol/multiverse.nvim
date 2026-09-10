@@ -55,6 +55,12 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim). `setup()` registers a `Vi
 - **`Neotree`**
   - Automatically syncs to the working directory of the loaded universe.
 
+## Plugins
+
+Register your own plugins to hook into the dehydrate/hydrate lifecycle via
+`Multiverse.setup({ plugins = { ... } })`. See
+[lua/docs/PLUGINS.md](lua/docs/PLUGINS.md) for how to author and register one.
+
 ## Contributing
 
 Contributions are welcome! Please read the [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to contribute to this project.
