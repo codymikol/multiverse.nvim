@@ -31,7 +31,7 @@ return Plugin:new({
     -- opens Neotree), but simplifying it needs headless/manual verification
     -- that window focus and width still behave correctly -- left as-is
     -- until that's confirmed.
-		vim.cmd("Neotree reveal current " .. cwd)
+		vim.cmd("Neotree reveal current " .. vim.fn.fnameescape(cwd))
 
     vim.cmd("Neotree close")
 

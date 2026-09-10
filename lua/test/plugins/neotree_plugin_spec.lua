@@ -98,5 +98,15 @@ describe("plugins.neotree_plugin", function()
 				{ name = "cmd", arg = "Neotree show" },
 			}, call_log)
 		end)
+
+		it("escapes special characters in cwd before building the reveal ex command", function()
+			getcwd_stub.returns("/home/test/proj|ect")
+
+			neotree_plugin.context.afterHydrate({})
+
+			assert.stub(vim_cmd_stub).was.called_with(
+				"Neotree reveal current " .. vim.fn.fnameescape("/home/test/proj|ect")
+			)
+		end)
 	end)
 end)
