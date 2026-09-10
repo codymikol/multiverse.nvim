@@ -1,4 +1,5 @@
 local stub = require("luassert.stub")
+local match = require("luassert.match")
 
 local universe_repository = require("multiverse.repositories.universe_repository")
 local buffer_manager = require("multiverse.managers.buffer_manager")
@@ -6,6 +7,7 @@ local neotree_integration = require("integrations.neotree")
 local tabpage_manager = require("multiverse.managers.tabpage_manager")
 local window_layout_manager = require("multiverse.managers.window_layout_manager")
 local hydration_manager = require("multiverse.managers.hydration_manager")
+local log = require("multiverse.log")
 
 describe("hydration_manager", function()
 	describe("hydrate", function()
@@ -17,6 +19,7 @@ describe("hydration_manager", function()
 		local window_layout_hydrate_stub
 		local notify_stub
 		local nvim_command_stub
+		local log_error_stub
 
 		before_each(function()
 			get_universe_by_uuid_stub = stub(universe_repository, "get_universe_by_uuid")
@@ -27,6 +30,7 @@ describe("hydration_manager", function()
 			window_layout_hydrate_stub = stub(window_layout_manager, "hydrate")
 			notify_stub = stub(vim, "notify")
 			nvim_command_stub = stub(vim.api, "nvim_command")
+			log_error_stub = stub(log, "error")
 		end)
 
 		after_each(function()
@@ -38,6 +42,7 @@ describe("hydration_manager", function()
 			window_layout_hydrate_stub:revert()
 			notify_stub:revert()
 			nvim_command_stub:revert()
+			log_error_stub:revert()
 		end)
 
 		describe("when the universe is not found", function()
@@ -82,6 +87,30 @@ describe("hydration_manager", function()
 				assert.stub(close_generated_nofile_scratch_buffers_stub).was.called()
 
 				assert.stub(notify_stub).was_not.called()
+			end)
+		end)
+
+		describe("when a hydration stage throws an error", function()
+			local universe
+
+			before_each(function()
+				universe = { workingDirectory = "/some/dir", uuid = "abc" }
+				get_universe_by_uuid_stub.returns(universe, nil)
+				window_layout_hydrate_stub.invokes(function()
+					error("boom 100% full")
+				end)
+			end)
+
+			it("should notify the user and still run cleanup instead of propagating the error", function()
+				assert.has_no.errors(function()
+					hydration_manager.hydrate({ uuid = "abc" })
+				end)
+
+				assert.stub(close_generated_nofile_scratch_buffers_stub).was.called()
+				assert.stub(neotree_hydrate_stub).was_not.called()
+
+				assert.stub(notify_stub).was.called_with(match._, vim.log.levels.ERROR)
+				assert.stub(log_error_stub).was.called_with("%s", match._)
 			end)
 		end)
 	end)
