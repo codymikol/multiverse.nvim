@@ -34,7 +34,7 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim). `setup()` registers a `Vi
   - **Completion**: Supports auto-completion for existing *Universes*.
 
 - **`MultiverseRemove`**
-  - **Description**: Removes an existing *Universe*, after confirmation — this deletes persisted data and cannot be undone.
+  - **Description**: Removes an existing *Universe* from the *Multiverse*, after confirming since this cannot be undone.
   - **Arguments**: 
     - `name` (string): The name of the *Universe* to remove.
   - **Completion**: Supports auto-completion for existing *Universes*.

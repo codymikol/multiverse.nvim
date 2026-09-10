@@ -140,7 +140,7 @@ describe("removeUniverseUsecase.run", function()
 		end)
 	end)
 
-	describe("when the user declines the confirmation prompt", function()
+	describe("when the user does not confirm the removal", function()
 		local multiverse
 		local target_universe
 		local get_multiverse_stub
