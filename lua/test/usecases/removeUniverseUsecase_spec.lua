@@ -133,6 +133,7 @@ describe("removeUniverseUsecase.run", function()
 			removeUniverseUsecase.run("foo")
 
 			assert.stub(notify_stub).was.called_with(delete_err, vim.log.levels.ERROR)
+			assert.stub(confirm_stub).was.called()
 			assert.stub(save_multiverse_stub).was_not_called()
 			assert.are.equal(1, #multiverse.universes)
 			assert.are.equal(target_universe, multiverse.universes[1])
@@ -147,6 +148,7 @@ describe("removeUniverseUsecase.run", function()
 		local delete_universe_stub
 		local notify_stub
 		local confirm_stub
+		local confirm_choice
 
 		before_each(function()
 			target_universe = UniverseSummary:new("/tmp/foo", "uuid-1", "foo", 0)
@@ -161,8 +163,9 @@ describe("removeUniverseUsecase.run", function()
 				return true, nil
 			end)
 			notify_stub = stub(vim, "notify")
+			confirm_choice = 2
 			confirm_stub = stub(vim.fn, "confirm", function()
-				return 2
+				return confirm_choice
 			end)
 		end)
 
@@ -182,6 +185,15 @@ describe("removeUniverseUsecase.run", function()
 			assert.stub(save_multiverse_stub).was_not_called()
 			assert.are.equal(1, #multiverse.universes)
 			assert.are.equal(target_universe, multiverse.universes[1])
+		end)
+
+		it("also aborts when the prompt is dismissed instead of explicitly declined", function()
+			confirm_choice = 0
+
+			removeUniverseUsecase.run("foo")
+
+			assert.stub(delete_universe_stub).was_not_called()
+			assert.stub(save_multiverse_stub).was_not_called()
 		end)
 	end)
 
