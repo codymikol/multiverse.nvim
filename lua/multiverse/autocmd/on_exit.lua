@@ -9,6 +9,8 @@ M.register = function()
   vim.api.nvim_create_autocmd("QuitPre", {
     group = augroup,
     callback = function()
+      -- Not debounced (unlike on_buffer_close.lua's BufDelete): a deferred save here
+      -- risks Neovim exiting before the timer fires, silently dropping the save.
       multiverse_manager.save()
     end,
   })
