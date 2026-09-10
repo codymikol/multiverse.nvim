@@ -85,18 +85,30 @@ describe("plugins.neotree_plugin", function()
 			package.loaded["plugins.neotree_plugin"] = nil
 		end)
 
-		it("pins the exact call sequence used to work around Neotree hijacking the multiverse window", function()
-			neotree_plugin.context.afterHydrate({})
-
-			assert.same({
+		local function expected_call_log(reveal_arg)
+			return {
 				{ name = "cmd", arg = "wincmd H" },
 				{ name = "cmd", arg = "vsplit" },
 				{ name = "cmd", arg = "wincmd h" },
 				{ name = "nvim_win_set_width", win_id = 4242, width = 36 },
-				{ name = "cmd", arg = "Neotree reveal current /home/test/project" },
+				{ name = "cmd", arg = "Neotree reveal current " .. reveal_arg },
 				{ name = "cmd", arg = "Neotree close" },
 				{ name = "cmd", arg = "Neotree show" },
-			}, call_log)
+			}
+		end
+
+		it("pins the exact call sequence used to work around Neotree hijacking the multiverse window", function()
+			neotree_plugin.context.afterHydrate({})
+
+			assert.same(expected_call_log("/home/test/project"), call_log)
+		end)
+
+		it("escapes special characters in cwd before building the reveal ex command", function()
+			getcwd_stub.returns("/home/test/proj|ect")
+
+			neotree_plugin.context.afterHydrate({})
+
+			assert.same(expected_call_log("/home/test/proj\\|ect"), call_log)
 		end)
 	end)
 end)
