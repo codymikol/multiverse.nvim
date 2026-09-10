@@ -15,6 +15,11 @@ M.run = function(name)
 			return
 		end
 
+		local confirmed = vim.fn.confirm("Remove universe '" .. name .. "'? This cannot be undone.", "&Yes\n&No", 2)
+		if confirmed ~= 1 then
+			return
+		end
+
 		local ok, del_err = universe_repository.deleteUniverse(universe)
 		if not ok then
 			vim.notify(del_err, vim.log.levels.ERROR)
