@@ -1,3 +1,5 @@
+local timestamp_manager = require("multiverse.managers.timestamp_manager")
+
 local UniverseSummary = {}
 UniverseSummary.__index = UniverseSummary
 
@@ -22,6 +24,13 @@ function UniverseSummary:new(
   self.uuid = uuid
   self.name = name
   self.lastExplored = lastExplored
+  return self
+end
+
+--- Sets lastExplored to the current timestamp.
+--- @return UniverseSummary self
+function UniverseSummary:setLastExploredToNow()
+  self.lastExplored = timestamp_manager.now()
   return self
 end
 

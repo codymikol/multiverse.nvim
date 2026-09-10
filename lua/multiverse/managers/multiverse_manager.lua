@@ -102,7 +102,7 @@ M.load_universe = function(multiverse, selected_universe_summary, skip_save)
 
   local success, err = pcall(function()
 
-    selected_universe_summary.lastExplored = timestamp_manager.now()
+    selected_universe_summary:setLastExploredToNow()
     multiverse_repository.save_multiverse(multiverse)
 
     local current_universe = nil
