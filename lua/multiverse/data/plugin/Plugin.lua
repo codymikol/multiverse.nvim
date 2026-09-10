@@ -1,3 +1,5 @@
+local PluginContext = require("multiverse.data.plugin.PluginContext")
+
 local Plugin = {}
 Plugin.__index = Plugin
 
@@ -5,11 +7,18 @@ Plugin.__index = Plugin
 --- @field name string
 --- @field context PluginContext
 
---- @param ctx PluginContext
---- @return Plugin
+--- @param ctx table
+--- @return Plugin|nil
 function Plugin:new(ctx)
+	local context = PluginContext:new(ctx)
+
+	if not context then
+		return nil
+	end
+
 	local self = setmetatable({}, Plugin)
-	self.context = ctx
+	self.name = context.name
+	self.context = context
 	return self
 end
 
