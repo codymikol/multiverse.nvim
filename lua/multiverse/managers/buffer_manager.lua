@@ -69,7 +69,7 @@ M.saveAll = function()
     if
         vim.api.nvim_buf_is_loaded(buffer)
         and vim.api.nvim_buf_is_valid(buffer)
-        and vim.api.nvim_buf_get_option(buffer, "modifiable")
+        and vim.api.nvim_get_option_value("modifiable", { buf = buffer })
     then
       local filename = vim.api.nvim_buf_get_name(buffer)
       log.debug("workspace: " .. vim.inspect(currentWorkspace) .. ", saving buffer: " .. vim.inspect(filename))
