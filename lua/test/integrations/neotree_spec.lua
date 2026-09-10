@@ -79,4 +79,16 @@ describe("neotree.hydrate", function()
 			assert.stub(cmd_stub).was_called_with("Neotree /some/dir\\|qall\\!")
 		end)
 	end)
+
+	it("escapes special characters in the cwd before passing it to vim.cmd", function()
+		exists_stub.returns(2)
+		local getcwd_stub = stub(vim.fn, "getcwd")
+		getcwd_stub.returns("/tmp/some|dir")
+
+		neotree.hydrate()
+
+		assert.stub(cmd_stub).was_called_with("Neotree " .. vim.fn.fnameescape("/tmp/some|dir"))
+
+		getcwd_stub:revert()
+	end)
 end)
