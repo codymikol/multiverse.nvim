@@ -3,11 +3,15 @@ local timestamp_manager = require("multiverse.managers.timestamp_manager")
 local UniverseSummary = {}
 UniverseSummary.__index = UniverseSummary
 
+local function isNonEmptyString(value)
+  return type(value) == "string" and value ~= ""
+end
+
 --- @class UniverseSummary
 --- @field directory string
 --- @field uuid string
 --- @field name string
---- @field lastExplored number
+--- @field lastExplored number|nil
 ---
 --- @param opts table
 --- @param opts.directory string  the directory of the universe
@@ -16,14 +20,14 @@ UniverseSummary.__index = UniverseSummary
 --- @param opts.lastExplored number|nil the last time the universe was explored
 function UniverseSummary:new(opts)
   opts = opts or {}
-  if not opts.directory then
-    error("UniverseSummary:new requires opts.directory")
+  if not isNonEmptyString(opts.directory) then
+    error("UniverseSummary:new requires opts.directory to be a non-empty string", 2)
   end
-  if not opts.uuid then
-    error("UniverseSummary:new requires opts.uuid")
+  if not isNonEmptyString(opts.uuid) then
+    error("UniverseSummary:new requires opts.uuid to be a non-empty string", 2)
   end
-  if not opts.name then
-    error("UniverseSummary:new requires opts.name")
+  if not isNonEmptyString(opts.name) then
+    error("UniverseSummary:new requires opts.name to be a non-empty string", 2)
   end
 
   local self = setmetatable({}, UniverseSummary)
