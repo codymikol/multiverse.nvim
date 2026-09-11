@@ -6,24 +6,31 @@ UniverseSummary.__index = UniverseSummary
 --- @class UniverseSummary
 --- @field directory string
 --- @field uuid string
---- @field name string 
+--- @field name string
 --- @field lastExplored number
 ---
---- @param directory string  the directory of the universe
---- @param uuid string  a unique identifier for the universe
---- @param name string  the name of the universe
---- @param lastExplored number the last time the universe was explored
-function UniverseSummary:new(
-  directory,
-  uuid,
-  name,
-  lastExplored
-)
+--- @param opts table
+--- @param opts.directory string  the directory of the universe
+--- @param opts.uuid string  a unique identifier for the universe
+--- @param opts.name string  the name of the universe
+--- @param opts.lastExplored number|nil the last time the universe was explored
+function UniverseSummary:new(opts)
+  opts = opts or {}
+  if not opts.directory then
+    error("UniverseSummary:new requires opts.directory")
+  end
+  if not opts.uuid then
+    error("UniverseSummary:new requires opts.uuid")
+  end
+  if not opts.name then
+    error("UniverseSummary:new requires opts.name")
+  end
+
   local self = setmetatable({}, UniverseSummary)
-  self.directory = directory
-  self.uuid = uuid
-  self.name = name
-  self.lastExplored = lastExplored
+  self.directory = opts.directory
+  self.uuid = opts.uuid
+  self.name = opts.name
+  self.lastExplored = opts.lastExplored
   return self
 end
 
