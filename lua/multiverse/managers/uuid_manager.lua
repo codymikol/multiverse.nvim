@@ -1,5 +1,9 @@
 local M = {}
 
+-- math.random's default seed is fixed, so every fresh nvim process would
+-- otherwise reproduce the same "random" sequence.
+math.randomseed(vim.loop.hrtime())
+
 M.create = function()
     local random = math.random
     local template = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
