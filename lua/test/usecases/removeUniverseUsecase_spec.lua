@@ -15,7 +15,7 @@ describe("removeUniverseUsecase.run", function()
 
 		before_each(function()
 			multiverse = Multiverse:new({
-				UniverseSummary:new("/tmp/foo", "uuid-1", "foo", 0),
+				UniverseSummary:new({ directory = "/tmp/foo", uuid = "uuid-1", name = "foo", lastExplored = 0 }),
 			})
 			get_multiverse_stub = stub(multiverse_repository, "getMultiverse", function()
 				return multiverse
@@ -50,10 +50,10 @@ describe("removeUniverseUsecase.run", function()
 		local notify_stub
 
 		before_each(function()
-			target_universe = UniverseSummary:new("/tmp/foo", "uuid-1", "foo", 0)
+			target_universe = UniverseSummary:new({ directory = "/tmp/foo", uuid = "uuid-1", name = "foo", lastExplored = 0 })
 			multiverse = Multiverse:new({
 				target_universe,
-				UniverseSummary:new("/tmp/bar", "uuid-2", "bar", 0),
+				UniverseSummary:new({ directory = "/tmp/bar", uuid = "uuid-2", name = "bar", lastExplored = 0 }),
 			})
 			get_multiverse_stub = stub(multiverse_repository, "getMultiverse", function()
 				return multiverse
@@ -93,7 +93,7 @@ describe("removeUniverseUsecase.run", function()
 		local delete_err = "Failed to delete universe file: /tmp/foo/universe-uuid-1.json, os returned error - permission denied"
 
 		before_each(function()
-			target_universe = UniverseSummary:new("/tmp/foo", "uuid-1", "foo", 0)
+			target_universe = UniverseSummary:new({ directory = "/tmp/foo", uuid = "uuid-1", name = "foo", lastExplored = 0 })
 			multiverse = Multiverse:new({
 				target_universe,
 			})

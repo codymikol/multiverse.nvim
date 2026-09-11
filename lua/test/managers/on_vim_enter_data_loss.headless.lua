@@ -80,7 +80,8 @@ local universe_uuid = "test-universe-uuid-104"
 local marker = "IMPORTANT_NON_TRIVIAL_SESSION_MARKER_important_file.lua"
 
 -- Register the universe in the multiverse.
-local universe_summary = UniverseSummary:new(test_dir, universe_uuid, "test-universe", 0)
+local universe_summary =
+	UniverseSummary:new({ directory = test_dir, uuid = universe_uuid, name = "test-universe", lastExplored = 0 })
 
 local multiverse = multiverse_repository.getMultiverse()
 table.insert(multiverse.universes, universe_summary)
