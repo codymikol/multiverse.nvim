@@ -20,6 +20,9 @@ end
 --- @param opts.lastExplored number|nil the last time the universe was explored
 function UniverseSummary:new(opts)
   opts = opts or {}
+  if type(opts) ~= "table" then
+    error("UniverseSummary:new requires a table argument", 2)
+  end
   if not isNonEmptyString(opts.directory) then
     error("UniverseSummary:new requires opts.directory to be a non-empty string", 2)
   end
