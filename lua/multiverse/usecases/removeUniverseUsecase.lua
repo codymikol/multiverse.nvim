@@ -21,13 +21,7 @@ M.run = function(name)
 			return
 		end
 
-		-- remove the catalog entry for the universe
-		for i, v in ipairs(multiverse.universes) do
-			if v == universe then
-				table.remove(multiverse.universes, i)
-				break
-			end
-		end
+		multiverse:removeUniverse(name)
 
 		multiverse_repository.save_multiverse(multiverse)
 	end)
