@@ -7,6 +7,7 @@ Multiverse.__index = Multiverse
 --- @field getUniverseByDirectory fun(directory: string): UniverseSummary | nil
 --- @field addUniverse fun(universe: UniverseSummary): nil
 --- @field getUniverseByName fun(name: string): UniverseSummary | nil
+--- @field removeUniverse fun(name: string): nil
 ---
 --- @param universes UniverseSummary[]  the initial set of known universes
 function Multiverse:new(universes)
@@ -41,6 +42,17 @@ function Multiverse:getUniverseByName(name)
     end
   end
   return nil
+end
+
+--- @param name string
+--- @return nil
+function Multiverse:removeUniverse(name)
+  for i, universe in ipairs(self.universes) do
+    if universe.name == name then
+      table.remove(self.universes, i)
+      return
+    end
+  end
 end
 
 return Multiverse
