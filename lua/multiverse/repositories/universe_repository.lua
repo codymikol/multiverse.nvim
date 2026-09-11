@@ -33,6 +33,8 @@ M.save_universe = function(universe)
 end
 
 
+local ENOENT = 2
+
 ---@param universe Universe | UniverseSummary
 ---
 ---@return boolean, string | nil
@@ -40,9 +42,14 @@ M.deleteUniverse = function(universe)
 
   local universe_file = getFilename(universe.uuid)
 
-  local _, err = os.remove(universe_file)
+  local _, err, code = os.remove(universe_file)
 
   if err then
+    -- File already gone; treat as deleted rather than erroring.
+    if code == ENOENT then
+      return true, nil
+    end
+
     return false, "Failed to delete universe file: " .. universe_file .. ", os returned error - " .. err
   end
 

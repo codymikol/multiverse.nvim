@@ -216,12 +216,12 @@ describe("universe_repository", function()
 			end)
 		end)
 
-		describe("when os.remove fails", function()
+		describe("when os.remove fails with a non-ENOENT error", function()
 			local os_remove_stub
 
 			before_each(function()
 				os_remove_stub = stub(os, "remove", function()
-					return nil, "some os error"
+					return nil, "some os error", 13
 				end)
 			end)
 
@@ -237,6 +237,28 @@ describe("universe_repository", function()
 					"Failed to delete universe file: " .. expectedFilename("uuid-1") .. ", os returned error - some os error",
 					err
 				)
+				assert.stub(os_remove_stub).was.called_with(expectedFilename("uuid-1"))
+			end)
+		end)
+
+		describe("when os.remove fails because the file is already missing", function()
+			local os_remove_stub
+
+			before_each(function()
+				os_remove_stub = stub(os, "remove", function()
+					return nil, "some_path: No such file or directory", 2
+				end)
+			end)
+
+			after_each(function()
+				os_remove_stub:revert()
+			end)
+
+			it("returns true with no error", function()
+				local ok, err = universe_repository.deleteUniverse({ uuid = "uuid-1" })
+
+				assert.is_true(ok)
+				assert.is_nil(err)
 				assert.stub(os_remove_stub).was.called_with(expectedFilename("uuid-1"))
 			end)
 		end)
