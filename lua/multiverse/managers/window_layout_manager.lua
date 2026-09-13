@@ -42,6 +42,10 @@ local function hydrateTabpage(universe, tabpage)
 
 		for idx, child in ipairs(node.children) do
 			if idx ~= 1 then
+				-- split/vsplit place the new window relative to the current
+				-- one, which can reorder a container's children relative to
+				-- how they were dehydrated (all buffers still restore
+				-- correctly): https://github.com/codymikol/multiverse.nvim/issues/279
 				if node.type == "column" then
 					vim.cmd("split")
 				end
@@ -51,8 +55,6 @@ local function hydrateTabpage(universe, tabpage)
 			end
 
 			local activeWindowId = vim.api.nvim_get_current_win()
-
-			node:setWindowId(activeWindowId)
 
 			if child.type == "leaf" then
 				local window = tabpage:getWindowByUuid(child.windowUuid)
@@ -75,6 +77,8 @@ local function hydrateTabpage(universe, tabpage)
           log.warn("Could not find window with uuid " .. vim.inspect(child.windowUuid) .. " in tabpage " .. vim.inspect(tabpage.tabpageId))
 				end
 			else
+				-- Leaf has no setWindowId; only container (Row/Column) children need it here.
+				child:setWindowId(activeWindowId)
 				table.insert(unexplored_layout, child)
 			end
 		end
