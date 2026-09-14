@@ -24,6 +24,14 @@ describe("uuid_manager", function()
 		assert.are_not.equal(uuid1, uuid2)
 	end)
 
+	it("should return exactly one value from create()", function()
+		local uuid_manager = require("multiverse.managers.uuid_manager")
+		local uuid, count = uuid_manager.create()
+
+		assert.is_string(uuid)
+		assert.is_nil(count)
+	end)
+
 	it("should not reseed on every create() call", function()
 		local uuid_manager = require_uuid_manager_seeded_at(111111)
 		local randomseed_stub = stub(math, "randomseed")
