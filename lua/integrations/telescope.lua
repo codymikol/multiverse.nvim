@@ -99,7 +99,7 @@ local function get_universe_preview(universe_summary)
 
 	if err then
 		vim.notify("Error fetching universe for preview, check MultiverseLog for more information", vim.log.levels.ERROR)
-		log.error("Error fetching universe preview: " .. vim.inspect(err))
+		log.error("Error fetching universe preview: %s", err)
 		return lines
 	end
 

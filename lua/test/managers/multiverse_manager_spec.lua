@@ -1,4 +1,5 @@
 local stub = require("luassert.stub")
+local match = require("luassert.match")
 local multiverse_repository = require("multiverse.repositories.multiverse_repository")
 local state_store = require("multiverse.store.state_store")
 local log = require("multiverse.log")
@@ -33,9 +34,9 @@ describe("multiverse_manager.save", function()
 				"Error saving universe, check MultiverseLog for more information",
 				vim.log.levels.ERROR
 			)
-			assert.stub(log_error_stub).was.called(1)
-			local log_message = log_error_stub.calls[1].refs[1]
-			assert.is_not_nil(log_message:find("boom", 1, true))
+			assert.stub(log_error_stub).was.called_with("Error saving universe: %s", match._)
+			local log_detail = log_error_stub.calls[1].refs[2]
+			assert.is_not_nil(tostring(log_detail):find("boom", 1, true))
 		end)
 	end)
 end)

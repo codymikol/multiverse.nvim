@@ -65,13 +65,15 @@ describe("telescope.get_universe_preview", function()
 
 		telescope.get_universe_preview(universe_summary)
 
-		assert.stub(notify_stub).was_called(1)
-		local notify_message = notify_stub.calls[1].refs[1]
-		assert.is_nil(notify_message:find("boom: something exploded", 1, true))
+		assert.stub(notify_stub).was.called_with(
+			"Error fetching universe for preview, check MultiverseLog for more information",
+			vim.log.levels.ERROR
+		)
 
-		assert.stub(log_error_stub).was_called(1)
-		local log_message = log_error_stub.calls[1].refs[1]
-		assert.is_not_nil(log_message:find("boom: something exploded", 1, true))
+		assert.stub(log_error_stub).was.called_with(
+			"Error fetching universe preview: %s",
+			"boom: something exploded"
+		)
 	end)
 
 	it("does not truncate the preview when an earlier tabpage has an empty layout", function()

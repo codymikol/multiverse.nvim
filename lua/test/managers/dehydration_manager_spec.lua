@@ -1,6 +1,5 @@
 local stub = require("luassert.stub")
 
-local Universe = require("multiverse.data.Universe")
 local Tabpage = require("multiverse.data.Tabpage")
 local Window = require("multiverse.data.Window")
 local tabpage_manager = require("multiverse.managers.tabpage_manager")
@@ -15,7 +14,6 @@ describe("dehydration_manager.dehydrate", function()
 	local get_all_buffers_stub
 	local getAllVisibleWindowsForTabpage_stub
 	local getWindowLayout_stub
-	local getBufferById_stub
 	local nvim_win_get_buf_stub
 	local notify_stub
 	local log_error_stub
@@ -38,10 +36,6 @@ describe("dehydration_manager.dehydrate", function()
 		getWindowLayout_stub = stub(window_layout_manager, "getWindowLayout", function()
 			return nil
 		end)
-		-- Simulate a window whose buffer is not tracked in universe.buffers.
-		getBufferById_stub = stub(Universe, "getBufferById", function()
-			return nil
-		end)
 		nvim_win_get_buf_stub = stub(vim.api, "nvim_win_get_buf", function()
 			return 999
 		end)
@@ -57,7 +51,6 @@ describe("dehydration_manager.dehydrate", function()
 		get_all_buffers_stub:revert()
 		getAllVisibleWindowsForTabpage_stub:revert()
 		getWindowLayout_stub:revert()
-		getBufferById_stub:revert()
 		nvim_win_get_buf_stub:revert()
 		notify_stub:revert()
 		log_error_stub:revert()

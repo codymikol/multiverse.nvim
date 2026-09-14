@@ -13,12 +13,19 @@ describe("cli_manager.registerCommands", function()
 	describe("MultiverseLog", function()
 		local create_user_command_stub
 
+		local get_log_file_stub
+		local edit_stub
+
 		before_each(function()
 			create_user_command_stub = stub(vim.api, "nvim_create_user_command")
+			get_log_file_stub = stub(log, "get_log_file")
+			edit_stub = stub(vim.cmd, "edit")
 		end)
 
 		after_each(function()
 			create_user_command_stub:revert()
+			get_log_file_stub:revert()
+			edit_stub:revert()
 		end)
 
 		it("registers a MultiverseLog user command", function()
@@ -31,10 +38,8 @@ describe("cli_manager.registerCommands", function()
 			)
 		end)
 
-		it("escapes special characters in the log file path when opening it", function()
-			local get_log_file_stub = stub(log, "get_log_file")
+		it("opens the log file path as-is, with no Ex command string-building", function()
 			get_log_file_stub.returns("/tmp/a%b.log")
-			local cmd_stub = stub(vim, "cmd")
 
 			cli_manager.registerCommands()
 
@@ -46,10 +51,7 @@ describe("cli_manager.registerCommands", function()
 			end
 			callback()
 
-			assert.stub(cmd_stub).was.called_with("edit " .. vim.fn.fnameescape("/tmp/a%b.log"))
-
-			cmd_stub:revert()
-			get_log_file_stub:revert()
+			assert.stub(edit_stub).was.called_with("/tmp/a%b.log")
 		end)
 	end)
 end)
