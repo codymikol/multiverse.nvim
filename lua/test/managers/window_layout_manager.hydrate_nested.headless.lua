@@ -18,15 +18,8 @@
 package.path = "./lua/?.lua;./lua/?/init.lua;" .. package.path
 local dehydration_manager = require("multiverse.managers.dehydration_manager")
 local window_layout_manager = require("multiverse.managers.window_layout_manager")
-
-local function make_buf(name)
-  local b = vim.api.nvim_create_buf(false, false)
-  vim.api.nvim_buf_set_name(b, name)
-  vim.api.nvim_set_option_value("buftype", "", { buf = b })
-  vim.api.nvim_set_option_value("modifiable", true, { buf = b })
-  vim.api.nvim_set_option_value("buflisted", true, { buf = b })
-  return b
-end
+local helpers = require("test.managers.window_layout_headless_helpers")
+local make_buf = helpers.make_buf
 
 vim.api.nvim_win_set_buf(0, make_buf("/tmp/a.txt"))
 vim.cmd("split")
