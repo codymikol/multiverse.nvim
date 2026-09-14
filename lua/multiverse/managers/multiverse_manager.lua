@@ -62,8 +62,8 @@ M.save = function()
   end)
 
   if not success then
-    log.error("Error saving universe: " .. vim.inspect(err))
-    vim.notify("Error saving universe: " .. vim.inspect(err), vim.log.levels.ERROR)
+    log.error("Error saving universe: %s", err)
+    vim.notify("Error saving universe, check MultiverseLog for more information", vim.log.levels.ERROR)
   end
 
 

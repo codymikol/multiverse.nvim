@@ -34,9 +34,8 @@ M.hydrate = function(selected_universe)
 	end)
 
 	if not success then
-		local message = "Error hydrating universe: " .. vim.inspect(hydrate_err)
-		log.error("%s", message)
-		vim.notify(message, vim.log.levels.ERROR)
+		vim.notify("Error hydrating universe, check MultiverseLog for more information", vim.log.levels.ERROR)
+		log.error("Error hydrating universe: %s", hydrate_err)
 	end
 
 	buffer_manager.close_generated_nofile_scratch_buffers()

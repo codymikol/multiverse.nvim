@@ -31,7 +31,8 @@ M.dehydrate = function(summary)
 			local windowBuffer = universe:getBufferById(windowBufferId)
 
 			if not windowBuffer then
-				vim.notify("Error: Buffer with ID " .. windowBufferId .. " not found in universe " .. universe.uuid .. vim.inspect(universe), vim.log.levels.ERROR)
+				vim.notify("Error: Buffer with ID " .. windowBufferId .. " not found in universe " .. universe.uuid, vim.log.levels.ERROR)
+				log.error("Buffer mismatch: buffer id %s not found in universe %s", windowBufferId, universe.uuid)
 			else
 				local windowBufferUuid = windowBuffer.uuid
 				window:setBufferUuid(windowBufferUuid)

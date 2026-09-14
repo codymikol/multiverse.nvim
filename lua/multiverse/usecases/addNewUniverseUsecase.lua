@@ -37,7 +37,7 @@ M.run = function(name, directory)
 
 		local new_universe_summary = UniverseSummary:new(normalized_directory, new_uuid, name, seconds_since_epoch)
 
-		print("Adding a new universe ." .. vim.inspect(new_universe_summary))
+		log.debug("Adding a new universe: %s", new_universe_summary)
 
 		multiverse:addUniverse(new_universe_summary)
 
@@ -51,7 +51,7 @@ M.run = function(name, directory)
 	end)
   if not success then
     vim.notify("Failed to add new universe, check MultiverseLog for more information", vim.log.levels.ERROR)
-    log.error("Error adding new universe: " .. vim.inspect(err))
+    log.error("Error adding new universe: %s", err)
   end
 end
 

@@ -140,9 +140,19 @@ describe("hydration_manager", function()
 
 				assert.stub(close_generated_nofile_scratch_buffers_stub).was.called()
 				assert.stub(neotree_hydrate_stub).was_not.called()
+			end)
 
-				assert.stub(notify_stub).was.called_with(match._, vim.log.levels.ERROR)
-				assert.stub(log_error_stub).was.called_with("%s", match._)
+			it("should notify with a short generic message and log the detailed error separately", function()
+				hydration_manager.hydrate({ uuid = "abc" })
+
+				assert.stub(notify_stub).was.called_with(
+					"Error hydrating universe, check MultiverseLog for more information",
+					vim.log.levels.ERROR
+				)
+				assert.stub(log_error_stub).was.called(1)
+				assert.stub(log_error_stub).was.called_with("Error hydrating universe: %s", match._)
+				local log_detail = log_error_stub.calls[1].refs[2]
+				assert.is_not_nil(tostring(log_detail):find("boom", 1, true))
 			end)
 		end)
 	end)
