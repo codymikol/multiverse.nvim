@@ -89,12 +89,16 @@ describe("buffer_manager", function()
 			assert.is_false(buffer_manager.isUniverseBuffer(1))
 		end)
 
-		-- Characterization, not a statement of intent: this early-return-past-buftype
-		-- behavior may be an unintentional drift, see #178.
-		it("should return true for a read-only buffer even though it is not a normal buffer", function()
+		it("should return false for a read-only buffer that is also not a normal buffer", function()
 			stubs = stubBuffer({ readonly = true, buftype = "help" })
 
-			assert.is_true(buffer_manager.isUniverseBuffer(1))
+			assert.is_false(buffer_manager.isUniverseBuffer(1))
+		end)
+
+		it("should return false for a read-only buffer with a normal buftype", function()
+			stubs = stubBuffer({ readonly = true })
+
+			assert.is_false(buffer_manager.isUniverseBuffer(1))
 		end)
 
 		it("should return false for a non-normal buffer that is not read-only", function()
