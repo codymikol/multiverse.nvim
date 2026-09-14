@@ -5,6 +5,7 @@ local promptSelectUniverseUsecase = require("multiverse.usecases.promptSelectUni
 local removeUniverseUsecase = require("multiverse.usecases.removeUniverseUsecase")
 local openUniverseUsecase = require("multiverse.usecases.openUniverseUsecase")
 local multiverse_repository = require("multiverse.repositories.multiverse_repository")
+local log = require("multiverse.log")
 
 local function complete_universe(arglead, cmdline, cursorpos)
 
@@ -46,6 +47,10 @@ M.registerCommands = function()
 
 	vim.api.nvim_create_user_command("MultiverseList", function()
 		promptSelectUniverseUsecase.run()
+	end, { nargs = 0 })
+
+	vim.api.nvim_create_user_command("MultiverseLog", function()
+		vim.cmd("edit " .. log.get_log_file())
 	end, { nargs = 0 })
 end
 
