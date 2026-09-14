@@ -37,7 +37,7 @@ M.run = function(name, directory)
 
 		local new_universe_summary = UniverseSummary:new(normalized_directory, new_uuid, name, seconds_since_epoch)
 
-		print("Adding a new universe ." .. vim.inspect(new_universe_summary))
+		log.debug("Adding a new universe: %s", new_universe_summary)
 
 		multiverse:addUniverse(new_universe_summary)
 

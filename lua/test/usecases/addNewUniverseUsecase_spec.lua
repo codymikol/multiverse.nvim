@@ -5,6 +5,7 @@ local multiverse_manager = require("multiverse.managers.multiverse_manager")
 local uuid_manager = require("multiverse.managers.uuid_manager")
 local timestamp_manager = require("multiverse.managers.timestamp_manager")
 local Multiverse = require("multiverse.data.Multiverse")
+local log = require("multiverse.log")
 local addNewUniverseUsecase = require("multiverse.usecases.addNewUniverseUsecase")
 
 describe("addNewUniverseUsecase.run", function()
@@ -16,6 +17,7 @@ describe("addNewUniverseUsecase.run", function()
 	local uuid_stub
 	local now_stub
 	local notify_stub
+	local log_debug_stub
 
 	local marker_path = vim.fn.tempname() .. "_multiverse_pwned_marker"
 
@@ -34,6 +36,7 @@ describe("addNewUniverseUsecase.run", function()
 			return 0
 		end)
 		notify_stub = stub(vim, "notify")
+		log_debug_stub = stub(log, "debug")
 		os.remove(marker_path)
 	end)
 
@@ -45,7 +48,16 @@ describe("addNewUniverseUsecase.run", function()
 		uuid_stub:revert()
 		now_stub:revert()
 		notify_stub:revert()
+		log_debug_stub:revert()
 		os.remove(marker_path)
+	end)
+
+	it("logs the new universe summary via log.debug instead of printing it", function()
+		addNewUniverseUsecase.run("foo", "/tmp/some/project")
+
+		assert.stub(log_debug_stub).was.called(1)
+		local format_arg = log_debug_stub.calls[1].refs[1]
+		assert.are.equal("Adding a new universe: %s", format_arg)
 	end)
 
 	it("does not execute backtick-quoted shell commands embedded in the directory", function()
