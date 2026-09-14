@@ -2,6 +2,7 @@ local stub = require("luassert.stub")
 
 local Tabpage = require("multiverse.data.Tabpage")
 local Window = require("multiverse.data.Window")
+local Buffer = require("multiverse.data.Buffer")
 local tabpage_manager = require("multiverse.managers.tabpage_manager")
 local buffer_manager = require("multiverse.managers.buffer_manager")
 local window_manager = require("multiverse.managers.window_manager")
@@ -44,8 +45,8 @@ describe("dehydration_manager.dehydrate", function()
 		end)
 		notify_stub = stub(vim, "notify")
 		log_error_stub = stub(log, "error")
-		-- Stubbed (not asserted) to silence dehydration_manager's unrelated
-		-- log.debug calls further down in dehydrate().
+		-- Stubbed so debug calls can be asserted on without hitting the
+		-- real io.open file write performed by log.debug.
 		log_debug_stub = stub(log, "debug")
 	end)
 
@@ -72,6 +73,47 @@ describe("dehydration_manager.dehydrate", function()
 			"Buffer mismatch: buffer id %s not found in universe %s",
 			999,
 			"universe-uuid"
+		)
+	end)
+
+	it("does not log window-level buffer debug details when the buffer lookup fails", function()
+		dehydration_manager.dehydrate(summary)
+
+		assert.stub(log_debug_stub).was.called_with("Tabpage: %s", 1)
+
+		for _, call in ipairs(log_debug_stub.calls) do
+			local message = call.vals[1]
+			if type(message) == "string" then
+				assert.is_nil(message:match("^  Window:"))
+				assert.is_nil(message:match("^    Buffer"))
+			end
+		end
+	end)
+
+	it("logs window and tabpage debug details on the happy path when the buffer resolves", function()
+		local buffer = Buffer:new("buffer-uuid", 999, "some-buffer-name")
+		get_all_buffers_stub:revert()
+		get_all_buffers_stub = stub(buffer_manager, "get_all_buffers", function()
+			return { buffer }
+		end)
+
+		dehydration_manager.dehydrate(summary)
+
+		assert.stub(log_debug_stub).was.called_with(
+			"Tabpage: %s",
+			1
+		)
+
+		assert.stub(log_debug_stub).was.called_with(
+			"  Window: %s Buffer UUID: %s",
+			1,
+			"buffer-uuid"
+		)
+
+		assert.stub(log_debug_stub).was.called_with(
+			"    Buffer: %s Name: %s",
+			999,
+			"some-buffer-name"
 		)
 	end)
 end)
