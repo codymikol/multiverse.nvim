@@ -14,18 +14,15 @@ describe("cli_manager.registerCommands", function()
 		local create_user_command_stub
 
 		local get_log_file_stub
-		local edit_stub
 
 		before_each(function()
 			create_user_command_stub = stub(vim.api, "nvim_create_user_command")
 			get_log_file_stub = stub(log, "get_log_file")
-			edit_stub = stub(vim.cmd, "edit")
 		end)
 
 		after_each(function()
 			create_user_command_stub:revert()
 			get_log_file_stub:revert()
-			edit_stub:revert()
 		end)
 
 		it("registers a MultiverseLog user command", function()
@@ -38,8 +35,9 @@ describe("cli_manager.registerCommands", function()
 			)
 		end)
 
-		it("opens the log file path as-is, with no Ex command string-building", function()
-			get_log_file_stub.returns("/tmp/a%b.log")
+		it("opens a log path containing '%' without mangling it via cmdline expansion", function()
+			local log_path = vim.fn.tempname() .. "_a%b.log"
+			get_log_file_stub.returns(log_path)
 
 			cli_manager.registerCommands()
 
@@ -49,9 +47,12 @@ describe("cli_manager.registerCommands", function()
 					callback = call.refs[2]
 				end
 			end
-			callback()
 
-			assert.stub(edit_stub).was.called_with("/tmp/a%b.log")
+			assert.has_no.errors(callback)
+			assert.are.equal(log_path, vim.api.nvim_buf_get_name(0))
+
+			vim.cmd("bdelete!")
+			vim.cmd("only")
 		end)
 	end)
 end)
