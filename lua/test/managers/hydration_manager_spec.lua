@@ -140,9 +140,6 @@ describe("hydration_manager", function()
 
 				assert.stub(close_generated_nofile_scratch_buffers_stub).was.called()
 				assert.stub(neotree_hydrate_stub).was_not.called()
-
-				assert.stub(notify_stub).was.called_with(match._, vim.log.levels.ERROR)
-				assert.stub(log_error_stub).was.called_with(match._, match._)
 			end)
 
 			it("should notify with a short generic message and log the detailed error separately", function()

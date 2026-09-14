@@ -7,6 +7,7 @@ local match = require("luassert.match")
 package.loaded["integrations.telescope"] = { prompt_select_universe = function() end }
 
 local cli_manager = require("multiverse.managers.cli_manager")
+local log = require("multiverse.log")
 
 describe("cli_manager.registerCommands", function()
 	describe("MultiverseLog", function()
@@ -28,6 +29,27 @@ describe("cli_manager.registerCommands", function()
 				match._,
 				match._
 			)
+		end)
+
+		it("escapes special characters in the log file path when opening it", function()
+			local get_log_file_stub = stub(log, "get_log_file")
+			get_log_file_stub.returns("/tmp/a%b.log")
+			local cmd_stub = stub(vim, "cmd")
+
+			cli_manager.registerCommands()
+
+			local callback
+			for _, call in ipairs(create_user_command_stub.calls) do
+				if call.refs[1] == "MultiverseLog" then
+					callback = call.refs[2]
+				end
+			end
+			callback()
+
+			assert.stub(cmd_stub).was.called_with("edit " .. vim.fn.fnameescape("/tmp/a%b.log"))
+
+			cmd_stub:revert()
+			get_log_file_stub:revert()
 		end)
 	end)
 end)

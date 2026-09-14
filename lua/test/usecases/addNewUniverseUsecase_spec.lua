@@ -18,6 +18,7 @@ describe("addNewUniverseUsecase.run", function()
 	local now_stub
 	local notify_stub
 	local log_debug_stub
+	local print_stub
 
 	local marker_path = vim.fn.tempname() .. "_multiverse_pwned_marker"
 
@@ -37,6 +38,7 @@ describe("addNewUniverseUsecase.run", function()
 		end)
 		notify_stub = stub(vim, "notify")
 		log_debug_stub = stub(log, "debug")
+		print_stub = stub(_G, "print")
 		os.remove(marker_path)
 	end)
 
@@ -49,6 +51,7 @@ describe("addNewUniverseUsecase.run", function()
 		now_stub:revert()
 		notify_stub:revert()
 		log_debug_stub:revert()
+		print_stub:revert()
 		os.remove(marker_path)
 	end)
 
@@ -57,7 +60,10 @@ describe("addNewUniverseUsecase.run", function()
 
 		assert.stub(log_debug_stub).was.called(1)
 		local format_arg = log_debug_stub.calls[1].refs[1]
+		local summary_arg = log_debug_stub.calls[1].refs[2]
 		assert.are.equal("Adding a new universe: %s", format_arg)
+		assert.are.equal("foo", summary_arg.name)
+		assert.stub(print_stub).was_not.called()
 	end)
 
 	it("does not execute backtick-quoted shell commands embedded in the directory", function()

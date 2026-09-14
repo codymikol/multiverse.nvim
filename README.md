@@ -43,6 +43,10 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim). `setup()` registers a `Vi
   - **Description**: Opens a *Telescope* picker that lists all *Universes* and loads one upon selection.
   - **Arguments**: None.
 
+- **`MultiverseLog`**
+  - **Description**: Opens the plugin's log file, which contains detailed diagnostic information for errors reported via notifications.
+  - **Arguments**: None.
+
 
 
 ## Startup Behavior

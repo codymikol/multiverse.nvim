@@ -73,7 +73,9 @@ describe("dehydration_manager.dehydrate", function()
 		)
 
 		assert.stub(log_error_stub).was.called_with(
-			'Buffer mismatch: buffer id 999 not found in universe "universe-uuid"'
+			"Buffer mismatch: buffer id %s not found in universe %s",
+			999,
+			"universe-uuid"
 		)
 	end)
 end)
