@@ -8,6 +8,7 @@ package.loaded["integrations.telescope"] = { prompt_select_universe = function()
 
 local cli_manager = require("multiverse.managers.cli_manager")
 local log = require("multiverse.log")
+local zellij_manager = require("multiverse.managers.zellij_manager")
 
 describe("cli_manager.registerCommands", function()
 	describe("MultiverseLog", function()
@@ -55,6 +56,71 @@ describe("cli_manager.registerCommands", function()
 			assert.has_no.errors(callback)
 			assert.are.equal(log_path, vim.api.nvim_buf_get_name(0))
 			assert.is_false(vim.bo.modifiable)
+		end)
+	end)
+
+	describe("MultiverseTerminal", function()
+		local create_user_command_stub
+		local is_available_stub
+		local session_name_for_stub
+		local open_floating_terminal_stub
+		local notify_stub
+
+		before_each(function()
+			create_user_command_stub = stub(vim.api, "nvim_create_user_command")
+			is_available_stub = stub(zellij_manager, "is_available")
+			session_name_for_stub = stub(zellij_manager, "session_name_for")
+			open_floating_terminal_stub = stub(zellij_manager, "open_floating_terminal")
+			notify_stub = stub(vim, "notify")
+		end)
+
+		after_each(function()
+			create_user_command_stub:revert()
+			is_available_stub:revert()
+			session_name_for_stub:revert()
+			open_floating_terminal_stub:revert()
+			notify_stub:revert()
+		end)
+
+		local function get_callback()
+			cli_manager.registerCommands()
+
+			for _, call in ipairs(create_user_command_stub.calls) do
+				if call.refs[1] == "MultiverseTerminal" then
+					return call.refs[2]
+				end
+			end
+		end
+
+		it("registers a MultiverseTerminal user command", function()
+			cli_manager.registerCommands()
+
+			assert.stub(create_user_command_stub).was.called_with(
+				"MultiverseTerminal",
+				match._,
+				match._
+			)
+		end)
+
+		it("opens a floating terminal for the session derived from the current cwd when zellij is available", function()
+			is_available_stub.returns(true)
+			session_name_for_stub.returns("multiverse-abc")
+
+			local callback = get_callback()
+			callback()
+
+			assert.stub(open_floating_terminal_stub).was_called_with("multiverse-abc")
+			assert.stub(notify_stub).was_not_called()
+		end)
+
+		it("warns and does not open a terminal when zellij is not available", function()
+			is_available_stub.returns(false)
+
+			local callback = get_callback()
+			callback()
+
+			assert.stub(open_floating_terminal_stub).was_not_called()
+			assert.stub(notify_stub).was_called_with("zellij is not installed", vim.log.levels.WARN)
 		end)
 	end)
 end)
