@@ -8,8 +8,24 @@ local cleanup_manager = require("multiverse.managers.cleanup_manager")
 local plugin_manager = require("multiverse.managers.plugin_manager")
 local log            = require("multiverse.log")
 local state_store    = require("multiverse.store.state_store")
+local profiler       = require("multiverse.profiler")
+
+--- Defense in depth on top of profiler.flush()'s own internal pcall: even if
+--- profiling misbehaves in some unforeseen way, it must never prevent the
+--- caller's state-machine reset to IDLE that follows this call.
+local function flush_profiler_trace(span, label)
+  local ok, err = pcall(function()
+    profiler.end_span(span)
+    profiler.flush()
+  end)
+  if not ok then
+    log.error("Profiler error during %s: %s", label, err)
+  end
+end
 
 M.save = function()
+
+  local save_span = profiler.start_span("save")
 
   local success, err = pcall(function()
 
@@ -47,15 +63,21 @@ M.save = function()
         return
       end
 
+      local before_dehydrate_span = profiler.start_span("beforeDehydrate")
       plugin_manager.beforeDehydrate({
         universe = current_universe
       })
+      profiler.end_span(before_dehydrate_span)
 
+      local dehydrate_span = profiler.start_span("dehydrate")
       local dehydrated_universe = dehydration_manager.dehydrate(current_universe_summary)
+      profiler.end_span(dehydrate_span)
 
+      local after_dehydrate_span = profiler.start_span("afterDehydrate")
       plugin_manager.afterDehydrate({
         universe = current_universe
       })
+      profiler.end_span(after_dehydrate_span)
 
       universe_repository.save_universe(dehydrated_universe)
     end
@@ -66,6 +88,7 @@ M.save = function()
     vim.notify("Error saving universe, check MultiverseLog for more information", vim.log.levels.ERROR)
   end
 
+  flush_profiler_trace(save_span, "save")
 
   state_store.set_current_state(state_store.STATES.IDLE)
 
@@ -80,6 +103,8 @@ end
 M.load_universe = function(multiverse, selected_universe_summary, skip_save)
 
   log.debug("Loading universe: " .. selected_universe_summary.name)
+
+  local load_span = profiler.start_span("load_universe")
 
   local success, err = pcall(function()
 
@@ -124,15 +149,23 @@ M.load_universe = function(multiverse, selected_universe_summary, skip_save)
 
     state_store.set_current_state(state_store.STATES.CLEANUP)
 
+    local cleanup_span = profiler.start_span("cleanup")
     cleanup_manager.cleanup()
+    profiler.end_span(cleanup_span)
 
     state_store.set_current_state(state_store.STATES.HYDRATION)
 
+    local before_hydrate_span = profiler.start_span("beforeHydrate")
     plugin_manager.beforeHydrate({ universe = current_universe })
+    profiler.end_span(before_hydrate_span)
 
+    local hydrate_span = profiler.start_span("hydrate")
     hydration_manager.hydrate(selected_universe_summary)
+    profiler.end_span(hydrate_span)
 
+    local after_hydrate_span = profiler.start_span("afterHydrate")
     plugin_manager.afterHydrate({ universe = current_universe })
+    profiler.end_span(after_hydrate_span)
 
   end)
 
@@ -140,6 +173,8 @@ M.load_universe = function(multiverse, selected_universe_summary, skip_save)
     log.error("Error loading universe: " .. selected_universe_summary.name .. ", error details: " .. vim.json.encode(err))
     vim.notify("Error loading universe: " .. selected_universe_summary.name, vim.log.levels.ERROR)
   end
+
+  flush_profiler_trace(load_span, "load")
 
   state_store.set_current_state(state_store.STATES.IDLE)
 

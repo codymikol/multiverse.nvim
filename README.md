@@ -54,6 +54,12 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim). `setup()` registers a `Vi
 - **Automatic hydration on directory entry**
   - **Description**: Opening Neovim directly on a directory that matches a registered *Universe* (e.g. `nvim .` or `nvim /path/to/project`) automatically hydrates that *Universe* on startup, equivalent to running `:MultiverseOpen <name>`. No action is required from the user.
 
+## Profiling
+
+- **`vim.g.multiverse_enable_profiling`**
+  - **Description**: When set to `true` (or `1`, if set from Vimscript), records timing spans for save/load operations (e.g. dehydration, hydration, cleanup, and plugin hooks) in the [Chrome Trace Event Format](https://chromium.googlesource.com/catapult/+/HEAD/tracing/README.md). The trace is written to `stdpath("cache") .. "/multiverse_trace.json"` after each save or load, and can be loaded in `chrome://tracing` or [Perfetto](https://ui.perfetto.dev) for inspection. Disabled by default.
+  - **Note**: The in-memory span buffer is capped at the most recent 1000 events and is not cleared until Neovim restarts.
+
 ## Integrations
 
 - **`Neotree`**
