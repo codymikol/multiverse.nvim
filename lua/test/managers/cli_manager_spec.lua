@@ -24,7 +24,9 @@ describe("cli_manager.registerCommands", function()
 			create_user_command_stub:revert()
 			get_log_file_stub:revert()
 			pcall(vim.cmd, "bdelete!")
-			pcall(vim.cmd, "only")
+			if #vim.api.nvim_list_wins() > 1 then
+				vim.cmd("only")
+			end
 		end)
 
 		it("registers a MultiverseLog user command", function()
@@ -52,6 +54,7 @@ describe("cli_manager.registerCommands", function()
 
 			assert.has_no.errors(callback)
 			assert.are.equal(log_path, vim.api.nvim_buf_get_name(0))
+			assert.is_false(vim.bo.modifiable)
 		end)
 	end)
 end)

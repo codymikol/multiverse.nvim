@@ -51,6 +51,7 @@ M.registerCommands = function()
 
 	vim.api.nvim_create_user_command("MultiverseLog", function()
 		vim.cmd.split(vim.fn.fnameescape(log.get_log_file()))
+		vim.bo.modifiable = false
 	end, { nargs = 0 })
 end
 

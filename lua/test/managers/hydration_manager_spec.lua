@@ -149,7 +149,10 @@ describe("hydration_manager", function()
 					"Error hydrating universe, check MultiverseLog for more information",
 					vim.log.levels.ERROR
 				)
+				assert.stub(log_error_stub).was.called(1)
 				assert.stub(log_error_stub).was.called_with("Error hydrating universe: %s", match._)
+				local log_detail = log_error_stub.calls[1].refs[2]
+				assert.is_not_nil(tostring(log_detail):find("boom", 1, true))
 			end)
 		end)
 	end)

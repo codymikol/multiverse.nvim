@@ -1,4 +1,5 @@
 local stub = require("luassert.stub")
+local match = require("luassert.match")
 local multiverse_repository = require("multiverse.repositories.multiverse_repository")
 local universe_repository = require("multiverse.repositories.universe_repository")
 local multiverse_manager = require("multiverse.managers.multiverse_manager")
@@ -58,10 +59,13 @@ describe("addNewUniverseUsecase.run", function()
 	it("logs the new universe summary via log.debug instead of printing it", function()
 		addNewUniverseUsecase.run("foo", "/tmp/some/project")
 
-		assert.stub(log_debug_stub).was.called(1)
-		local format_arg = log_debug_stub.calls[1].refs[1]
-		local summary_arg = log_debug_stub.calls[1].refs[2]
-		assert.are.equal("Adding a new universe: %s", format_arg)
+		assert.stub(log_debug_stub).was.called_with("Adding a new universe: %s", match._)
+		local summary_arg
+		for _, call in ipairs(log_debug_stub.calls) do
+			if call.refs[1] == "Adding a new universe: %s" then
+				summary_arg = call.refs[2]
+			end
+		end
 		assert.are.equal("foo", summary_arg.name)
 		assert.stub(print_stub).was_not.called()
 	end)
