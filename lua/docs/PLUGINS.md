@@ -37,12 +37,12 @@ local myPlugin = Plugin:new({
 ```
 
 - **`name`** (string, required) — identifies the plugin. `Plugin:new` returns
-  `nil` if `name` is missing or not a non-empty string. The examples below
-  use a hardcoded literal `name`, so this can't happen — but if you build
-  `name` dynamically, check the result before registering it.
+  `nil` if `name` is missing or not a non-empty string; check the result
+  before registering it.
 - **`beforeDehydrate`**, **`afterDehydrate`**, **`beforeHydrate`**,
   **`afterHydrate`** (functions, all optional) — lifecycle hooks. Only the
-  hooks you provide are called; omit any you don't need.
+  hooks you provide are called; omit any you don't need. A hook value that
+  isn't a function is dropped with a warning and never fires.
 
 ## Lifecycle hooks
 

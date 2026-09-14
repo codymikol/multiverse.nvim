@@ -112,6 +112,16 @@ describe("multiverse setup", function()
 			assert.stub(on_vim_enter_stub).was.called()
 		end)
 
+		it("warns when opts.plugins is explicitly false instead of omitted", function()
+			local Multiverse = require("multiverse")
+
+			assert.has_no.errors(function()
+				Multiverse.setup({ plugins = false })
+			end)
+
+			assert.stub(log_warn_stub).was.called()
+		end)
+
 		it("registers a plugin that follows a nil hole in opts.plugins", function()
 			-- A hole at an earlier index (e.g. from a Plugin:new call that returned nil)
 			-- must not stop registration from reaching later, valid entries.
@@ -147,6 +157,50 @@ describe("multiverse setup", function()
 			assert.stub(on_exit_stub).was.called()
 			assert.stub(on_buffer_close_stub).was.called()
 			assert.stub(on_vim_enter_stub).was.called()
+		end)
+
+		it("registers multiple valid plugins passed together in opts.plugins", function()
+			local calls = {}
+			local firstPlugin = Plugin:new({
+				name = "FirstPlugin",
+				beforeDehydrate = function()
+					table.insert(calls, "first")
+				end,
+			})
+			local secondPlugin = Plugin:new({
+				name = "SecondPlugin",
+				beforeDehydrate = function()
+					table.insert(calls, "second")
+				end,
+			})
+
+			local Multiverse = require("multiverse")
+			Multiverse.setup({ plugins = { firstPlugin, secondPlugin } })
+
+			local plugin_manager = require("multiverse.managers.plugin_manager")
+			plugin_manager.beforeDehydrate({ universe = {} })
+
+			assert.same({ "first", "second" }, calls)
+		end)
+
+		it("registers a valid plugin alongside a malformed entry in opts.plugins", function()
+			local beforeDehydrate_calls = {}
+			local myPlugin = Plugin:new({
+				name = "TestPlugin",
+				beforeDehydrate = function(ctx)
+					table.insert(beforeDehydrate_calls, ctx)
+				end,
+			})
+			local malformed = { name = "Malformed" }
+
+			local Multiverse = require("multiverse")
+			Multiverse.setup({ plugins = { malformed, myPlugin } })
+
+			local plugin_manager = require("multiverse.managers.plugin_manager")
+			plugin_manager.beforeDehydrate({ universe = {} })
+
+			assert.equals(1, #beforeDehydrate_calls)
+			assert.stub(log_warn_stub).was.called()
 		end)
 
 		it("also invokes afterHydrate for a setup-registered plugin", function()

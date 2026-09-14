@@ -35,7 +35,7 @@ Multiverse.setup = function(opts)
 
   initialize.run()
 
-  if opts.plugins then
+  if opts.plugins ~= nil then
     if type(opts.plugins) ~= "table" then
       log.warn(
         "opts.plugins should be a list of plugins, e.g. { plugins = { myPlugin } }, got: "
