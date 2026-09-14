@@ -20,10 +20,13 @@ describe("dehydration_manager.dehydrate", function()
 	local log_debug_stub
 
 	local summary = { uuid = "universe-uuid", name = "some-name", directory = "/tmp" }
-	local tabpage = Tabpage:new("tabpage-uuid", 1, "window-uuid")
-	local window = Window:new("window-uuid", nil, 42)
+	local tabpage
+	local window
 
 	before_each(function()
+		tabpage = Tabpage:new("tabpage-uuid", 1, "window-uuid")
+		window = Window:new("window-uuid", nil, 42)
+
 		getTabpages_stub = stub(tabpage_manager, "getTabpages", function()
 			return { tabpage }
 		end)
