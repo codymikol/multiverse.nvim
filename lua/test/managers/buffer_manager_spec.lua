@@ -2,7 +2,7 @@ local buffer_manager = require("multiverse.managers.buffer_manager")
 local stub = require("luassert.stub")
 
 --- Stubs the vim.api functions buffer_manager consults about a given buffer
---- (used by isUniverseBuffer/isDesiredUniverseBuffer/saveAll) so each test can
+--- (used by isUniverseBuffer/isDesiredUniverseBuffer) so each test can
 --- describe the buffer under test via a small options table.
 --- @param opts table|nil
 --- @return table stubs to be reverted in after_each
@@ -127,70 +127,37 @@ describe("buffer_manager", function()
 		end)
 	end)
 
-	describe("saveAll", function()
-		local stubs
-		local tmpdir
-		local original_workspaces
-
-		before_each(function()
-			tmpdir = vim.fn.tempname()
-			vim.fn.mkdir(tmpdir, "p")
-
-			-- "workspaces" is an external runtime dependency not present in the
-			-- test environment; inject a fake module so saveAll's require() resolves.
-			original_workspaces = package.loaded["workspaces"]
-			package.loaded["workspaces"] = { name = function() return "test-workspace" end }
-
-			local Persistance = require("multiverse.repositories.persistance")
-
-			stubs = {}
-			table.insert(stubs, stub(Persistance, "getDir").returns(tmpdir))
-			table.insert(stubs, stub(vim.api, "nvim_list_bufs").returns({ 1 }))
-			table.insert(stubs, stub(vim.fn, "filereadable").returns(1))
+	describe("exports", function()
+		it("should not expose a closeAll function", function()
+			assert.is_nil(buffer_manager.closeAll)
 		end)
 
-		after_each(function()
-			if stubs then
-				revertStubs(stubs)
-				stubs = nil
-			end
-			package.loaded["workspaces"] = original_workspaces
-			vim.fn.delete(tmpdir, "rf")
+		it("should not expose a saveAll function", function()
+			assert.is_nil(buffer_manager.saveAll)
 		end)
 
-		local function savedBufferFile()
-			local bufferFileLocation = tmpdir .. "/" .. vim.fn.sha256("test-workspace") .. "/buffer.txt"
-			local f = io.open(bufferFileLocation, "r")
-			local contents = f and f:read("*a") or nil
-			if f then
-				f:close()
-			end
-			return contents
-		end
-
-		local function stubTrackedBuffer(opts)
-			-- parens truncate stubBuffer's second return (named handles); without
-			-- them list_extend receives it as a numeric `start` arg and errors.
-			vim.list_extend(stubs, (stubBuffer(opts)))
-		end
-
-		it("should not persist a valid, loaded but non-modifiable buffer", function()
-			stubTrackedBuffer({ loaded = true, modifiable = false })
-
-			buffer_manager.saveAll()
-
-			local contents = savedBufferFile()
-			assert.is_not_nil(contents)
-			assert.are.equal("", contents)
+		it("should not expose a hydrate function", function()
+			assert.is_nil(buffer_manager.hydrate)
 		end)
 
-		it("should persist a valid, loaded, modifiable buffer", function()
-			stubTrackedBuffer({ loaded = true })
+		it("should still expose isUniverseBuffer as a function", function()
+			assert.are.equal("function", type(buffer_manager.isUniverseBuffer))
+		end)
 
-			buffer_manager.saveAll()
+		it("should still expose closeAllBuffers as a function", function()
+			assert.are.equal("function", type(buffer_manager.closeAllBuffers))
+		end)
 
-			local contents = savedBufferFile()
-			assert.are.equal("/home/foo/bar.txt\n", contents)
+		it("should still expose hydrateBuffersForUniverse as a function", function()
+			assert.are.equal("function", type(buffer_manager.hydrateBuffersForUniverse))
+		end)
+
+		it("should still expose get_all_buffers as a function", function()
+			assert.are.equal("function", type(buffer_manager.get_all_buffers))
+		end)
+
+		it("should still expose close_generated_nofile_scratch_buffers as a function", function()
+			assert.are.equal("function", type(buffer_manager.close_generated_nofile_scratch_buffers))
 		end)
 	end)
 end)
