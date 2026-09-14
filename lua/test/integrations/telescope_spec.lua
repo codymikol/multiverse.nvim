@@ -20,10 +20,13 @@ local Window = require("multiverse.data.Window")
 local Buffer = require("multiverse.data.Buffer")
 
 local universe_repository = require("multiverse.repositories.universe_repository")
+local log = require("multiverse.log")
 
 describe("telescope.get_universe_preview", function()
 	local telescope
 	local getUniverseByUuid_stub
+	local notify_stub
+	local log_error_stub
 
 	before_each(function()
 		package.loaded["integrations.telescope"] = nil
@@ -35,7 +38,40 @@ describe("telescope.get_universe_preview", function()
 			getUniverseByUuid_stub:revert()
 			getUniverseByUuid_stub = nil
 		end
+		if notify_stub then
+			notify_stub:revert()
+			notify_stub = nil
+		end
+		if log_error_stub then
+			log_error_stub:revert()
+			log_error_stub = nil
+		end
 		package.loaded["integrations.telescope"] = nil
+	end)
+
+	it("does not concatenate the raw error into the user-facing notify, and logs the detail", function()
+		getUniverseByUuid_stub = stub(universe_repository, "get_universe_by_uuid")
+		getUniverseByUuid_stub.returns(nil, "boom: something exploded")
+
+		notify_stub = stub(vim, "notify")
+		log_error_stub = stub(log, "error")
+
+		local universe_summary = {
+			uuid = "universe-uuid",
+			name = "test-universe",
+			directory = "/home/test",
+			lastExplored = os.time(),
+		}
+
+		telescope.get_universe_preview(universe_summary)
+
+		assert.stub(notify_stub).was_called(1)
+		local notify_message = notify_stub.calls[1].refs[1]
+		assert.is_nil(notify_message:find("boom: something exploded", 1, true))
+
+		assert.stub(log_error_stub).was_called(1)
+		local log_message = log_error_stub.calls[1].refs[1]
+		assert.is_not_nil(log_message:find("boom: something exploded", 1, true))
 	end)
 
 	it("does not truncate the preview when an earlier tabpage has an empty layout", function()
