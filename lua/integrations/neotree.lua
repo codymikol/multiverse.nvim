@@ -5,7 +5,7 @@ M.hydrate = function()
     return
   end
   local cwd = vim.fn.getcwd()
-  vim.cmd("Neotree " .. cwd)
+  vim.cmd("Neotree " .. vim.fn.fnameescape(cwd))
 end
 
 return M
