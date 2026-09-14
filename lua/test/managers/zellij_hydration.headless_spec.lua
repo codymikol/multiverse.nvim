@@ -46,8 +46,24 @@ local persistance = require("multiverse.repositories.persistance")
 local UniverseSummary = require("multiverse.data.UniverseSummary")
 local zellij_manager = require("multiverse.managers.zellij_manager")
 
-assert(zellij_manager.is_available() == false,
-  "expected zellij to not be installed in this test environment; if it is, this test's no-op-path coverage no longer applies")
+-- Force the zellij-not-installed path deterministically, regardless of
+-- whether the zellij binary happens to be on this machine's PATH: this
+-- spec's job is proving the dehydrate/hydrate cycle survives a terminal
+-- buffer and that the plugin hooks no-op when zellij is unavailable, not
+-- asserting anything about the host environment.
+local original_is_available = zellij_manager.is_available
+zellij_manager.is_available = function()
+  return false
+end
+
+-- Redirect all persisted state to a throwaway temp directory rather than the
+-- real `stdpath("data")/workspace-persistance` location.
+local persistance_dir = vim.fn.tempname()
+vim.fn.mkdir(persistance_dir, "p")
+local original_getDir = persistance.getDir
+persistance.getDir = function()
+  return persistance_dir
+end
 
 local test_dir = "/tmp/multiverse_test_zellij_hydration"
 vim.fn.mkdir(test_dir, "p")
@@ -114,7 +130,6 @@ local after_dehydrate_ok, after_dehydrate_err = pcall(plugin_manager.afterDehydr
 assert(after_dehydrate_ok,
   "expected plugin_manager.afterDehydrate to not crash, got error: " .. tostring(after_dehydrate_err))
 
-vim.fn.mkdir(persistance.getDir(), "p")
 local _, save_err = universe_repository.save_universe(universe)
 assert(save_err == nil, "expected to save the dehydrated universe, got error: " .. tostring(save_err))
 
@@ -139,6 +154,13 @@ local terminal_buffers_after = count_terminal_buffers()
 assert(terminal_buffers_after == terminal_buffers_before,
   "expected the terminal buffer to survive the cycle without being duplicated or orphaned, expected "
     .. terminal_buffers_before .. " terminal buffer(s), got " .. terminal_buffers_after)
+
+-- restore originals for hygiene, even though this is a one-shot process
+zellij_manager.is_available = original_is_available
+persistance.getDir = original_getDir
+
+vim.fn.delete(persistance_dir, "rf")
+vim.fn.delete(test_dir, "rf")
 
 print("PASS")
 os.exit(0)

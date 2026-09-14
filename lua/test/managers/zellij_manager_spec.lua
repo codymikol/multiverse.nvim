@@ -1,5 +1,12 @@
 local zellij_manager = require("multiverse.managers.zellij_manager")
+local persistance = require("multiverse.repositories.persistance")
 local stub = require("luassert.stub")
+
+-- vim.v.shell_error is read-only from Lua, so it can't be stubbed directly;
+-- capture the real systemlist here (before any test stubs it) so the
+-- reattach_if_running failure test can run a real failing shell command to
+-- set v:shell_error as a side effect.
+local real_systemlist = vim.fn.systemlist
 
 describe("zellij_manager", function()
 	describe("is_available", function()
@@ -70,7 +77,19 @@ describe("zellij_manager", function()
 			nvim_create_buf_stub:revert()
 			nvim_open_win_stub:revert()
 			termopen_stub:revert()
+
+			-- Stub validity to false so this cleanup call can never reach a real
+			-- window/buffer id that happens to collide with the fabricated ones
+			-- used above (e.g. 22/11/33/44) elsewhere in the test process.
+			local win_valid_stub = stub(vim.api, "nvim_win_is_valid")
+			win_valid_stub.returns(false)
+			local buf_valid_stub = stub(vim.api, "nvim_buf_is_valid")
+			buf_valid_stub.returns(false)
+
 			zellij_manager.close_floating_terminal()
+
+			win_valid_stub:revert()
+			buf_valid_stub:revert()
 		end)
 
 		it("opens a scratch buffer in a floating editor-relative window", function()
@@ -87,7 +106,15 @@ describe("zellij_manager", function()
 		it("runs 'zellij attach --create <session_name>' inside the new buffer", function()
 			zellij_manager.open_floating_terminal("multiverse-abc")
 
-			assert.stub(termopen_stub).was_called_with("zellij attach --create multiverse-abc")
+			assert.stub(termopen_stub).was_called_with("zellij attach --create " .. vim.fn.shellescape("multiverse-abc"))
+		end)
+
+		it("shellescapes the session name before interpolating it into the command", function()
+			zellij_manager.open_floating_terminal("multiverse abc")
+
+			assert.stub(termopen_stub).was_called_with(
+				"zellij attach --create " .. vim.fn.shellescape("multiverse abc")
+			)
 		end)
 
 		it("returns the new window id and buffer id", function()
@@ -95,6 +122,31 @@ describe("zellij_manager", function()
 
 			assert.are.equal(22, win_id)
 			assert.are.equal(11, buf_id)
+		end)
+
+		it("closes the previously tracked floating terminal before opening a new one", function()
+			local nvim_win_is_valid_stub = stub(vim.api, "nvim_win_is_valid")
+			nvim_win_is_valid_stub.returns(true)
+			local nvim_buf_is_valid_stub = stub(vim.api, "nvim_buf_is_valid")
+			nvim_buf_is_valid_stub.returns(true)
+			local nvim_win_close_stub = stub(vim.api, "nvim_win_close")
+			local nvim_buf_delete_stub = stub(vim.api, "nvim_buf_delete")
+
+			nvim_create_buf_stub.returns(11)
+			nvim_open_win_stub.returns(22)
+			zellij_manager.open_floating_terminal("multiverse-first")
+
+			nvim_create_buf_stub.returns(33)
+			nvim_open_win_stub.returns(44)
+			zellij_manager.open_floating_terminal("multiverse-second")
+
+			assert.stub(nvim_win_close_stub).was_called_with(22, true)
+			assert.stub(nvim_buf_delete_stub).was_called_with(11, { force = true })
+
+			nvim_win_is_valid_stub:revert()
+			nvim_buf_is_valid_stub:revert()
+			nvim_win_close_stub:revert()
+			nvim_buf_delete_stub:revert()
 		end)
 	end)
 
@@ -191,7 +243,21 @@ describe("zellij_manager", function()
 			nvim_create_buf_stub:revert()
 			nvim_open_win_stub:revert()
 			termopen_stub:revert()
+			-- Reset v:shell_error (read-only, so it can't be assigned directly)
+			-- in case the shell_error test below left it non-zero.
+			real_systemlist("exit 0")
+
+			-- Stub validity to false so this cleanup call can never reach a real
+			-- window/buffer id that happens to collide with a fabricated one.
+			local win_valid_stub = stub(vim.api, "nvim_win_is_valid")
+			win_valid_stub.returns(false)
+			local buf_valid_stub = stub(vim.api, "nvim_buf_is_valid")
+			buf_valid_stub.returns(false)
+
 			zellij_manager.close_floating_terminal()
+
+			win_valid_stub:revert()
+			buf_valid_stub:revert()
 		end)
 
 		it("returns false without listing sessions when zellij is not available", function()
@@ -211,7 +277,9 @@ describe("zellij_manager", function()
 			local result = zellij_manager.reattach_if_running("multiverse-abc")
 
 			assert.is_true(result)
-			assert.stub(termopen_stub).was_called_with("zellij attach --create multiverse-abc")
+			assert.stub(termopen_stub).was_called_with(
+				"zellij attach --create " .. vim.fn.shellescape("multiverse-abc")
+			)
 		end)
 
 		it("does nothing and returns false when the session is not running", function()
@@ -223,11 +291,79 @@ describe("zellij_manager", function()
 			assert.is_false(result)
 			assert.stub(termopen_stub).was_not_called()
 		end)
+
+		it("returns false and does not iterate sessions when listing sessions fails", function()
+			executable_stub.returns(1)
+			systemlist_stub.invokes(function()
+				-- Run a real failing shell command so v:shell_error is set the
+				-- same way it would be after a real "zellij list-sessions"
+				-- failure (v:shell_error can't be stubbed/assigned directly).
+				real_systemlist("exit 1")
+				return { "garbage output" }
+			end)
+
+			local result = zellij_manager.reattach_if_running("multiverse-abc")
+
+			assert.is_false(result)
+			assert.stub(termopen_stub).was_not_called()
+		end)
+	end)
+
+	describe("mark_open / mark_closed / was_open", function()
+		local original_getDir
+		local temp_dir
+
+		before_each(function()
+			original_getDir = persistance.getDir
+			temp_dir = vim.fn.tempname()
+			persistance.getDir = function()
+				return temp_dir
+			end
+		end)
+
+		after_each(function()
+			persistance.getDir = original_getDir
+			vim.fn.delete(temp_dir, "rf")
+		end)
+
+		it("returns false from was_open before anything has been marked", function()
+			assert.is_false(zellij_manager.was_open("multiverse-abc"))
+		end)
+
+		it("returns true from was_open after mark_open is called", function()
+			zellij_manager.mark_open("multiverse-abc")
+
+			assert.is_true(zellij_manager.was_open("multiverse-abc"))
+		end)
+
+		it("returns false from was_open after mark_closed following mark_open", function()
+			zellij_manager.mark_open("multiverse-abc")
+			zellij_manager.mark_closed("multiverse-abc")
+
+			assert.is_false(zellij_manager.was_open("multiverse-abc"))
+		end)
+
+		it("is a harmless no-op to call mark_closed when nothing was ever marked", function()
+			assert.has_no.errors(function()
+				zellij_manager.mark_closed("multiverse-never-marked")
+			end)
+			assert.is_false(zellij_manager.was_open("multiverse-never-marked"))
+		end)
 	end)
 
 	describe("is_floating_terminal_open", function()
 		after_each(function()
+			-- Stub validity to false so this cleanup call can never reach a real
+			-- window/buffer id that happens to collide with a fabricated one.
+			local win_valid_stub = stub(vim.api, "nvim_win_is_valid")
+			win_valid_stub.returns(false)
+			local buf_valid_stub = stub(vim.api, "nvim_buf_is_valid")
+			buf_valid_stub.returns(false)
+
 			zellij_manager.close_floating_terminal()
+
+			win_valid_stub:revert()
+			buf_valid_stub:revert()
 		end)
 
 		it("returns false when nothing has been opened", function()
@@ -240,6 +376,10 @@ describe("zellij_manager", function()
 			local nvim_open_win_stub = stub(vim.api, "nvim_open_win")
 			nvim_open_win_stub.returns(22)
 			local termopen_stub = stub(vim.fn, "termopen")
+			local nvim_win_is_valid_stub = stub(vim.api, "nvim_win_is_valid")
+			nvim_win_is_valid_stub.returns(true)
+			local nvim_buf_is_valid_stub = stub(vim.api, "nvim_buf_is_valid")
+			nvim_buf_is_valid_stub.returns(true)
 
 			zellij_manager.open_floating_terminal("multiverse-abc")
 
@@ -248,6 +388,37 @@ describe("zellij_manager", function()
 			termopen_stub:revert()
 
 			assert.is_true(zellij_manager.is_floating_terminal_open())
+
+			nvim_win_is_valid_stub:revert()
+			nvim_buf_is_valid_stub:revert()
+		end)
+
+		it("returns false when the tracked window or buffer is no longer valid", function()
+			local nvim_create_buf_stub = stub(vim.api, "nvim_create_buf")
+			nvim_create_buf_stub.returns(11)
+			local nvim_open_win_stub = stub(vim.api, "nvim_open_win")
+			nvim_open_win_stub.returns(22)
+			local termopen_stub = stub(vim.fn, "termopen")
+			local nvim_win_is_valid_stub = stub(vim.api, "nvim_win_is_valid")
+			nvim_win_is_valid_stub.returns(true)
+			local nvim_buf_is_valid_stub = stub(vim.api, "nvim_buf_is_valid")
+			nvim_buf_is_valid_stub.returns(true)
+
+			zellij_manager.open_floating_terminal("multiverse-abc")
+
+			nvim_create_buf_stub:revert()
+			nvim_open_win_stub:revert()
+			termopen_stub:revert()
+
+			-- Simulate the user manually closing the floating window themselves
+			-- (e.g. `:q`), without going through close_floating_terminal().
+			nvim_win_is_valid_stub.returns(false)
+			nvim_buf_is_valid_stub.returns(false)
+
+			assert.is_false(zellij_manager.is_floating_terminal_open())
+
+			nvim_win_is_valid_stub:revert()
+			nvim_buf_is_valid_stub:revert()
 		end)
 	end)
 end)

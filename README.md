@@ -47,6 +47,10 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim). `setup()` registers a `Vi
   - **Description**: Opens the plugin's log file, which contains detailed diagnostic information for errors reported via notifications.
   - **Arguments**: None.
 
+- **`MultiverseTerminal`**
+  - **Description**: Opens a floating terminal backed by a Zellij session tied to the current *Universe*'s directory, so it can be reconnected to after the *Universe* is dehydrated/hydrated (a universe switch, or closing and reopening Neovim). No-ops with a warning if the `zellij` binary isn't installed.
+  - **Arguments**: None.
+
 
 
 ## Startup Behavior
