@@ -34,6 +34,8 @@ describe("multiverse_manager.save", function()
 				vim.log.levels.ERROR
 			)
 			assert.stub(log_error_stub).was.called(1)
+			local log_message = log_error_stub.calls[1].refs[1]
+			assert.is_not_nil(log_message:find("boom", 1, true))
 		end)
 	end)
 end)

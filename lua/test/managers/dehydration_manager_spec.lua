@@ -47,6 +47,8 @@ describe("dehydration_manager.dehydrate", function()
 		end)
 		notify_stub = stub(vim, "notify")
 		log_error_stub = stub(log, "error")
+		-- Stubbed (not asserted) to silence dehydration_manager's unrelated
+		-- log.debug calls further down in dehydrate().
 		log_debug_stub = stub(log, "debug")
 	end)
 
@@ -65,12 +67,13 @@ describe("dehydration_manager.dehydrate", function()
 	it("notifies a short message without dumping the universe object, and logs the details", function()
 		dehydration_manager.dehydrate(summary)
 
-		assert.stub(notify_stub).was.called(1)
-		local notify_message = notify_stub.calls[1].refs[1]
+		assert.stub(notify_stub).was.called_with(
+			"Error: Buffer with ID 999 not found in universe universe-uuid",
+			vim.log.levels.ERROR
+		)
 
-		assert.is_nil(notify_message:find("<table", 1, true), "notify message should not contain an inspected table dump")
-		assert.is_not_nil(notify_message:find("999", 1, true), "notify message should mention the offending buffer id")
-
-		assert.stub(log_error_stub).was.called(1)
+		assert.stub(log_error_stub).was.called_with(
+			'Buffer mismatch: buffer id 999 not found in universe "universe-uuid"'
+		)
 	end)
 end)
