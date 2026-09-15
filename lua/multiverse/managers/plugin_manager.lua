@@ -1,5 +1,6 @@
 local NeoTreePlugin = require("plugins.neotree_plugin")
 local CopilotChatPlugin = require("plugins.copilot_chat_plugin")
+local ZellijPlugin = require("plugins.zellij_plugin")
 
 local M = {}
 
@@ -9,6 +10,7 @@ local M = {}
 --- @type Plugin[] this is a list of out of the box plugins that are supported by default.
 local plugins = {
 	NeoTreePlugin,
+	ZellijPlugin,
 }
 
 --- @param plugin PluginContext --- The plugin to register and handle lifecycle events with.
