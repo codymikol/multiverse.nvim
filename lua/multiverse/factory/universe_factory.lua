@@ -56,7 +56,7 @@ function M.make(jsonString)
 		for _, buffer_json in pairs(universe_json_or_err.buffers) do
 			if type(buffer_json) == "table" then
 				local buffer_uuid = buffer_json.uuid
-				local buffer = Buffer:new(buffer_uuid, nil, buffer_json.bufferName)
+				local buffer = Buffer:new({ uuid = buffer_uuid, bufferId = nil, bufferName = buffer_json.bufferName })
 				universe:addBuffer(buffer)
 			end
 		end
