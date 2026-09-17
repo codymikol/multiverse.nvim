@@ -90,7 +90,7 @@ describe("telescope.get_universe_preview", function()
 
 		local layout2 = WindowLayout:new()
 		local row = Row:new()
-		local leaf = Leaf:new("window-2-uuid", 2)
+		local leaf = Leaf:new({ windowUuid = "window-2-uuid", windowId = 2 })
 		row:addChild(leaf)
 		layout2:addChild(row)
 		tabpage2:setLayout(layout2)
