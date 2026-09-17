@@ -42,15 +42,13 @@ local function hydrateTabpage(universe, tabpage)
 
 		for idx, child in ipairs(node.children) do
 			if idx ~= 1 then
-				-- split/vsplit place the new window relative to the current
-				-- one, which can reorder a container's children relative to
-				-- how they were dehydrated (all buffers still restore
-				-- correctly): https://github.com/codymikol/multiverse.nvim/issues/279
+				-- belowright forces the new window after/right of the current one
+				-- regardless of 'splitbelow'/'splitright', so siblings append in order.
 				if node.type == "column" then
-					vim.cmd("split")
+					vim.cmd("belowright split")
 				end
 				if node.type == "row" then
- 					vim.cmd("vsplit")
+					vim.cmd("belowright vsplit")
 				end
 			end
 
