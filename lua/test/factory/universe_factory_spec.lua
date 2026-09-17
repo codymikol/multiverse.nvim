@@ -348,6 +348,24 @@ describe("universe_factory make", function()
 		end)
 	end)
 
+	describe("a tabpage json payload where a window element is missing uuid", function()
+		it("should not throw when a window element is missing uuid", function()
+			assert.has_no.errors(function()
+				universe_factory.make(
+					'{"uuid":"a","name":"example","workingDirectory":"/home/foo","tabpages":[{"uuid":"a","windows":[{"bufferUuid":"b"}]}]}'
+				)
+			end)
+		end)
+
+		it("should skip window elements missing uuid", function()
+			local universe = universe_factory.make(
+				'{"uuid":"a","name":"example","workingDirectory":"/home/foo","tabpages":[{"uuid":"a","windows":[{"bufferUuid":"b"}]}]}'
+			)
+			assert.is_not.Nil(universe)
+			assert.are.equal(0, #universe.tabpages[1].windows)
+		end)
+	end)
+
 	describe("a tabpage json payload where layout is not a table", function()
 		it("should not throw when layout is a number", function()
 			assert.has_no.errors(function()

@@ -88,8 +88,12 @@ function M.make(jsonString)
 				if type(tabpage_json.windows) == "table" then
 					for _, window_json in pairs(tabpage_json.windows) do
 						if type(window_json) == "table" then
-							local window = Window:new({ uuid = window_json.uuid, bufferUuid = window_json.bufferUuid })
-							tabpage:addWindow(window)
+							if isNonEmptyString(window_json.uuid) then
+								local window = Window:new({ uuid = window_json.uuid, bufferUuid = window_json.bufferUuid })
+								tabpage:addWindow(window)
+							else
+								log.warn("Window json was missing a valid uuid, got: %s", window_json.uuid)
+							end
 						end
 					end
 				end
