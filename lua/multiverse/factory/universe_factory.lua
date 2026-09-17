@@ -88,7 +88,7 @@ function M.make(jsonString)
 				if type(tabpage_json.windows) == "table" then
 					for _, window_json in pairs(tabpage_json.windows) do
 						if type(window_json) == "table" then
-							local window = Window:new(window_json.uuid, window_json.bufferUuid, nil)
+							local window = Window:new({ uuid = window_json.uuid, bufferUuid = window_json.bufferUuid })
 							tabpage:addWindow(window)
 						end
 					end

@@ -16,7 +16,7 @@ M.getAllVisibleWindowsForTabpage = function(tabpageId)
     if isEditable then
       local windowUuid = uuid_manager.create()
       -- todo(mikol): I think we can just do this here, not in the external loop, come back to this...
-      local newWindow = Window:new(windowUuid, nil, windowId)
+      local newWindow = Window:new({ uuid = windowUuid, windowId = windowId })
       table.insert(editableWindows, newWindow)
     end
   end

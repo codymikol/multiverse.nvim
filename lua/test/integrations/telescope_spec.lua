@@ -84,7 +84,7 @@ describe("telescope.get_universe_preview", function()
 
 		-- Tabpage 2: normal layout with a single leaf window, plus one
 		-- buffer that isn't shown in any layout leaf.
-		local window = Window:new("window-2-uuid", "buffer-1-uuid", 2)
+		local window = Window:new({ uuid = "window-2-uuid", bufferUuid = "buffer-1-uuid", windowId = 2 })
 		local tabpage2 = Tabpage:new("tabpage-2-uuid", 2, "window-2-uuid")
 		tabpage2:addWindow(window)
 

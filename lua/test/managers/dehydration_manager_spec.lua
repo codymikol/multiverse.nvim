@@ -25,7 +25,7 @@ describe("dehydration_manager.dehydrate", function()
 
 	before_each(function()
 		tabpage = Tabpage:new("tabpage-uuid", 1, "window-uuid")
-		window = Window:new("window-uuid", nil, 42)
+		window = Window:new({ uuid = "window-uuid", windowId = 42 })
 
 		getTabpages_stub = stub(tabpage_manager, "getTabpages", function()
 			return { tabpage }
