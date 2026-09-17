@@ -68,8 +68,8 @@ M.make = function(neovimWindowLayout, universe)
 
 			if window ~= nil then
 				windowUuid = window.uuid
-        local leaf = Leaf:new(windowUuid, windowId)
-        node.cursor:addChild(leaf)
+				local leaf = Leaf:new({ windowUuid = windowUuid, windowId = windowId })
+				node.cursor:addChild(leaf)
 			end
 
 		end
@@ -122,7 +122,7 @@ M.makeFromJson = function(jsonManifest)
 		end
 
 		if type == "leaf" then
-			local leaf = Leaf:new(node.manifest.windowUuid, nil)
+			local leaf = Leaf:new({ windowUuid = node.manifest.windowUuid })
 			node.cursor:addChild(leaf)
 		end
 	    ::continue::
