@@ -17,18 +17,18 @@ describe("on_exit", function()
 			pcall(vim.api.nvim_del_augroup_by_name, augroup_name)
 		end)
 
-		it("should only register a single QuitPre autocmd when called multiple times", function()
+		it("should only register a single VimLeavePre autocmd when called multiple times", function()
 			on_exit.register()
 			on_exit.register()
 
-			local autocmds = vim.api.nvim_get_autocmds({ group = augroup_name, event = "QuitPre" })
+			local autocmds = vim.api.nvim_get_autocmds({ group = augroup_name, event = "VimLeavePre" })
 
 			assert.equals(1, #autocmds)
-			assert.equals("QuitPre", autocmds[1].event)
+			assert.equals("VimLeavePre", autocmds[1].event)
 		end)
 	end)
 
-	describe("QuitPre autocmd", function()
+	describe("registered autocmd", function()
 		local save_stub
 
 		before_each(function()
@@ -43,7 +43,7 @@ describe("on_exit", function()
 		it("should invoke multiverse_manager.save() exactly once", function()
 			on_exit.register()
 
-			vim.api.nvim_exec_autocmds("QuitPre", { group = augroup_name })
+			vim.api.nvim_exec_autocmds("VimLeavePre", { group = augroup_name })
 
 			assert.stub(save_stub).was.called(1)
 		end)
@@ -52,9 +52,17 @@ describe("on_exit", function()
 			on_exit.register()
 			on_exit.register()
 
-			vim.api.nvim_exec_autocmds("QuitPre", { group = augroup_name })
+			vim.api.nvim_exec_autocmds("VimLeavePre", { group = augroup_name })
 
 			assert.stub(save_stub).was.called(1)
+		end)
+
+		it("should not invoke multiverse_manager.save() on QuitPre (window/split close)", function()
+			on_exit.register()
+
+			vim.api.nvim_exec_autocmds("QuitPre", { group = augroup_name })
+
+			assert.stub(save_stub).was.called(0)
 		end)
 	end)
 end)
