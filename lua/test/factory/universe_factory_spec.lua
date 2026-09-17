@@ -330,6 +330,37 @@ describe("universe_factory make", function()
 		end)
 	end)
 
+	describe("a universe json payload where a buffer entry is missing uuid and/or bufferName", function()
+		it("should not throw when a buffer entry is an empty table", function()
+			assert.has_no.errors(function()
+				universe_factory.make('{"uuid":"a","name":"example","workingDirectory":"/home/foo","buffers":[{}]}')
+			end)
+		end)
+
+		it("should skip a buffer entry that is an empty table", function()
+			local universe =
+				universe_factory.make('{"uuid":"a","name":"example","workingDirectory":"/home/foo","buffers":[{}]}')
+			assert.is_not.Nil(universe)
+			assert.are.equal(0, #universe.buffers)
+		end)
+
+		it("should not throw when a buffer entry is missing bufferName", function()
+			assert.has_no.errors(function()
+				universe_factory.make(
+					'{"uuid":"a","name":"example","workingDirectory":"/home/foo","buffers":[{"uuid":"x"}]}'
+				)
+			end)
+		end)
+
+		it("should skip a buffer entry that is missing bufferName", function()
+			local universe = universe_factory.make(
+				'{"uuid":"a","name":"example","workingDirectory":"/home/foo","buffers":[{"uuid":"x"}]}'
+			)
+			assert.is_not.Nil(universe)
+			assert.are.equal(0, #universe.buffers)
+		end)
+	end)
+
 	describe("a tabpage json payload where windows contains non-table elements", function()
 		it("should not throw when windows contains non-table elements", function()
 			assert.has_no.errors(function()

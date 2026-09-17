@@ -91,7 +91,7 @@ multiverse_repository.save_multiverse(multiverse)
 -- very clearly NOT the empty/near-empty state a fresh `nvim .` startup
 -- buffer would produce.
 local universe = Universe:new({ uuid = universe_uuid, name = "test-universe", workingDirectory = test_dir })
-universe:addBuffer(Buffer:new({ uuid = "test-buffer-uuid-104", bufferId = nil, bufferName = marker }))
+universe:addBuffer(Buffer:new({ uuid = "test-buffer-uuid-104", bufferName = marker }))
 universe_repository.save_universe(universe)
 
 -- Sanity check (this is the "confirm setup worked" step, not the
