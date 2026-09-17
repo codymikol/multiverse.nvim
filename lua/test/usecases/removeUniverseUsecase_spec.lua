@@ -151,7 +151,8 @@ describe("removeUniverseUsecase.run", function()
 		local confirm_choice
 
 		before_each(function()
-			target_universe = UniverseSummary:new("/tmp/foo", "uuid-1", "foo", 0)
+			target_universe =
+				UniverseSummary:new({ directory = "/tmp/foo", uuid = "uuid-1", name = "foo", lastExplored = 0 })
 			multiverse = Multiverse:new({
 				target_universe,
 			})

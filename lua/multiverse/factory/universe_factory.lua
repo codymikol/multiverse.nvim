@@ -55,9 +55,14 @@ function M.make(jsonString)
 	if type(universe_json_or_err.buffers) == "table" then
 		for _, buffer_json in pairs(universe_json_or_err.buffers) do
 			if type(buffer_json) == "table" then
-				local buffer_uuid = buffer_json.uuid
-				local buffer = Buffer:new(buffer_uuid, nil, buffer_json.bufferName)
-				universe:addBuffer(buffer)
+				if not isNonEmptyString(buffer_json.uuid) then
+					log.warn("Buffer json was missing a valid uuid, got: %s", buffer_json.uuid)
+				elseif not isNonEmptyString(buffer_json.bufferName) then
+					log.warn("Buffer json was missing a valid bufferName, got: %s", buffer_json.bufferName)
+				else
+					local buffer = Buffer:new({ uuid = buffer_json.uuid, bufferName = buffer_json.bufferName })
+					universe:addBuffer(buffer)
+				end
 			end
 		end
 	end
