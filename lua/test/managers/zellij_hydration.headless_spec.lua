@@ -89,7 +89,7 @@ vim.api.nvim_win_set_buf(base_win, normal_buf)
 -- creates), without depending on the zellij binary actually being present.
 -- 'buftype' can't be set to "terminal" directly (nvim rejects it with
 -- E474); nvim_open_term is what actually turns a scratch buffer into a real
--- terminal buffer, same as termopen() does under the hood.
+-- terminal buffer, same as jobstart(..., { term = true }) does under the hood.
 local term_buf = vim.api.nvim_create_buf(false, true)
 vim.api.nvim_open_term(term_buf, {})
 vim.api.nvim_open_win(term_buf, true, {

@@ -68,7 +68,7 @@ M.open_floating_terminal = function(session_name)
     border = "rounded",
   })
 
-  vim.fn.termopen("zellij attach --create " .. vim.fn.shellescape(session_name))
+  vim.fn.jobstart("zellij attach --create " .. vim.fn.shellescape(session_name), { term = true })
 
   floating_terminal.win_id = win_id
   floating_terminal.buf_id = buf_id
