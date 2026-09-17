@@ -89,7 +89,7 @@ vim.api.nvim_win_set_buf(base_win, normal_buf)
 -- creates), without depending on the zellij binary actually being present.
 -- 'buftype' can't be set to "terminal" directly (nvim rejects it with
 -- E474); nvim_open_term is what actually turns a scratch buffer into a real
--- terminal buffer, same as termopen() does under the hood.
+-- terminal buffer, same as jobstart(..., { term = true }) does under the hood.
 local term_buf = vim.api.nvim_create_buf(false, true)
 vim.api.nvim_open_term(term_buf, {})
 vim.api.nvim_open_win(term_buf, true, {
@@ -115,7 +115,12 @@ local terminal_buffers_before = count_terminal_buffers()
 assert(terminal_buffers_before == 1,
   "expected exactly 1 terminal buffer to be set up before the cycle, got " .. terminal_buffers_before)
 
-local summary = UniverseSummary:new(test_dir, "test-zellij-hydration-uuid", "test-zellij-hydration-universe", 0)
+local summary = UniverseSummary:new({
+  directory = test_dir,
+  uuid = "test-zellij-hydration-uuid",
+  name = "test-zellij-hydration-universe",
+  lastExplored = 0,
+})
 
 -- beforeDehydrate: zellij plugin should no-op (is_available() is false) rather than raise.
 local before_dehydrate_ok, before_dehydrate_err = pcall(zellij_plugin.context.beforeDehydrate, {})

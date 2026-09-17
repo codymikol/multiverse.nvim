@@ -61,7 +61,7 @@ describe("zellij_manager", function()
 	describe("open_floating_terminal", function()
 		local nvim_create_buf_stub
 		local nvim_open_win_stub
-		local termopen_stub
+		local jobstart_stub
 
 		before_each(function()
 			nvim_create_buf_stub = stub(vim.api, "nvim_create_buf")
@@ -70,13 +70,13 @@ describe("zellij_manager", function()
 			nvim_open_win_stub = stub(vim.api, "nvim_open_win")
 			nvim_open_win_stub.returns(22)
 
-			termopen_stub = stub(vim.fn, "termopen")
+			jobstart_stub = stub(vim.fn, "jobstart")
 		end)
 
 		after_each(function()
 			nvim_create_buf_stub:revert()
 			nvim_open_win_stub:revert()
-			termopen_stub:revert()
+			jobstart_stub:revert()
 
 			-- Stub validity to false so this cleanup call can never reach a real
 			-- window/buffer id that happens to collide with the fabricated ones
@@ -106,14 +106,18 @@ describe("zellij_manager", function()
 		it("runs 'zellij attach --create <session_name>' inside the new buffer", function()
 			zellij_manager.open_floating_terminal("multiverse-abc")
 
-			assert.stub(termopen_stub).was_called_with("zellij attach --create " .. vim.fn.shellescape("multiverse-abc"))
+			assert.stub(jobstart_stub).was_called_with(
+				"zellij attach --create " .. vim.fn.shellescape("multiverse-abc"),
+				{ term = true }
+			)
 		end)
 
 		it("shellescapes the session name before interpolating it into the command", function()
 			zellij_manager.open_floating_terminal("multiverse abc")
 
-			assert.stub(termopen_stub).was_called_with(
-				"zellij attach --create " .. vim.fn.shellescape("multiverse abc")
+			assert.stub(jobstart_stub).was_called_with(
+				"zellij attach --create " .. vim.fn.shellescape("multiverse abc"),
+				{ term = true }
 			)
 		end)
 
@@ -196,13 +200,13 @@ describe("zellij_manager", function()
 			nvim_create_buf_stub.returns(33)
 			local nvim_open_win_stub = stub(vim.api, "nvim_open_win")
 			nvim_open_win_stub.returns(44)
-			local termopen_stub = stub(vim.fn, "termopen")
+			local jobstart_stub = stub(vim.fn, "jobstart")
 
 			zellij_manager.open_floating_terminal("multiverse-abc")
 
 			nvim_create_buf_stub:revert()
 			nvim_open_win_stub:revert()
-			termopen_stub:revert()
+			jobstart_stub:revert()
 
 			zellij_manager.close_floating_terminal()
 
@@ -224,7 +228,7 @@ describe("zellij_manager", function()
 		local systemlist_stub
 		local nvim_create_buf_stub
 		local nvim_open_win_stub
-		local termopen_stub
+		local jobstart_stub
 
 		before_each(function()
 			executable_stub = stub(vim.fn, "executable")
@@ -234,7 +238,7 @@ describe("zellij_manager", function()
 			nvim_create_buf_stub.returns(11)
 			nvim_open_win_stub = stub(vim.api, "nvim_open_win")
 			nvim_open_win_stub.returns(22)
-			termopen_stub = stub(vim.fn, "termopen")
+			jobstart_stub = stub(vim.fn, "jobstart")
 		end)
 
 		after_each(function()
@@ -242,7 +246,7 @@ describe("zellij_manager", function()
 			systemlist_stub:revert()
 			nvim_create_buf_stub:revert()
 			nvim_open_win_stub:revert()
-			termopen_stub:revert()
+			jobstart_stub:revert()
 			-- Reset v:shell_error (read-only, so it can't be assigned directly)
 			-- in case the shell_error test below left it non-zero.
 			real_systemlist("exit 0")
@@ -267,7 +271,7 @@ describe("zellij_manager", function()
 
 			assert.is_false(result)
 			assert.stub(systemlist_stub).was_not_called()
-			assert.stub(termopen_stub).was_not_called()
+			assert.stub(jobstart_stub).was_not_called()
 		end)
 
 		it("opens a floating terminal and returns true when the session is running", function()
@@ -277,8 +281,9 @@ describe("zellij_manager", function()
 			local result = zellij_manager.reattach_if_running("multiverse-abc")
 
 			assert.is_true(result)
-			assert.stub(termopen_stub).was_called_with(
-				"zellij attach --create " .. vim.fn.shellescape("multiverse-abc")
+			assert.stub(jobstart_stub).was_called_with(
+				"zellij attach --create " .. vim.fn.shellescape("multiverse-abc"),
+				{ term = true }
 			)
 		end)
 
@@ -289,7 +294,7 @@ describe("zellij_manager", function()
 			local result = zellij_manager.reattach_if_running("multiverse-abc")
 
 			assert.is_false(result)
-			assert.stub(termopen_stub).was_not_called()
+			assert.stub(jobstart_stub).was_not_called()
 		end)
 
 		it("returns false and does not iterate sessions when listing sessions fails", function()
@@ -305,7 +310,7 @@ describe("zellij_manager", function()
 			local result = zellij_manager.reattach_if_running("multiverse-abc")
 
 			assert.is_false(result)
-			assert.stub(termopen_stub).was_not_called()
+			assert.stub(jobstart_stub).was_not_called()
 		end)
 	end)
 
@@ -375,7 +380,7 @@ describe("zellij_manager", function()
 			nvim_create_buf_stub.returns(11)
 			local nvim_open_win_stub = stub(vim.api, "nvim_open_win")
 			nvim_open_win_stub.returns(22)
-			local termopen_stub = stub(vim.fn, "termopen")
+			local jobstart_stub = stub(vim.fn, "jobstart")
 			local nvim_win_is_valid_stub = stub(vim.api, "nvim_win_is_valid")
 			nvim_win_is_valid_stub.returns(true)
 			local nvim_buf_is_valid_stub = stub(vim.api, "nvim_buf_is_valid")
@@ -385,7 +390,7 @@ describe("zellij_manager", function()
 
 			nvim_create_buf_stub:revert()
 			nvim_open_win_stub:revert()
-			termopen_stub:revert()
+			jobstart_stub:revert()
 
 			assert.is_true(zellij_manager.is_floating_terminal_open())
 
@@ -398,7 +403,7 @@ describe("zellij_manager", function()
 			nvim_create_buf_stub.returns(11)
 			local nvim_open_win_stub = stub(vim.api, "nvim_open_win")
 			nvim_open_win_stub.returns(22)
-			local termopen_stub = stub(vim.fn, "termopen")
+			local jobstart_stub = stub(vim.fn, "jobstart")
 			local nvim_win_is_valid_stub = stub(vim.api, "nvim_win_is_valid")
 			nvim_win_is_valid_stub.returns(true)
 			local nvim_buf_is_valid_stub = stub(vim.api, "nvim_buf_is_valid")
@@ -408,7 +413,7 @@ describe("zellij_manager", function()
 
 			nvim_create_buf_stub:revert()
 			nvim_open_win_stub:revert()
-			termopen_stub:revert()
+			jobstart_stub:revert()
 
 			-- Simulate the user manually closing the floating window themselves
 			-- (e.g. `:q`), without going through close_floating_terminal().
