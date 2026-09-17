@@ -14,10 +14,10 @@ describe("window_layout_factory make", function()
 		local uuid3 = "2eeb7904-9216-4ec4-abd0-b3d40d125b9e"
 		local uuid4 = "61551161-55df-4f73-87a4-94956a313446"
 
-		local windowOne = Window:new(uuid1, nil, 1)
-		local windowTwo = Window:new(uuid2, nil, 2)
-		local windowThree = Window:new(uuid3, nil, 3)
-		local windowFour = Window:new(uuid4, nil, 4)
+		local windowOne = Window:new({ uuid = uuid1, windowId = 1 })
+		local windowTwo = Window:new({ uuid = uuid2, windowId = 2 })
+		local windowThree = Window:new({ uuid = uuid3, windowId = 3 })
+		local windowFour = Window:new({ uuid = uuid4, windowId = 4 })
 
 		tabpage:addAllWindows({ windowOne, windowTwo, windowThree, windowFour })
 
@@ -143,7 +143,7 @@ describe("window_layout_factory make", function()
 
 		local uuid1 = "258ca574-a7f2-47ad-a843-250a617ba634"
 
-		local windowOne = Window:new(uuid1, nil, 1000)
+		local windowOne = Window:new({ uuid = uuid1, windowId = 1000 })
 
 		tabpage:addAllWindows({ windowOne })
 
