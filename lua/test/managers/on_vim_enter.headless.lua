@@ -30,7 +30,8 @@ vim.fn.mkdir(test_dir, "p")
 vim.api.nvim_buf_set_name(0, test_dir)
 
 -- Build a fake universe whose directory matches the buffer's directory.
-local universe_summary = UniverseSummary:new(test_dir, "test-universe-uuid", "test-universe", 0)
+local universe_summary =
+	UniverseSummary:new({ directory = test_dir, uuid = "test-universe-uuid", name = "test-universe", lastExplored = 0 })
 
 local multiverse = Multiverse:new({ universe_summary })
 

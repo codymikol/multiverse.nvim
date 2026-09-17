@@ -35,7 +35,12 @@ M.run = function(name, directory)
 			return
 		end
 
-		local new_universe_summary = UniverseSummary:new(normalized_directory, new_uuid, name, seconds_since_epoch)
+		local new_universe_summary = UniverseSummary:new({
+			directory = normalized_directory,
+			uuid = new_uuid,
+			name = name,
+			lastExplored = seconds_since_epoch,
+		})
 
 		log.debug("Adding a new universe: %s", new_universe_summary)
 

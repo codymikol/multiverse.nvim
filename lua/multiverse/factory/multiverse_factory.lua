@@ -14,12 +14,12 @@ M.make = function (jsonString)
 
   for _, universe_json in pairs(multiverse_json.universes) do
 
-   local universeSummary = UniverseSummary:new(
-      universe_json.directory,
-      universe_json.uuid,
-      universe_json.name,
-      universe_json.lastExplored
-    )
+   local universeSummary = UniverseSummary:new({
+      directory = universe_json.directory,
+      uuid = universe_json.uuid,
+      name = universe_json.name,
+      lastExplored = universe_json.lastExplored,
+    })
 
     multiverse:addUniverse(universeSummary)
 
