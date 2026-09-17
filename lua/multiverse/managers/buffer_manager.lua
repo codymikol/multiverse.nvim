@@ -64,8 +64,8 @@ local function isDesiredUniverseBuffer(buffer_id)
   end
 
   if isReadOnlyBuffer(buffer_id) then
-    log.debug("buffer " .. get_buf_desc(buffer_id) .. " is read only, considered desired here (isUniverseBuffer may still exclude it)...")
-    return true
+    log.debug("buffer " .. get_buf_desc(buffer_id) .. " is read only, not closing...")
+    return false
   end
 
   if not isNormalBuffer(buffer_id) then
