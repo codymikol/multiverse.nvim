@@ -115,7 +115,12 @@ local terminal_buffers_before = count_terminal_buffers()
 assert(terminal_buffers_before == 1,
   "expected exactly 1 terminal buffer to be set up before the cycle, got " .. terminal_buffers_before)
 
-local summary = UniverseSummary:new(test_dir, "test-zellij-hydration-uuid", "test-zellij-hydration-universe", 0)
+local summary = UniverseSummary:new({
+  directory = test_dir,
+  uuid = "test-zellij-hydration-uuid",
+  name = "test-zellij-hydration-universe",
+  lastExplored = 0,
+})
 
 -- beforeDehydrate: zellij plugin should no-op (is_available() is false) rather than raise.
 local before_dehydrate_ok, before_dehydrate_err = pcall(zellij_plugin.context.beforeDehydrate, {})
