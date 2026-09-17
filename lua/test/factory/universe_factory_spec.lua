@@ -359,6 +359,22 @@ describe("universe_factory make", function()
 			assert.is_not.Nil(universe)
 			assert.are.equal(0, #universe.buffers)
 		end)
+
+		it("should skip a buffer entry with an empty-string uuid", function()
+			local universe = universe_factory.make(
+				'{"uuid":"a","name":"example","workingDirectory":"/home/foo","buffers":[{"uuid":"","bufferName":"x"}]}'
+			)
+			assert.is_not.Nil(universe)
+			assert.are.equal(0, #universe.buffers)
+		end)
+
+		it("should skip a buffer entry with a non-string bufferName", function()
+			local universe = universe_factory.make(
+				'{"uuid":"a","name":"example","workingDirectory":"/home/foo","buffers":[{"uuid":"x","bufferName":5}]}'
+			)
+			assert.is_not.Nil(universe)
+			assert.are.equal(0, #universe.buffers)
+		end)
 	end)
 
 	describe("a tabpage json payload where windows contains non-table elements", function()

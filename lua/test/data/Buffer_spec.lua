@@ -11,7 +11,7 @@ describe("Buffer", function()
 		end)
 
 		describe("with no argument", function()
-			it("should raise a missing uuid error via the opts = opts or {} fallback", function()
+			it("should raise a missing uuid error", function()
 				assert.has_error(function()
 					Buffer:new()
 				end, "Buffer:new requires opts.uuid to be a non-empty string")
