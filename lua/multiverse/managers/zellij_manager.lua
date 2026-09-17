@@ -26,10 +26,18 @@ end
 --- always produces the same session name, which is what lets a zellij
 --- session survive across the dehydrate/hydrate boundary (e.g. `afterHydrate`
 --- calling this with `vim.fn.getcwd()`) without needing any shared persistence.
+---
+--- Truncated to 16 hex chars (64 bits, plenty to avoid collisions across a
+--- user's directories): the full 64-char sha256 digest pushes zellij's IPC
+--- socket path (~/run/user/<uid>/zellij/contract_version_1/<name>) past the
+--- AF_UNIX sun_path limit (108 bytes), which makes `zellij attach --create`
+--- fail after it has already sent alt-screen/terminal-query escape codes,
+--- leaving the terminal cleared with leftover query-response garbage printed
+--- into the shell.
 --- @param working_directory string
 --- @return string
 M.session_name_for = function(working_directory)
-  return "multiverse-" .. vim.fn.sha256(working_directory)
+  return "multiverse-" .. vim.fn.sha256(working_directory):sub(1, 16)
 end
 
 --- Opens a centered floating window over a new scratch buffer and attaches
