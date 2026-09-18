@@ -90,7 +90,7 @@ multiverse_repository.save_multiverse(multiverse)
 -- Persist a real, non-trivial session for that universe: a buffer that is
 -- very clearly NOT the empty/near-empty state a fresh `nvim .` startup
 -- buffer would produce.
-local universe = Universe:new(universe_uuid, "test-universe", test_dir)
+local universe = Universe:new({ uuid = universe_uuid, name = "test-universe", workingDirectory = test_dir })
 universe:addBuffer(Buffer:new("test-buffer-uuid-104", nil, marker))
 universe_repository.save_universe(universe)
 
