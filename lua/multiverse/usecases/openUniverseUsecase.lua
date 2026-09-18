@@ -19,7 +19,7 @@ M.run = function(name)
 	end)
 	if not success then
 		vim.notify("Failed to open universe, check MultiverseLog for more information", vim.log.levels.ERROR)
-		log.error("Error opening universe: " .. vim.inspect(err))
+		log.error("Error opening universe: %s", err)
 	end
 end
 

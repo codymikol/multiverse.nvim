@@ -90,18 +90,18 @@ M.close_floating_terminal = function(win_id, buf_id)
   if win_id and vim.api.nvim_win_is_valid(win_id) then
     local status, err = pcall(vim.api.nvim_win_close, win_id, true)
     if status then
-      log.debug("successfully closed zellij floating window " .. vim.inspect(win_id))
+      log.debug("successfully closed zellij floating window %s", win_id)
     else
-      log.error("error closing zellij floating window " .. vim.inspect(win_id) .. ", error: " .. vim.inspect(err))
+      log.error("error closing zellij floating window %s, error: %s", win_id, err)
     end
   end
 
   if buf_id and vim.api.nvim_buf_is_valid(buf_id) then
     local status, err = pcall(vim.api.nvim_buf_delete, buf_id, { force = true })
     if status then
-      log.debug("successfully deleted zellij terminal buffer " .. vim.inspect(buf_id))
+      log.debug("successfully deleted zellij terminal buffer %s", buf_id)
     else
-      log.error("error deleting zellij terminal buffer " .. vim.inspect(buf_id) .. ", error: " .. vim.inspect(err))
+      log.error("error deleting zellij terminal buffer %s, error: %s", buf_id, err)
     end
   end
 
@@ -133,12 +133,12 @@ M.mark_open = function(session_name)
   local path = open_flag_path(session_name)
   local status, file_or_err = pcall(io.open, path, "w")
   if not status or file_or_err == nil then
-    log.error("error opening zellij open-flag file " .. vim.inspect(path) .. " for writing, error: " .. vim.inspect(file_or_err))
+    log.error("error opening zellij open-flag file %s for writing, error: %s", path, file_or_err)
     return
   end
 
   file_or_err:close()
-  log.debug("marked zellij session " .. vim.inspect(session_name) .. " as open")
+  log.debug("marked zellij session %s as open", session_name)
 end
 
 --- Clears the on-disk flag set by `mark_open`, so a later `was_open` call
@@ -146,7 +146,7 @@ end
 --- @param session_name string
 M.mark_closed = function(session_name)
   vim.fn.delete(open_flag_path(session_name))
-  log.debug("marked zellij session " .. vim.inspect(session_name) .. " as closed")
+  log.debug("marked zellij session %s as closed", session_name)
 end
 
 --- @param session_name string
@@ -173,7 +173,7 @@ M.reattach_if_running = function(session_name)
   local sessions = vim.fn.systemlist(command)
 
   if vim.v.shell_error ~= 0 then
-    log.error("error running '" .. command .. "', exit code: " .. vim.v.shell_error)
+    log.error("error running %s, exit code: %s", command, vim.v.shell_error)
     return false
   end
 
