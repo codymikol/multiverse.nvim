@@ -48,7 +48,7 @@ M.run = function(name, directory)
 
 		multiverse_repository.save_multiverse(multiverse)
 
-		local new_universe = Universe:new(new_uuid, name, normalized_directory)
+		local new_universe = Universe:new({ uuid = new_uuid, name = name, workingDirectory = normalized_directory })
 
 		universe_repository.save_universe(new_universe)
 

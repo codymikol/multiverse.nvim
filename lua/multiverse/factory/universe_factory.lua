@@ -50,7 +50,7 @@ function M.make(jsonString)
 		return nil
 	end
 
-	local universe = Universe:new(uuid, name, workingDirectory)
+	local universe = Universe:new({ uuid = uuid, name = name, workingDirectory = workingDirectory })
 
 	if type(universe_json_or_err.buffers) == "table" then
 		for _, buffer_json in pairs(universe_json_or_err.buffers) do
