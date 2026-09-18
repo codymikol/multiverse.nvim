@@ -97,7 +97,11 @@ M.load_universe = function(multiverse, selected_universe_summary, skip_save)
         current_universe_summary = multiverse:getUniverseByDirectory(current_directory .. "/")
       end
 
-      if current_universe_summary ~= nil then
+      if current_universe_summary ~= nil and current_universe_summary.uuid == selected_universe_summary.uuid then
+
+        log.debug("Current directory's universe is the same universe being loaded (" .. selected_universe_summary.uuid .. "), skipping dehydration to avoid clobbering its just-persisted session.")
+
+      elseif current_universe_summary ~= nil then
 
         -- deliberately shadowed: keeps beforeHydrate/afterHydrate's
         -- `current_universe` argument at its pre-existing value (nil) here,
