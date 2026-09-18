@@ -52,7 +52,19 @@ M.run = function(name, directory)
 
 		universe_repository.save_universe(new_universe)
 
-		multiverse_manager.load_universe(multiverse, new_universe_summary)
+		-- The new universe is already registered at the current directory
+		-- (see multiverse:addUniverse above), so load_universe's own
+		-- current-directory lookup would resolve to this SAME universe and
+		-- skip its dehydration step (to avoid clobbering a just-persisted
+		-- session -- see #313). That means the currently-open buffers must be
+		-- captured into the new universe's file here, explicitly, before
+		-- load_universe runs cleanup+hydrate against it; otherwise the just
+		-- created empty universe file is read back as-is and the user's open
+		-- buffers are lost. skip_save=true tells load_universe not to redo
+		-- this save.
+		multiverse_manager.save()
+
+		multiverse_manager.load_universe(multiverse, new_universe_summary, true)
 	end)
   if not success then
     vim.notify("Failed to add new universe, check MultiverseLog for more information", vim.log.levels.ERROR)

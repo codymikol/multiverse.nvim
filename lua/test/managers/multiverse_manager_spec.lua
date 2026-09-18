@@ -57,6 +57,8 @@ describe("multiverse_manager.load_universe", function()
 	local get_universe_by_uuid_stub
 	local getcwd_stub
 	local save_stub
+	local log_error_stub
+	local log_debug_stub
 
 	before_each(function()
 		state_store.set_current_state(state_store.STATES.IDLE)
@@ -66,6 +68,8 @@ describe("multiverse_manager.load_universe", function()
 		beforeHydrate_stub = stub(plugin_manager, "beforeHydrate")
 		afterHydrate_stub = stub(plugin_manager, "afterHydrate")
 		get_universe_by_uuid_stub = stub(universe_repository, "get_universe_by_uuid")
+		log_error_stub = stub(log, "error")
+		log_debug_stub = stub(log, "debug")
 	end)
 
 	after_each(function()
@@ -75,6 +79,8 @@ describe("multiverse_manager.load_universe", function()
 		beforeHydrate_stub:revert()
 		afterHydrate_stub:revert()
 		get_universe_by_uuid_stub:revert()
+		log_error_stub:revert()
+		log_debug_stub:revert()
 		if getcwd_stub then
 			getcwd_stub:revert()
 			getcwd_stub = nil
@@ -98,6 +104,7 @@ describe("multiverse_manager.load_universe", function()
 			local multiverse = Multiverse:new({ current_universe_summary })
 
 			getcwd_stub = stub(vim.fn, "getcwd", function() return cwd end)
+			get_universe_by_uuid_stub.returns({ uuid = shared_uuid })
 			save_stub = stub(multiverse_manager, "save")
 
 			multiverse_manager.load_universe(multiverse, selected_universe_summary)

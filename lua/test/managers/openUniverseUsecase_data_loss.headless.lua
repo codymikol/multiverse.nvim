@@ -87,7 +87,7 @@ local marker = "IMPORTANT_NON_TRIVIAL_SESSION_MARKER_important_file.lua"
 
 -- Register the universe in the multiverse.
 local universe_summary =
-	UniverseSummary:new({ directory = test_dir, uuid = universe_uuid, name = universe_name, lastExplored = 0 })
+  UniverseSummary:new({ directory = test_dir, uuid = universe_uuid, name = universe_name, lastExplored = 0 })
 
 local multiverse = multiverse_repository.getMultiverse()
 table.insert(multiverse.universes, universe_summary)
@@ -126,7 +126,7 @@ vim.api.nvim_buf_set_name(0, test_dir)
 state_store.set_current_state(state_store.STATES.IDLE)
 
 -- Call the REAL openUniverseUsecase.run -> multiverse_manager.load_universe
--- pipeline; nothing here is monkeypatched.
+-- pipeline; aside from the stubs above, nothing here is monkeypatched.
 openUniverseUsecase.run(universe_name)
 
 state_store.set_current_state(state_store.STATES.IDLE)

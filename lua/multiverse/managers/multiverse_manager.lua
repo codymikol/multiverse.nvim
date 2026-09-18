@@ -98,7 +98,7 @@ M.load_universe = function(multiverse, selected_universe_summary, skip_save)
         current_universe_summary = multiverse:getUniverseByDirectory(current_directory .. "/")
       end
 
-      if current_universe_summary ~= nil and current_universe_summary.uuid ~= selected_universe_summary.uuid then
+      if current_universe_summary ~= nil then
 
         -- deliberately shadowed: keeps beforeHydrate/afterHydrate's
         -- `current_universe` argument at its pre-existing value (nil) here,
@@ -106,18 +106,30 @@ M.load_universe = function(multiverse, selected_universe_summary, skip_save)
         -- change instead of silently altering it.
         local current_universe, err = universe_repository.get_universe_by_uuid(current_universe_summary.uuid)
 
+        -- This abort guard must run whether or not the current directory's
+        -- universe is the one being loaded: bailing out here (before
+        -- cleanup_manager.cleanup() runs below) is what keeps a missing/
+        -- corrupt universe file from wiping the user's open buffers.
         if current_universe == nil then
           log.error("Error dehydrating universe: " .. current_universe_summary.uuid .. ", error details: " .. vim.inspect(err))
           return
         end
 
-        log.debug("load universe searching multiverse for matching directory and found: " .. vim.inspect(current_universe_summary))
+        if current_universe_summary.uuid ~= selected_universe_summary.uuid then
 
-        M.save()
+          log.debug("load universe searching multiverse for matching directory and found: " .. vim.inspect(current_universe_summary))
 
-      elseif current_universe_summary ~= nil then
+          M.save()
 
-        log.debug("Current directory's universe is the same universe being loaded (%s), skipping dehydration to avoid clobbering its just-persisted session.", selected_universe_summary.uuid)
+        else
+
+          log.debug(
+            "Current directory's universe is the same universe being loaded (%s), skipping dehydration "
+              .. "to avoid clobbering its just-persisted session.",
+            selected_universe_summary.uuid
+          )
+
+        end
 
       else
         log.debug("Working directory is not part of a universe, proceeding with loading the selected universe and skipping dehydration.")

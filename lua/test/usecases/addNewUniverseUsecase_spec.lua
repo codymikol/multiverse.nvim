@@ -15,6 +15,7 @@ describe("addNewUniverseUsecase.run", function()
 	local save_multiverse_stub
 	local save_universe_stub
 	local load_universe_stub
+	local save_stub
 	local uuid_stub
 	local now_stub
 	local notify_stub
@@ -31,6 +32,7 @@ describe("addNewUniverseUsecase.run", function()
 		save_multiverse_stub = stub(multiverse_repository, "save_multiverse")
 		save_universe_stub = stub(universe_repository, "save_universe")
 		load_universe_stub = stub(multiverse_manager, "load_universe")
+		save_stub = stub(multiverse_manager, "save")
 		uuid_stub = stub(uuid_manager, "create", function()
 			return "uuid-1"
 		end)
@@ -48,6 +50,7 @@ describe("addNewUniverseUsecase.run", function()
 		save_multiverse_stub:revert()
 		save_universe_stub:revert()
 		load_universe_stub:revert()
+		save_stub:revert()
 		uuid_stub:revert()
 		now_stub:revert()
 		notify_stub:revert()
@@ -68,6 +71,18 @@ describe("addNewUniverseUsecase.run", function()
 		end
 		assert.are.equal("foo", summary_arg.name)
 		assert.stub(print_stub).was_not.called()
+	end)
+
+	it("captures the currently-open session into the new universe before loading it, without redoing that save", function()
+		addNewUniverseUsecase.run("foo", "/tmp/some/project")
+
+		assert.stub(save_universe_stub).was.called(1)
+		assert.stub(save_stub).was.called(1)
+		assert.stub(load_universe_stub).was.called(1)
+
+		local load_universe_call = load_universe_stub.calls[1]
+		assert.are.equal(multiverse, load_universe_call.refs[1])
+		assert.are.equal(true, load_universe_call.refs[3])
 	end)
 
 	it("does not execute backtick-quoted shell commands embedded in the directory", function()
