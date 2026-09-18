@@ -5,7 +5,7 @@ describe("window_layout_factory make", function()
 	local Tabpage = require("multiverse.data.Tabpage")
 
 	describe("a complex window layout with rows, columns and leaves", function()
-		local universe = Universe:new("", "example", "/home/foo")
+		local universe = Universe:new({ uuid = "uuid-1", name = "example", workingDirectory = "/home/foo" })
 
 		local tabpage = Tabpage:new()
 
@@ -137,7 +137,7 @@ describe("window_layout_factory make", function()
 	end)
 
 	describe("a window layout with a single leaf node", function()
-		local universe = Universe:new("", "example", "/home/foo")
+		local universe = Universe:new({ uuid = "uuid-1", name = "example", workingDirectory = "/home/foo" })
 
 		local tabpage = Tabpage:new()
 
