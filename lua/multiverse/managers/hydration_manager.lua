@@ -21,6 +21,8 @@ M.hydrate = function(selected_universe)
 		return
 	end
 
+	local hydrated_buffer_ids = nil
+
 	local success, hydrate_err = pcall(function()
 		setCwd(universe)
 
@@ -28,7 +30,7 @@ M.hydrate = function(selected_universe)
 
 		tabpage_manager.hydrate(universe)
 
-		window_layout_manager.hydrate(universe)
+		hydrated_buffer_ids = window_layout_manager.hydrate(universe)
 
 		neotree_integration.hydrate()
 	end)
@@ -39,6 +41,43 @@ M.hydrate = function(selected_universe)
 	end
 
 	buffer_manager.close_generated_nofile_scratch_buffers()
+
+	-- Hydration sets these buffers current (and fires FileType) synchronously,
+	-- before plugins that register their own FileType autocmds later in the
+	-- same VimEnter dispatch (e.g. lazily-configured highlighters) get a
+	-- chance to register. Re-firing FileType one tick later via vim.schedule
+	-- lets those late listeners attach without deferring hydration itself.
+	if hydrated_buffer_ids ~= nil and #hydrated_buffer_ids > 0 then
+		vim.schedule(function()
+			local seen_buffer_ids = {}
+			for _, bufferId in ipairs(hydrated_buffer_ids) do
+				if not seen_buffer_ids[bufferId] and vim.api.nvim_buf_is_valid(bufferId) then
+					seen_buffer_ids[bufferId] = true
+					local filetype = vim.api.nvim_get_option_value("filetype", { buf = bufferId })
+					if filetype ~= "" then
+						-- Re-emission runs per-buffer inside its own pcall so a third-party
+						-- FileType handler throwing for one buffer (e.g. a highlighter) can't
+						-- abort the whole loop and silently skip re-emission for every later
+						-- buffer too.
+						local reemit_ok, reemit_err = pcall(function()
+							-- `buffer` only matches buffer-local (`<buffer=N>`) autocmds and is
+							-- mutually exclusive with `pattern`, so it can't re-fire listeners
+							-- registered with a string pattern like "lua"; nvim_buf_call makes
+							-- this buffer current for the duration of the real, pattern-matched
+							-- FileType dispatch, matching how :doautocmd FileType <ft> behaves.
+							vim.api.nvim_buf_call(bufferId, function()
+								vim.api.nvim_exec_autocmds("FileType", { pattern = filetype, modeline = false })
+							end)
+						end)
+
+						if not reemit_ok then
+							log.error("Error re-emitting FileType for buffer %s: %s", bufferId, reemit_err)
+						end
+					end
+				end
+			end
+		end)
+	end
 end
 
 return M
