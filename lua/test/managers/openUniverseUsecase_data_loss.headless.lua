@@ -139,6 +139,23 @@ assert(contents_after:find(marker, 1, true) ~= nil,
     .. "openUniverseUsecase.run() must not save/dehydrate over a universe's own session when the universe being "
     .. "loaded is the same one currently registered at cwd.")
 
+-- Beyond "the file wasn't clobbered", confirm hydration actually ran against
+-- the un-clobbered data: a change that made load_universe bail out entirely
+-- before reaching hydration would also leave the persisted file untouched
+-- and pass the assertion above without actually fixing the reported bug (the
+-- user still sees empty windows on load).
+local hydrated_marker_buffer_found = false
+for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+  if vim.api.nvim_buf_get_name(buf):find(marker, 1, true) ~= nil then
+    hydrated_marker_buffer_found = true
+    break
+  end
+end
+
+assert(hydrated_marker_buffer_found,
+  "openUniverseUsecase.run() did not hydrate the marker buffer -- the persisted session survived on disk, but "
+    .. "was never loaded back into the editor.")
+
 -- restore originals for hygiene, even though this is a one-shot process
 persistance.getDir = original_getDir
 neotree_integration.hydrate = original_neotree_hydrate
