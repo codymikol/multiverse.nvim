@@ -21,6 +21,7 @@ describe("addNewUniverseUsecase.run", function()
 	local notify_stub
 	local log_debug_stub
 	local print_stub
+	local getcwd_stub
 
 	local marker_path = vim.fn.tempname() .. "_multiverse_pwned_marker"
 
@@ -56,6 +57,10 @@ describe("addNewUniverseUsecase.run", function()
 		notify_stub:revert()
 		log_debug_stub:revert()
 		print_stub:revert()
+		if getcwd_stub then
+			getcwd_stub:revert()
+			getcwd_stub = nil
+		end
 		os.remove(marker_path)
 	end)
 
@@ -75,7 +80,7 @@ describe("addNewUniverseUsecase.run", function()
 
 	it("captures the currently-open session into the new universe before loading it, when adding for the current directory", function()
 		local directory = "/tmp/some/project"
-		local getcwd_stub = stub(vim.fn, "getcwd", function() return directory end)
+		getcwd_stub = stub(vim.fn, "getcwd", function() return directory end)
 
 		local call_order = {}
 		save_stub.invokes(function() table.insert(call_order, "save") end)
@@ -90,21 +95,17 @@ describe("addNewUniverseUsecase.run", function()
 
 		local load_universe_call = load_universe_stub.calls[1]
 		assert.are.equal(multiverse, load_universe_call.refs[1])
-
-		getcwd_stub:revert()
 	end)
 
 	it("does not capture the current session when adding a universe for a different directory", function()
 		local directory = "/tmp/some/other/project"
-		local getcwd_stub = stub(vim.fn, "getcwd", function() return "/tmp/some/unrelated/cwd" end)
+		getcwd_stub = stub(vim.fn, "getcwd", function() return "/tmp/some/unrelated/cwd" end)
 
 		addNewUniverseUsecase.run("foo", directory)
 
 		assert.stub(save_universe_stub).was.called(1)
 		assert.stub(save_stub).was_not.called()
 		assert.stub(load_universe_stub).was.called(1)
-
-		getcwd_stub:revert()
 	end)
 
 	it("does not execute backtick-quoted shell commands embedded in the directory", function()

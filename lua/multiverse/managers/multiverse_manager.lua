@@ -117,7 +117,7 @@ M.load_universe = function(multiverse, selected_universe_summary, skip_save)
 
         if current_universe_summary.uuid ~= selected_universe_summary.uuid then
 
-          log.debug("load universe searching multiverse for matching directory and found: %s", vim.inspect(current_universe_summary))
+          log.debug("load universe searching multiverse for matching directory and found: %s", current_universe_summary)
 
           M.save()
 

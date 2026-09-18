@@ -52,15 +52,10 @@ M.run = function(name, directory)
 
 		universe_repository.save_universe(new_universe)
 
-		-- If the new universe is being added for the directory the user is
-		-- CURRENTLY in, load_universe's same-uuid skip (see #313) will treat
-		-- the still-empty file just written above as this universe's real
-		-- session and skip re-saving it -- so capture the user's
-		-- currently-open buffers into it here, explicitly, before
-		-- load_universe runs. Adding a universe for some OTHER directory
-		-- doesn't need this: load_universe's own mismatched-uuid save path
-		-- already dehydrates whatever's open at the current directory,
-		-- unchanged from its pre-#313 behavior.
+		-- Adding a universe for the CURRENT directory needs an explicit save
+		-- here: load_universe's same-uuid skip (#313) would otherwise treat
+		-- the still-empty file above as this universe's real session and
+		-- never capture the currently-open buffers into it.
 		if normalized_directory == vim.fn.getcwd() then
 			multiverse_manager.save()
 		end
