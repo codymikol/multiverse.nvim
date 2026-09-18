@@ -61,6 +61,11 @@ M.registerCommands = function()
 			return
 		end
 
+		if zellij_manager.is_floating_terminal_open() then
+			zellij_manager.close_floating_terminal()
+			return
+		end
+
 		local session_name = zellij_manager.session_name_for(vim.fn.getcwd())
 		zellij_manager.open_floating_terminal(session_name)
 	end, { nargs = 0 })

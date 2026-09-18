@@ -64,6 +64,8 @@ describe("cli_manager.registerCommands", function()
 		local is_available_stub
 		local session_name_for_stub
 		local open_floating_terminal_stub
+		local close_floating_terminal_stub
+		local is_floating_terminal_open_stub
 		local notify_stub
 
 		before_each(function()
@@ -71,6 +73,9 @@ describe("cli_manager.registerCommands", function()
 			is_available_stub = stub(zellij_manager, "is_available")
 			session_name_for_stub = stub(zellij_manager, "session_name_for")
 			open_floating_terminal_stub = stub(zellij_manager, "open_floating_terminal")
+			close_floating_terminal_stub = stub(zellij_manager, "close_floating_terminal")
+			is_floating_terminal_open_stub = stub(zellij_manager, "is_floating_terminal_open")
+			is_floating_terminal_open_stub.returns(false)
 			notify_stub = stub(vim, "notify")
 		end)
 
@@ -79,6 +84,8 @@ describe("cli_manager.registerCommands", function()
 			is_available_stub:revert()
 			session_name_for_stub:revert()
 			open_floating_terminal_stub:revert()
+			close_floating_terminal_stub:revert()
+			is_floating_terminal_open_stub:revert()
 			notify_stub:revert()
 		end)
 
@@ -121,6 +128,18 @@ describe("cli_manager.registerCommands", function()
 
 			assert.stub(open_floating_terminal_stub).was_not_called()
 			assert.stub(notify_stub).was_called_with("zellij is not installed", vim.log.levels.WARN)
+		end)
+
+		it("closes floating terminal when already open", function()
+			is_available_stub.returns(true)
+			session_name_for_stub.returns("multiverse-abc")
+			is_floating_terminal_open_stub.returns(true)
+
+			local callback = get_callback()
+			callback()
+
+			assert.stub(close_floating_terminal_stub).was_called()
+			assert.stub(open_floating_terminal_stub).was_not_called()
 		end)
 	end)
 end)
