@@ -37,7 +37,7 @@ M.on_vim_enter = function()
   end)
 
   if not success then
-    log.error("Error loading universe on startup: " .. vim.inspect(err))
+    log.error("Error loading universe on startup: %s", err)
   end
 end
 

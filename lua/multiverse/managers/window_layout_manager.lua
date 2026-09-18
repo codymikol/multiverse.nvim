@@ -16,14 +16,14 @@ end
 local function hydrateTabpage(universe, tabpage)
 	vim.api.nvim_set_current_tabpage(tabpage.tabpageId)
 
-  log.debug("Hydrating tabpage " .. vim.inspect(tabpage.tabpageId) .. " with layout " .. vim.inspect(tabpage.layout))
+  log.debug("Hydrating tabpage %s with layout %s", tabpage.tabpageId, tabpage.layout)
 
 	local layout = tabpage.layout
 
 	local unexplored_layout = { layout.children[1] } -- start at the first row rather than the window layout root
 
   if #unexplored_layout == 0 then
-    log.warn("Tabpage " .. vim.inspect(tabpage.tabpageId) .. " has no layout children to hydrate")
+    log.warn("Tabpage %s has no layout children to hydrate", tabpage.tabpageId)
     return
   end
 
@@ -33,7 +33,7 @@ local function hydrateTabpage(universe, tabpage)
 		if node.windowId ~= nil then
 			vim.api.nvim_set_current_win(node.windowId)
     else
-      log.warn("No windowId set for layout node " .. vim.inspect(node.uuid) .. "; setting current window to tabpage's current window")
+      log.warn("No windowId set for layout node %s; setting current window to tabpage's current window", node.uuid)
 		end
 
 		if nil == node.children then
@@ -63,16 +63,16 @@ local function hydrateTabpage(universe, tabpage)
           if nil ~= window.bufferUuid then
             local buffer = universe:getBufferByUuid(window.bufferUuid)
 					  if nil ~= buffer then
-              log.debug("Setting window " .. vim.inspect(activeWindowId) .. " to buffer " .. vim.inspect(buffer.bufferId) .. " (" .. vim.inspect(buffer.bufferName) .. ")")
+              log.debug("Setting window %s to buffer %s (%s)", activeWindowId, buffer.bufferId, buffer.bufferName)
 						  vim.api.nvim_set_current_buf(buffer.bufferId)
 					  else
-              log.warn("Could not find buffer with uuid " .. vim.inspect(window.bufferUuid) .. " for window " .. vim.inspect(window.uuid))
+              log.warn("Could not find buffer with uuid %s for window %s", window.bufferUuid, window.uuid)
 					  end
           else
-            log.warn("Window " .. vim.inspect(window.uuid) .. " has no associated buffer")
+            log.warn("Window %s has no associated buffer", window.uuid)
           end
 				else
-          log.warn("Could not find window with uuid " .. vim.inspect(child.windowUuid) .. " in tabpage " .. vim.inspect(tabpage.tabpageId))
+          log.warn("Could not find window with uuid %s in tabpage %s", child.windowUuid, tabpage.tabpageId)
 				end
 			else
 				-- Leaf has no setWindowId; only container (Row/Column) children need it here.

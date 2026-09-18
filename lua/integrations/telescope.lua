@@ -105,7 +105,7 @@ local function get_universe_preview(universe_summary)
 
 	if not universe then
 		vim.notify("Error: Universe not found for UUID: " .. universe_summary.uuid)
-		log.debug("Error: Universe not found for UUID: " .. vim.inspect(universe_summary))
+		log.debug("Error: Universe not found for UUID: %s", universe_summary)
 		return lines
 	end
 
@@ -116,7 +116,7 @@ local function get_universe_preview(universe_summary)
 		end
 
 		if node.depth == nil then
-			log.error("get_node_indent called with node without depth: " .. vim.inspect(node))
+			log.error("get_node_indent called with node without depth: %s", node)
 			return ""
 		end
 
@@ -179,7 +179,7 @@ local function get_universe_preview(universe_summary)
 				if child.type == "leaf" then
 
           if child.windowUuid == nil then
-            log.warn("Leaf node without window UUID: " .. vim.inspect(child))
+            log.warn("Leaf node without window UUID: %s", child)
             goto continue
           end
 
@@ -188,7 +188,7 @@ local function get_universe_preview(universe_summary)
 					local window_description = "no buffer"
 
           if window == nil then
-            log.error("Window not found for UUID: " .. child.windowUuid)
+            log.error("Window not found for UUID: %s", child.windowUuid)
             goto continue
           end
 

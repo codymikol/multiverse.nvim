@@ -45,14 +45,14 @@ M.dehydrate = function(summary)
 	end
 
   for i, tabpage in ipairs(universe.tabpages) do
-    log.debug("Tabpage: " .. vim.inspect(i))
+    log.debug("Tabpage: %s", i)
     for j, window in ipairs(tabpage.windows) do
-      log.debug("  Window: " .. vim.inspect(j) .. " Buffer UUID: " .. vim.inspect(window.bufferUuid))
+      log.debug("  Window: %s Buffer UUID: %s", j, window.bufferUuid)
       local buffer = universe:getBufferByUuid(window.bufferUuid)
       if buffer then
-        log.debug("    Buffer: " .. vim.inspect(buffer.bufferId) .. " Name: " .. vim.inspect(buffer.bufferName))
+        log.debug("    Buffer: %s Name: %s", buffer.bufferId, buffer.bufferName)
       else
-        log.debug("    Buffer not found for UUID: " .. vim.inspect(window.bufferUuid))
+        log.debug("    Buffer not found for UUID: %s", window.bufferUuid)
       end
     end
   end
