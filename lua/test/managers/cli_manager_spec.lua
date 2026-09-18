@@ -132,14 +132,16 @@ describe("cli_manager.registerCommands", function()
 
 		it("closes floating terminal when already open", function()
 			is_available_stub.returns(true)
-			session_name_for_stub.returns("multiverse-abc")
 			is_floating_terminal_open_stub.returns(true)
 
 			local callback = get_callback()
 			callback()
 
-			assert.stub(close_floating_terminal_stub).was_called()
+			assert.stub(close_floating_terminal_stub).was_called(1)
+			assert.stub(close_floating_terminal_stub).was_called_with()
+			assert.stub(session_name_for_stub).was_not_called()
 			assert.stub(open_floating_terminal_stub).was_not_called()
+			assert.stub(notify_stub).was_not_called()
 		end)
 	end)
 end)

@@ -48,7 +48,7 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim). `setup()` registers a `Vi
   - **Arguments**: None.
 
 - **`MultiverseTerminal`**
-  - **Description**: Opens a floating terminal backed by a Zellij session tied to the current *Universe*'s directory, so it can be reconnected to after the *Universe* is dehydrated/hydrated (a universe switch, or closing and reopening Neovim). No-ops with a warning if the `zellij` binary isn't installed.
+  - **Description**: Toggles a floating terminal backed by a Zellij session tied to the current *Universe*'s directory. Closing it only detaches the nvim-side window — the underlying Zellij session survives and is reattached, either by invoking this command again or automatically after a universe switch or restarting Neovim. No-ops with a warning if the `zellij` binary isn't installed.
   - **Arguments**: None.
 
 
