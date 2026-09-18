@@ -1,6 +1,10 @@
 local Universe = {}
 Universe.__index = Universe
 
+local function isNonEmptyString(value)
+	return type(value) == "string" and value ~= ""
+end
+
 --- @class Universe
 --- @field uuid string
 --- @field name string
@@ -15,15 +19,30 @@ Universe.__index = Universe
 --- @field getBufferById (number) -> Buffer
 --- @field getBufferByUuid (string) -> Buffer
 
---- @param uuid string
---- @param name string
---- @param workingDirectory string
+--- @param opts table
+--- @param opts.uuid string  a unique identifier for the universe
+--- @param opts.name string  the name of the universe
+--- @param opts.workingDirectory string  the working directory of the universe
 --- @return Universe
-function Universe:new(uuid, name, workingDirectory)
+function Universe:new(opts)
+	opts = opts or {}
+	if type(opts) ~= "table" then
+		error("Universe:new requires a table argument", 2)
+	end
+	if not isNonEmptyString(opts.uuid) then
+		error("Universe:new requires opts.uuid to be a non-empty string", 2)
+	end
+	if not isNonEmptyString(opts.name) then
+		error("Universe:new requires opts.name to be a non-empty string", 2)
+	end
+	if not isNonEmptyString(opts.workingDirectory) then
+		error("Universe:new requires opts.workingDirectory to be a non-empty string", 2)
+	end
+
 	local self = setmetatable({}, Universe)
-	self.uuid = uuid
-	self.name = name
-	self.workingDirectory = workingDirectory
+	self.uuid = opts.uuid
+	self.name = opts.name
+	self.workingDirectory = opts.workingDirectory
 	self.currentTabpage = nil
 	self.buffers = {}
 	self.tabpages = {}
