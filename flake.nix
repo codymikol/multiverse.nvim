@@ -45,7 +45,7 @@
             };
  
             settings = {
-              concurrency = { maxParallel = 1; };
+              concurrency = { maxParallel = 3; };
             };
 
           };
