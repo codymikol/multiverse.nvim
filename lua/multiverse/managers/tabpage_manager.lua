@@ -9,7 +9,7 @@ M.getTabpages = function()
   local tabpageIds = vim.api.nvim_list_tabpages()
   for _, tabpageId in ipairs(tabpageIds) do
     local tabpageUuid = uuid_manager.create()
-    local newTabPage = Tabpage:new(tabpageUuid, tabpageId, "") -- todo(mikol): We need to find the active windowId for this tabpage and assign it here.
+    local newTabPage = Tabpage:new({ uuid = tabpageUuid, tabpageId = tabpageId, activeWindowUuid = "" }) -- todo(mikol): We need to find the active windowId for this tabpage and assign it here.
     table.insert(tabpages, newTabPage)
   end
   return tabpages
