@@ -9,7 +9,7 @@ local stub = require("luassert.stub")
 local function makeUniverseWithTabpages(n)
 	local universe = Universe:new("", "example", "/home/foo")
 	for i = 1, n do
-		universe:addTabpage(Tabpage:new("uuid" .. i, nil, ""))
+		universe:addTabpage(Tabpage:new({ uuid = "uuid" .. i, activeWindowUuid = "" }))
 	end
 	return universe
 end

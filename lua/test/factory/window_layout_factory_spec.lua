@@ -7,7 +7,7 @@ describe("window_layout_factory make", function()
 	describe("a complex window layout with rows, columns and leaves", function()
 		local universe = Universe:new("", "example", "/home/foo")
 
-		local tabpage = Tabpage:new()
+		local tabpage = Tabpage:new({ uuid = "tabpage-uuid" })
 
 		local uuid1 = "258ca574-a7f2-47ad-a843-250a617ba634"
 		local uuid2 = "beb59ba6-b646-4a03-9a84-a53adaaaf4b0"
@@ -139,7 +139,7 @@ describe("window_layout_factory make", function()
 	describe("a window layout with a single leaf node", function()
 		local universe = Universe:new("", "example", "/home/foo")
 
-		local tabpage = Tabpage:new()
+		local tabpage = Tabpage:new({ uuid = "tabpage-uuid" })
 
 		local uuid1 = "258ca574-a7f2-47ad-a843-250a617ba634"
 
