@@ -134,4 +134,27 @@ describe("multiverse_manager.load_universe", function()
 			assert.stub(hydrate_stub).was.called_with(selected_universe_summary)
 		end)
 	end)
+
+	describe("when the current directory's universe's file is missing or corrupt", function()
+		it("aborts before cleanup/hydrate run and logs the error", function()
+			local cwd = "/tmp/multiverse-manager-spec/corrupt"
+			local shared_uuid = "corrupt-universe-uuid"
+
+			local current_universe_summary =
+				UniverseSummary:new({ directory = cwd, uuid = shared_uuid, name = "corrupt-universe" })
+			local selected_universe_summary =
+				UniverseSummary:new({ directory = cwd, uuid = shared_uuid, name = "corrupt-universe" })
+			local multiverse = Multiverse:new({ current_universe_summary })
+
+			getcwd_stub = stub(vim.fn, "getcwd", function() return cwd end)
+			get_universe_by_uuid_stub.returns(nil, "some error")
+			save_stub = stub(multiverse_manager, "save")
+
+			multiverse_manager.load_universe(multiverse, selected_universe_summary)
+
+			assert.stub(cleanup_stub).was_not.called()
+			assert.stub(hydrate_stub).was_not.called()
+			assert.stub(log_error_stub).was.called()
+		end)
+	end)
 end)
