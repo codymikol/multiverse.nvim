@@ -9,7 +9,11 @@ M.getTabpages = function()
   local tabpageIds = vim.api.nvim_list_tabpages()
   for _, tabpageId in ipairs(tabpageIds) do
     local tabpageUuid = uuid_manager.create()
-    local newTabPage = Tabpage:new(tabpageUuid, tabpageId, "") -- todo(mikol): We need to find the active windowId for this tabpage and assign it here.
+    -- activeWindowUuid can't be resolved here: window uuids don't exist yet, they're
+    -- minted later in dehydration_manager.dehydrate. Capture the raw window id now so
+    -- dehydration can correlate it to a uuid once windows are built.
+    local newTabPage = Tabpage:new(tabpageUuid, tabpageId, "")
+    newTabPage.activeWindowId = vim.api.nvim_tabpage_get_win(tabpageId)
     table.insert(tabpages, newTabPage)
   end
   return tabpages

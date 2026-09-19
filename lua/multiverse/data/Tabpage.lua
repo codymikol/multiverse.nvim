@@ -6,6 +6,7 @@ Tabpage.__index = Tabpage
 --- @field setLayout (WindowLayout) -> nil
 --- @field uuid string -- A unique identifier for this tabpage that is persisted and rehydrated.
 --- @field tabpageId number | nil -- The neovim id for this tabpage that is NOT persisted and is to be set during hydration.
+--- @field activeWindowId number | nil -- The neovim id of this tabpage's active window at dehydration time; NOT persisted, resolved to activeWindowUuid during dehydration.
 --- @field activeWindowUuid string -- The immutable identifier for the active window in this tabpage.
 --- @field windows Window[]
 --- @field layout WindowLayout
