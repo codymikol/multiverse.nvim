@@ -11,14 +11,12 @@ local state_store    = require("multiverse.store.state_store")
 
 M.save = function()
 
+  if not state_store.try_transition(state_store.STATES.IDLE, state_store.STATES.DEHYDRATION) then
+    vim.notify("Cannot save universe while in state: " .. state_store.get_current_state())
+    return
+  end
+
   local success, err = pcall(function()
-
-    if state_store.get_current_state() ~= state_store.STATES.IDLE then
-      vim.notify("Cannot save universe while in state: " .. state_store.get_current_state())
-      return
-    end
-
-    state_store.set_current_state(state_store.STATES.DEHYDRATION)
 
     local multiverse = multiverse_repository.getMultiverse()
 
@@ -31,7 +29,6 @@ M.save = function()
 
     if current_multiverse_summary == nil then
       vim.notify("No universe found for current directory: " .. current_directory)
-      state_store.set_current_state(state_store.STATES.IDLE)
       return
     end
 
@@ -43,7 +40,6 @@ M.save = function()
 
       if current_universe == nil then
         log.error("Error dehydrating universe: " .. current_universe_summary.uuid .. ", error details: " .. vim.inspect(err))
-        state_store.set_current_state(state_store.STATES.IDLE)
         return
       end
 
@@ -66,8 +62,7 @@ M.save = function()
     vim.notify("Error saving universe, check MultiverseLog for more information", vim.log.levels.ERROR)
   end
 
-
-  state_store.set_current_state(state_store.STATES.IDLE)
+  state_store.try_transition(state_store.STATES.DEHYDRATION, state_store.STATES.IDLE)
 
 end
 
@@ -139,17 +134,18 @@ M.load_universe = function(multiverse, selected_universe_summary, skip_save)
       log.debug("skip_save is true, proceeding with loading the selected universe and skipping dehydration.")
     end
 
-    state_store.set_current_state(state_store.STATES.CLEANUP)
+    -- Nested with_lock: acquiring a lock always overwrites state unconditionally.
+    -- Only the restore-on-exit step is guarded, so each lock restores its
+    -- prior state only if nothing since moved state away from it.
+    state_store.with_lock(state_store.STATES.CLEANUP, function()
+      cleanup_manager.cleanup()
 
-    cleanup_manager.cleanup()
-
-    state_store.set_current_state(state_store.STATES.HYDRATION)
-
-    plugin_manager.beforeHydrate({ universe = current_universe })
-
-    hydration_manager.hydrate(selected_universe_summary)
-
-    plugin_manager.afterHydrate({ universe = current_universe })
+      state_store.with_lock(state_store.STATES.HYDRATION, function()
+        plugin_manager.beforeHydrate({ universe = current_universe })
+        hydration_manager.hydrate(selected_universe_summary)
+        plugin_manager.afterHydrate({ universe = current_universe })
+      end)
+    end)
 
   end)
 
@@ -157,8 +153,6 @@ M.load_universe = function(multiverse, selected_universe_summary, skip_save)
     log.error("Error loading universe: " .. selected_universe_summary.name .. ", error details: " .. vim.json.encode(err))
     vim.notify("Error loading universe: " .. selected_universe_summary.name, vim.log.levels.ERROR)
   end
-
-  state_store.set_current_state(state_store.STATES.IDLE)
 
 end
 

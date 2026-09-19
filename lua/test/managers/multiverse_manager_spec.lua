@@ -44,7 +44,60 @@ describe("multiverse_manager.save", function()
 			assert.stub(log_error_stub).was.called_with("Error saving universe: %s", match._)
 			local log_detail = log_error_stub.calls[1].refs[2]
 			assert.is_not_nil(tostring(log_detail):find("boom", 1, true))
+			assert.are.equal(state_store.STATES.IDLE, state_store.get_current_state())
 		end)
+	end)
+end)
+
+describe("multiverse_manager.save - state locking (#216)", function()
+	local notify_stub
+
+	before_each(function()
+		state_store.set_current_state(state_store.STATES.IDLE)
+		notify_stub = stub(vim, "notify")
+	end)
+
+	after_each(function()
+		notify_stub:revert()
+		state_store.set_current_state(state_store.STATES.IDLE)
+	end)
+
+	it("does not reset state to IDLE when another operation already holds the lock", function()
+		state_store.set_current_state(state_store.STATES.CLEANUP)
+
+		multiverse_manager.save()
+
+		assert.stub(notify_stub).was.called_with("Cannot save universe while in state: " .. state_store.STATES.CLEANUP)
+		assert.are.equal(state_store.STATES.CLEANUP, state_store.get_current_state())
+	end)
+
+	it("ends back at IDLE after a normal successful run", function()
+		local get_multiverse_stub = stub(multiverse_repository, "getMultiverse", function()
+			return {
+				getUniverseByDirectory = function() return nil end,
+			}
+		end)
+
+		multiverse_manager.save()
+
+		get_multiverse_stub:revert()
+
+		assert.are.equal(state_store.STATES.IDLE, state_store.get_current_state())
+	end)
+
+	it("does not reset state to IDLE when the save body itself is clobbered by a concurrent operation", function()
+		local get_multiverse_stub = stub(multiverse_repository, "getMultiverse", function()
+			state_store.set_current_state(state_store.STATES.HYDRATION)
+			return {
+				getUniverseByDirectory = function() return nil end,
+			}
+		end)
+
+		multiverse_manager.save()
+
+		get_multiverse_stub:revert()
+
+		assert.are.equal(state_store.STATES.HYDRATION, state_store.get_current_state())
 	end)
 end)
 
@@ -155,6 +208,33 @@ describe("multiverse_manager.load_universe", function()
 			assert.stub(cleanup_stub).was_not.called()
 			assert.stub(hydrate_stub).was_not.called()
 			assert.stub(log_error_stub).was.called()
+		end)
+	end)
+
+	describe("state locking (#216)", function()
+		it("ends back at IDLE after a normal successful run", function()
+			local selected_universe_summary =
+				UniverseSummary:new({ directory = "/tmp/multiverse-manager-spec/state", uuid = "state-uuid", name = "state-universe" })
+			local multiverse = Multiverse:new({})
+
+			multiverse_manager.load_universe(multiverse, selected_universe_summary, true)
+
+			assert.are.equal(state_store.STATES.IDLE, state_store.get_current_state())
+		end)
+
+		it("does not stomp state back to IDLE when hydration clobbers it mid-flow", function()
+			hydrate_stub:revert()
+			hydrate_stub = stub(hydration_manager, "hydrate", function()
+				state_store.set_current_state(state_store.STATES.DEHYDRATION)
+			end)
+
+			local selected_universe_summary =
+				UniverseSummary:new({ directory = "/tmp/multiverse-manager-spec/clobber", uuid = "clobber-uuid", name = "clobber-universe" })
+			local multiverse = Multiverse:new({})
+
+			multiverse_manager.load_universe(multiverse, selected_universe_summary, true)
+
+			assert.are.equal(state_store.STATES.DEHYDRATION, state_store.get_current_state())
 		end)
 	end)
 end)
