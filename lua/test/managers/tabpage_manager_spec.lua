@@ -17,7 +17,6 @@ end
 describe("tabpage_manager", function()
 	describe("getTabpages", function()
 		local nvim_list_tabpages_stub
-
 		local nvim_tabpage_get_win_stub
 
 		before_each(function()
@@ -26,7 +25,7 @@ describe("tabpage_manager", function()
 
 			nvim_tabpage_get_win_stub = stub(vim.api, "nvim_tabpage_get_win")
 			nvim_tabpage_get_win_stub.invokes(function(tabpageId)
-				return tabpageId + 1
+				return tabpageId + 9000
 			end)
 		end)
 
@@ -59,10 +58,7 @@ describe("tabpage_manager", function()
 		it("should leave activeWindowUuid unresolved until dehydration correlates the active window's uuid", function()
 			local tabpages = tabpage_manager.getTabpages()
 
-			-- Window uuids don't exist yet at getTabpages() time (they're minted later
-			-- during dehydration_manager.dehydrate), so uuid correlation is deferred to
-			-- that phase. getTabpages() only captures the raw active window id (see the
-			-- activeWindowId assertions below); activeWindowUuid intentionally stays "".
+			-- activeWindowUuid is resolved later, during dehydration.
 			assert.are.equal("", tabpages[1].activeWindowUuid)
 			assert.are.equal("", tabpages[2].activeWindowUuid)
 		end)
@@ -70,8 +66,8 @@ describe("tabpage_manager", function()
 		it("should capture the raw active window id from nvim_tabpage_get_win for each tabpage", function()
 			local tabpages = tabpage_manager.getTabpages()
 
-			assert.are.equal(1001, tabpages[1].activeWindowId)
-			assert.are.equal(1002, tabpages[2].activeWindowId)
+			assert.are.equal(10000, tabpages[1].activeWindowId)
+			assert.are.equal(10001, tabpages[2].activeWindowId)
 		end)
 
 		it("should assign each Tabpage a non-empty uuid", function()
