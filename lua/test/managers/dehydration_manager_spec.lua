@@ -74,4 +74,14 @@ describe("dehydration_manager.dehydrate", function()
 			"universe-uuid"
 		)
 	end)
+
+	it("delegates activeWindowUuid resolution to tabpage:resolveActiveWindowUuid with the fetched windows", function()
+		local resolveActiveWindowUuid_stub = stub(tabpage, "resolveActiveWindowUuid")
+
+		dehydration_manager.dehydrate(summary)
+
+		assert.stub(resolveActiveWindowUuid_stub).was.called_with(tabpage, { window })
+
+		resolveActiveWindowUuid_stub:revert()
+	end)
 end)

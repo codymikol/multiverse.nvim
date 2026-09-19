@@ -13,6 +13,7 @@ Tabpage.__index = Tabpage
 --- @field addWindow (Window) -> nil
 --- @field addAllWindows (Window[]) -> nil
 --- @field getWindowByUuid (string): Window | nil
+--- @field resolveActiveWindowUuid (Window[]) -> nil
 
 --- @param uuid string
 --- @param tabpageId number | nil
@@ -22,6 +23,7 @@ function Tabpage:new(uuid, tabpageId, activeWindowUuid)
   self.uuid = uuid
   self.tabpageId = tabpageId
   self.activeWindowUuid = activeWindowUuid
+  self.activeWindowId = nil
   self.windows = {}
   self.layout = nil
   return self
@@ -55,6 +57,21 @@ function Tabpage:getWindowByUuid(uuid)
       return window
     end
   end
+end
+
+--- Resolves self.activeWindowId (a transient, raw neovim window id captured at
+--- dehydration time) to the persisted uuid of the matching window in the given
+--- windows list, then clears activeWindowId since it must not be persisted.
+--- @param windows Window[]
+--- @return nil
+function Tabpage:resolveActiveWindowUuid(windows)
+  for _, window in pairs(windows) do
+    if window.windowId == self.activeWindowId then
+      self.activeWindowUuid = window.uuid
+      break
+    end
+  end
+  self.activeWindowId = nil
 end
 
 return Tabpage
