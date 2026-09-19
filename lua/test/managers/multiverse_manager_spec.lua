@@ -44,6 +44,56 @@ describe("multiverse_manager.save", function()
 			assert.stub(log_error_stub).was.called_with("Error saving universe: %s", match._)
 			local log_detail = log_error_stub.calls[1].refs[2]
 			assert.is_not_nil(tostring(log_detail):find("boom", 1, true))
+			assert.are.same(state_store.STATES.IDLE, state_store.get_current_state())
+		end)
+	end)
+
+	describe("when state_store is not IDLE (another operation is in-flight)", function()
+		local notify_stub
+
+		before_each(function()
+			state_store.set_current_state(state_store.STATES.IDLE)
+			notify_stub = stub(vim, "notify")
+		end)
+
+		after_each(function()
+			notify_stub:revert()
+			state_store.set_current_state(state_store.STATES.IDLE)
+		end)
+
+		it("leaves the in-flight state untouched instead of resetting it to IDLE", function()
+			state_store.set_current_state(state_store.STATES.HYDRATION)
+
+			multiverse_manager.save()
+
+			assert.are.same(state_store.STATES.HYDRATION, state_store.get_current_state())
+			assert.stub(notify_stub).was.called_with(match.matches("Cannot save universe while in state"))
+		end)
+	end)
+
+	describe("when no universe is found for the current directory", function()
+		local get_multiverse_stub
+		local notify_stub
+
+		before_each(function()
+			state_store.set_current_state(state_store.STATES.IDLE)
+			get_multiverse_stub = stub(multiverse_repository, "getMultiverse", function()
+				return Multiverse:new({})
+			end)
+			notify_stub = stub(vim, "notify")
+		end)
+
+		after_each(function()
+			get_multiverse_stub:revert()
+			notify_stub:revert()
+			state_store.set_current_state(state_store.STATES.IDLE)
+		end)
+
+		it("resets state back to IDLE after taking the early-return branch", function()
+			multiverse_manager.save()
+
+			assert.stub(notify_stub).was.called_with(match.matches("No universe found for current directory"))
+			assert.are.same(state_store.STATES.IDLE, state_store.get_current_state())
 		end)
 	end)
 end)
@@ -111,6 +161,7 @@ describe("multiverse_manager.load_universe", function()
 
 			assert.stub(save_stub).was_not.called()
 			assert.stub(hydrate_stub).was.called_with(selected_universe_summary)
+			assert.are.same(state_store.STATES.IDLE, state_store.get_current_state())
 		end)
 	end)
 
@@ -132,11 +183,12 @@ describe("multiverse_manager.load_universe", function()
 
 			assert.stub(save_stub).was.called(1)
 			assert.stub(hydrate_stub).was.called_with(selected_universe_summary)
+			assert.are.same(state_store.STATES.IDLE, state_store.get_current_state())
 		end)
 	end)
 
 	describe("when the current directory's universe's file is missing or corrupt", function()
-		it("aborts before cleanup/hydrate run and logs the error", function()
+		it("aborts before cleanup/hydrate run, logs the error, and leaves in-flight state untouched", function()
 			local cwd = "/tmp/multiverse-manager-spec/corrupt"
 			local shared_uuid = "corrupt-universe-uuid"
 
@@ -150,11 +202,45 @@ describe("multiverse_manager.load_universe", function()
 			get_universe_by_uuid_stub.returns(nil, "some error")
 			save_stub = stub(multiverse_manager, "save")
 
+			state_store.set_current_state(state_store.STATES.HYDRATION)
+
 			multiverse_manager.load_universe(multiverse, selected_universe_summary)
 
 			assert.stub(cleanup_stub).was_not.called()
 			assert.stub(hydrate_stub).was_not.called()
 			assert.stub(log_error_stub).was.called()
+			assert.are.same(state_store.STATES.HYDRATION, state_store.get_current_state())
+		end)
+	end)
+
+	describe("when cleanup raises an error after CLEANUP has begun", function()
+		local notify_stub
+
+		before_each(function()
+			cleanup_stub:revert()
+			cleanup_stub = stub(cleanup_manager, "cleanup", function()
+				error("cleanup boom")
+			end)
+			notify_stub = stub(vim, "notify")
+		end)
+
+		after_each(function()
+			notify_stub:revert()
+		end)
+
+		it("still resets state back to IDLE", function()
+			local selected_universe_summary =
+				UniverseSummary:new({ directory = "/tmp/multiverse-manager-spec/skip", uuid = "skip-uuid", name = "skip-universe" })
+			local multiverse = Multiverse:new({})
+
+			multiverse_manager.load_universe(multiverse, selected_universe_summary, true)
+
+			assert.stub(log_error_stub).was.called_with(match.matches("Error loading universe: skip%-universe"))
+			assert.stub(notify_stub).was.called_with(
+				"Error loading universe: skip-universe",
+				vim.log.levels.ERROR
+			)
+			assert.are.same(state_store.STATES.IDLE, state_store.get_current_state())
 		end)
 	end)
 end)

@@ -9,7 +9,18 @@ local plugin_manager = require("multiverse.managers.plugin_manager")
 local log            = require("multiverse.log")
 local state_store    = require("multiverse.store.state_store")
 
+-- Only the call that moved state_store out of IDLE may reset it back;
+-- an early-return busy/abort branch that never transitioned state
+-- must leave whatever state it found untouched.
+local function reset_if_owned(owns_transition)
+  if owns_transition then
+    state_store.set_current_state(state_store.STATES.IDLE)
+  end
+end
+
 M.save = function()
+
+  local owns_transition = false
 
   local success, err = pcall(function()
 
@@ -19,6 +30,7 @@ M.save = function()
     end
 
     state_store.set_current_state(state_store.STATES.DEHYDRATION)
+    owns_transition = true
 
     local multiverse = multiverse_repository.getMultiverse()
 
@@ -31,7 +43,6 @@ M.save = function()
 
     if current_multiverse_summary == nil then
       vim.notify("No universe found for current directory: " .. current_directory)
-      state_store.set_current_state(state_store.STATES.IDLE)
       return
     end
 
@@ -43,7 +54,6 @@ M.save = function()
 
       if current_universe == nil then
         log.error("Error dehydrating universe: " .. current_universe_summary.uuid .. ", error details: " .. vim.inspect(err))
-        state_store.set_current_state(state_store.STATES.IDLE)
         return
       end
 
@@ -66,8 +76,7 @@ M.save = function()
     vim.notify("Error saving universe, check MultiverseLog for more information", vim.log.levels.ERROR)
   end
 
-
-  state_store.set_current_state(state_store.STATES.IDLE)
+  reset_if_owned(owns_transition)
 
 end
 
@@ -81,6 +90,8 @@ end
 M.load_universe = function(multiverse, selected_universe_summary, skip_save)
 
   log.debug("Loading universe: " .. selected_universe_summary.name)
+
+  local owns_transition = false
 
   local success, err = pcall(function()
 
@@ -140,6 +151,7 @@ M.load_universe = function(multiverse, selected_universe_summary, skip_save)
     end
 
     state_store.set_current_state(state_store.STATES.CLEANUP)
+    owns_transition = true
 
     cleanup_manager.cleanup()
 
@@ -158,7 +170,7 @@ M.load_universe = function(multiverse, selected_universe_summary, skip_save)
     vim.notify("Error loading universe: " .. selected_universe_summary.name, vim.log.levels.ERROR)
   end
 
-  state_store.set_current_state(state_store.STATES.IDLE)
+  reset_if_owned(owns_transition)
 
 end
 
