@@ -73,10 +73,11 @@ end
 
 --- @param multiverse Multiverse
 --- @param selected_universe_summary UniverseSummary
---- @param skip_save boolean | nil  when true, skips saving/dehydrating whatever is currently open before
---- hydrating the selected universe. Callers should pass true when there is nothing meaningful to save (e.g.
---- on VimEnter, where the current buffer is just the empty/startup state, not a prior session), since saving
---- in that case would clobber the target universe's already-persisted session.
+--- @param skip_save boolean | nil  when true, unconditionally skips saving/dehydrating whatever is currently
+--- open before hydrating the selected universe. When the current directory's registered universe is the same
+--- universe being loaded, load_universe already skips the save automatically (to avoid clobbering its
+--- just-persisted session), so skip_save is only needed for callers with nothing meaningful to save at all
+--- (e.g. on VimEnter, where the current buffer is just the empty/startup state, not a prior session).
 M.load_universe = function(multiverse, selected_universe_summary, skip_save)
 
   log.debug("Loading universe: " .. selected_universe_summary.name)
@@ -105,14 +106,30 @@ M.load_universe = function(multiverse, selected_universe_summary, skip_save)
         -- change instead of silently altering it.
         local current_universe, err = universe_repository.get_universe_by_uuid(current_universe_summary.uuid)
 
+        -- This abort guard must run whether or not the current directory's
+        -- universe is the one being loaded: bailing out here (before
+        -- cleanup_manager.cleanup() runs below) is what keeps a missing/
+        -- corrupt universe file from wiping the user's open buffers.
         if current_universe == nil then
           log.error("Error dehydrating universe: " .. current_universe_summary.uuid .. ", error details: " .. vim.inspect(err))
           return
         end
 
-        log.debug("load universe searching multiverse for matching directory and found: " .. vim.inspect(current_universe_summary))
+        if current_universe_summary.uuid ~= selected_universe_summary.uuid then
 
-        M.save()
+          log.debug("load universe searching multiverse for matching directory and found: %s", current_universe_summary)
+
+          M.save()
+
+        else
+
+          log.debug(
+            "Current directory's universe is the same universe being loaded (%s), skipping dehydration "
+              .. "to avoid clobbering its just-persisted session.",
+            selected_universe_summary.uuid
+          )
+
+        end
 
       else
         log.debug("Working directory is not part of a universe, proceeding with loading the selected universe and skipping dehydration.")

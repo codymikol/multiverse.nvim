@@ -52,6 +52,14 @@ M.run = function(name, directory)
 
 		universe_repository.save_universe(new_universe)
 
+		-- Adding a universe for the CURRENT directory needs an explicit save
+		-- here: load_universe's same-uuid skip (#313) would otherwise treat
+		-- the still-empty file above as this universe's real session and
+		-- never capture the currently-open buffers into it.
+		if normalized_directory == vim.fn.getcwd() then
+			multiverse_manager.save()
+		end
+
 		multiverse_manager.load_universe(multiverse, new_universe_summary)
 	end)
   if not success then
