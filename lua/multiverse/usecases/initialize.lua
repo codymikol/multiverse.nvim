@@ -12,7 +12,7 @@ local function ensure_local_directory_exists()
   if not stat then
     local ok, err = uv.fs_mkdir(multiverse_path, 493) -- 493 is octal 0755
     if not ok then
-      vim.notify("Failed to create multiverse directory: " .. err, vim.log.levels.ERROR)
+      vim.notify("Failed to create multiverse directory: " .. tostring(err), vim.log.levels.ERROR)
     end
   end
 end

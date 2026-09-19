@@ -107,4 +107,73 @@ describe("initialize.run", function()
 			assert.stub(notify_stub).was.called_with("Failed to create multiverse directory: " .. mkdir_err, vim.log.levels.ERROR)
 		end)
 	end)
+
+	describe("when fs_mkdir fails with a non-string error value", function()
+		local fs_stat_stub
+		local fs_mkdir_stub
+		local notify_stub
+		local mkdir_err = setmetatable({ code = "EACCES" }, {
+			__tostring = function()
+				return "EACCES: permission denied"
+			end,
+		})
+
+		before_each(function()
+			fs_stat_stub, fs_mkdir_stub = stub_fs(nil, false, mkdir_err)
+			notify_stub = stub(vim, "notify")
+		end)
+
+		after_each(function()
+			fs_stat_stub:revert()
+			fs_mkdir_stub:revert()
+			notify_stub:revert()
+		end)
+
+		it("should not error", function()
+			assert.has_no.errors(function()
+				initialize.run()
+			end)
+		end)
+
+		it("should notify with the tostring()-converted error message", function()
+			initialize.run()
+			assert.stub(notify_stub).was.called(1)
+			assert.stub(notify_stub).was.called_with(
+				"Failed to create multiverse directory: EACCES: permission denied",
+				vim.log.levels.ERROR
+			)
+		end)
+	end)
+
+	describe("when fs_mkdir fails with a nil error value", function()
+		local fs_stat_stub
+		local fs_mkdir_stub
+		local notify_stub
+
+		before_each(function()
+			fs_stat_stub, fs_mkdir_stub = stub_fs(nil, false, nil)
+			notify_stub = stub(vim, "notify")
+		end)
+
+		after_each(function()
+			fs_stat_stub:revert()
+			fs_mkdir_stub:revert()
+			notify_stub:revert()
+		end)
+
+		it("should not error", function()
+			assert.has_no.errors(function()
+				initialize.run()
+			end)
+		end)
+
+		it("should notify with the tostring()-converted nil error message", function()
+			initialize.run()
+			assert.stub(notify_stub).was.called(1)
+			assert.stub(notify_stub).was.called_with(
+				"Failed to create multiverse directory: nil",
+				vim.log.levels.ERROR
+			)
+		end)
+	end)
 end)
