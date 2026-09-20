@@ -21,6 +21,7 @@ end
 --- @param leaf Leaf
 --- @param activeWindowId number the window, already current, that this leaf represents
 --- @return number|nil bufferId the buffer id set current, or nil if nothing was hydrated
+--- @return number|nil windowId the real window id the buffer was set current in, or nil if nothing was hydrated
 local function hydrateLeaf(universe, tabpage, leaf, activeWindowId)
 	local window = tabpage:getWindowByUuid(leaf.windowUuid)
 
@@ -44,14 +45,14 @@ local function hydrateLeaf(universe, tabpage, leaf, activeWindowId)
 
 	log.debug("Setting window " .. vim.inspect(activeWindowId) .. " to buffer " .. vim.inspect(buffer.bufferId) .. " (" .. vim.inspect(buffer.bufferName) .. ")")
 	vim.api.nvim_set_current_buf(buffer.bufferId)
-	return buffer.bufferId
+	return buffer.bufferId, activeWindowId
 end
 
 --- @param universe Universe
 --- @param tabpage Tabpage
---- @return number[] hydrated_buffer_ids buffer ids set current via nvim_set_current_buf
+--- @return { bufferId: number, windowId: number }[] hydrated_windows buffer/window id pairs set current via nvim_set_current_buf
 local function hydrateTabpage(universe, tabpage)
-	local hydrated_buffer_ids = {}
+	local hydrated_windows = {}
 
 	vim.api.nvim_set_current_tabpage(tabpage.tabpageId)
 
@@ -63,7 +64,7 @@ local function hydrateTabpage(universe, tabpage)
 
   if root == nil then
     log.warn("Tabpage " .. vim.inspect(tabpage.tabpageId) .. " has no layout children to hydrate")
-    return hydrated_buffer_ids
+    return hydrated_windows
   end
 
   -- vim.fn.winlayout() returns a bare "leaf" node (no row/column wrapper)
@@ -78,12 +79,12 @@ local function hydrateTabpage(universe, tabpage)
     end
 
     local activeWindowId = vim.api.nvim_get_current_win()
-    local bufferId = hydrateLeaf(universe, tabpage, root, activeWindowId)
+    local bufferId, windowId = hydrateLeaf(universe, tabpage, root, activeWindowId)
     if bufferId ~= nil then
-      table.insert(hydrated_buffer_ids, bufferId)
+      table.insert(hydrated_windows, { bufferId = bufferId, windowId = windowId })
     end
 
-    return hydrated_buffer_ids
+    return hydrated_windows
   end
 
   local unexplored_layout = { root }
@@ -116,9 +117,9 @@ local function hydrateTabpage(universe, tabpage)
 			local activeWindowId = vim.api.nvim_get_current_win()
 
 			if child.type == "leaf" then
-				local bufferId = hydrateLeaf(universe, tabpage, child, activeWindowId)
+				local bufferId, windowId = hydrateLeaf(universe, tabpage, child, activeWindowId)
 				if bufferId ~= nil then
-					table.insert(hydrated_buffer_ids, bufferId)
+					table.insert(hydrated_windows, { bufferId = bufferId, windowId = windowId })
 				end
 			else
 				-- Leaf has no setWindowId; only container (Row/Column) children need it here.
@@ -130,21 +131,21 @@ local function hydrateTabpage(universe, tabpage)
 		::continue::
 	end
 
-	return hydrated_buffer_ids
+	return hydrated_windows
 end
 
 --- @param universe Universe
---- @return number[] hydrated_buffer_ids buffer ids set current across all tabpages
+--- @return { bufferId: number, windowId: number }[] hydrated_windows buffer/window id pairs set current across all tabpages
 M.hydrate = function(universe)
-	local hydrated_buffer_ids = {}
+	local hydrated_windows = {}
 
 	for _, tabpage in ipairs(universe.tabpages) do
-		for _, bufferId in ipairs(hydrateTabpage(universe, tabpage)) do
-			table.insert(hydrated_buffer_ids, bufferId)
+		for _, hydrated_window in ipairs(hydrateTabpage(universe, tabpage)) do
+			table.insert(hydrated_windows, hydrated_window)
 		end
 	end
 
-	return hydrated_buffer_ids
+	return hydrated_windows
 end
 
 return M

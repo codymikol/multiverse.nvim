@@ -21,7 +21,7 @@ M.hydrate = function(selected_universe)
 		return
 	end
 
-	local hydrated_buffer_ids = nil
+	local hydrated_windows = nil
 
 	local success, hydrate_err = pcall(function()
 		setCwd(universe)
@@ -30,7 +30,7 @@ M.hydrate = function(selected_universe)
 
 		tabpage_manager.hydrate(universe)
 
-		hydrated_buffer_ids = window_layout_manager.hydrate(universe)
+		hydrated_windows = window_layout_manager.hydrate(universe)
 
 		neotree_integration.hydrate()
 	end)
@@ -47,31 +47,47 @@ M.hydrate = function(selected_universe)
 	-- same VimEnter dispatch (e.g. lazily-configured highlighters) get a
 	-- chance to register. Re-firing FileType one tick later via vim.schedule
 	-- lets those late listeners attach without deferring hydration itself.
-	if hydrated_buffer_ids ~= nil and #hydrated_buffer_ids > 0 then
+	if hydrated_windows ~= nil and #hydrated_windows > 0 then
 		vim.schedule(function()
-			local seen_buffer_ids = {}
-			for _, bufferId in ipairs(hydrated_buffer_ids) do
-				if not seen_buffer_ids[bufferId] and vim.api.nvim_buf_is_valid(bufferId) then
-					seen_buffer_ids[bufferId] = true
+			-- Dedupe by windowId, not bufferId: nvim_buf_call(bufferId, fn) only
+			-- reuses a buffer's REAL window if that window belongs to the CURRENT
+			-- tabpage, falling back to a temporary/hidden autocmd window for any
+			-- other tabpage's window -- so a late listener setting window-scoped
+			-- options (conceallevel, foldmethod, ...) would silently write them to
+			-- a throwaway window instead of the one the user sees. A single buffer
+			-- could also in principle be shown in more than one window, and each
+			-- real window needs its own re-emission regardless.
+			local seen_window_ids = {}
+			for _, hydrated_window in ipairs(hydrated_windows) do
+				local bufferId = hydrated_window.bufferId
+				local windowId = hydrated_window.windowId
+				if
+					not seen_window_ids[windowId]
+					and vim.api.nvim_win_is_valid(windowId)
+					and vim.api.nvim_win_get_buf(windowId) == bufferId
+					and vim.api.nvim_buf_is_valid(bufferId)
+				then
+					seen_window_ids[windowId] = true
 					local filetype = vim.api.nvim_get_option_value("filetype", { buf = bufferId })
 					if filetype ~= "" then
-						-- Re-emission runs per-buffer inside its own pcall so a third-party
-						-- FileType handler throwing for one buffer (e.g. a highlighter) can't
-						-- abort the whole loop and silently skip re-emission for every later
-						-- buffer too.
+						-- nvim_exec_autocmds already isolates a throwing FileType callback
+						-- (reported to :messages, not propagated here), so this pcall only
+						-- guards nvim_win_call/nvim_exec_autocmds itself failing structurally
+						-- (e.g. the window closing between the validity check above and this
+						-- call) -- it stops that from aborting the loop for every later window.
 						local reemit_ok, reemit_err = pcall(function()
-							-- `buffer` only matches buffer-local (`<buffer=N>`) autocmds and is
-							-- mutually exclusive with `pattern`, so it can't re-fire listeners
-							-- registered with a string pattern like "lua"; nvim_buf_call makes
-							-- this buffer current for the duration of the real, pattern-matched
-							-- FileType dispatch, matching how :doautocmd FileType <ft> behaves.
-							vim.api.nvim_buf_call(bufferId, function()
+							-- nvim_win_call makes the REAL window (and thus its buffer)
+							-- current for the duration of the real, pattern-matched FileType
+							-- dispatch, so both window-scoped and buffer-scoped/pattern
+							-- listeners land on the window the user actually sees, matching
+							-- how :doautocmd FileType <ft> behaves for a visible window.
+							vim.api.nvim_win_call(windowId, function()
 								vim.api.nvim_exec_autocmds("FileType", { pattern = filetype, modeline = false })
 							end)
 						end)
 
 						if not reemit_ok then
-							log.error("Error re-emitting FileType for buffer %s: %s", bufferId, reemit_err)
+							log.error("Error re-emitting FileType for window %s (buffer %s): %s", windowId, bufferId, reemit_err)
 						end
 					end
 				end

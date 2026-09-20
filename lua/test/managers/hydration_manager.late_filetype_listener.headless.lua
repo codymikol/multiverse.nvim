@@ -37,6 +37,8 @@ package.path = "./lua/?.lua;./lua/?/init.lua;" .. package.path
 local dehydration_manager = require("multiverse.managers.dehydration_manager")
 local hydration_manager = require("multiverse.managers.hydration_manager")
 local universe_repository = require("multiverse.repositories.universe_repository")
+local universe_factory = require("multiverse.factory.universe_factory")
+local json = require("multiverse.repositories.json")
 
 -- `-u NONE` skips user config, but filetype detection (ftdetect/ftplugin) is
 -- runtime, not user config, and must be turned on explicitly for `:edit` to
@@ -70,6 +72,22 @@ local function write_file(path, contents)
   local file = assert(io.open(path, "w"))
   file:write(contents)
   file:close()
+end
+
+-- Round-trips `universe` through the same JSON encode/decode +
+-- universe_factory.make() path that universe_repository.get_universe_by_uuid
+-- uses in production. dehydration_manager.dehydrate's in-memory Universe
+-- object carries a real, live `Leaf.windowId` (set by window_layout_factory
+-- .make, which reads winlayout() while the dehydrated windows still exist),
+-- but window_layout_factory.makeFromJson -- what real hydration actually
+-- goes through -- only ever reads `windowUuid`, so `Leaf.windowId` is always
+-- nil for a universe loaded from disk. Passing the raw dehydrated object
+-- straight into hydrate (as this file used to) exercises a windowId-is-set
+-- branch that real users never hit; round-tripping through JSON here makes
+-- universe_a/b/c shaped exactly like what production really hydrates from.
+local function round_trip_through_json(universe)
+  local encoded = json.encode(universe)
+  return universe_factory.make(encoded)
 end
 
 -- Registers a "late" FileType autocmd for `pattern`, simulating a
@@ -107,7 +125,8 @@ vim.cmd("edit /tmp/regression297_a.lua")
 
 local bufnr_a = vim.api.nvim_get_current_buf()
 
-local universe_a = dehydration_manager.dehydrate({ uuid = "u297a", name = "u297a", directory = "/tmp" })
+local universe_a =
+  round_trip_through_json(dehydration_manager.dehydrate({ uuid = "u297a", name = "u297a", directory = "/tmp" }))
 
 -- Delete the just-dehydrated buffer so hydration cannot pass by silently
 -- reusing a leftover buffer object that already carries stale `filetype`
@@ -169,7 +188,8 @@ vim.cmd("vsplit")
 vim.cmd("edit /tmp/regression297_b2.py")
 local bufnr_b2 = vim.api.nvim_get_current_buf()
 
-local universe_b = dehydration_manager.dehydrate({ uuid = "u297b", name = "u297b", directory = "/tmp" })
+local universe_b =
+  round_trip_through_json(dehydration_manager.dehydrate({ uuid = "u297b", name = "u297b", directory = "/tmp" }))
 
 vim.api.nvim_buf_delete(bufnr_b1, { force = true })
 vim.api.nvim_buf_delete(bufnr_b2, { force = true })
@@ -212,9 +232,132 @@ assert(
   "expected the late-registered python FileType listener to fire for /tmp/regression297_b2.py after hydrate"
 )
 
+----------------------------------------------------------------------------
+-- Scenario C: multiple tabpages, each with a single window. Regression test
+-- for the code-review-found bug where FileType re-emission after hydration
+-- used nvim_buf_call(bufferId, ...): nvim_buf_call only makes a buffer's
+-- REAL window current if that window belongs to the CURRENT tabpage, so for
+-- any OTHER tabpage it silently falls back to a temporary/hidden autocmd
+-- window instead. A late listener setting window-scoped options (the whole
+-- point of re-emitting FileType) would then write to that throwaway window,
+-- never the window the user actually sees. This asserts the late listener
+-- fires in the buffer's REAL, visible window -- found independently via
+-- vim.fn.win_findbuf -- for BOTH tabpages, not just whichever tabpage
+-- happens to be current when vim.schedule's callback runs.
+----------------------------------------------------------------------------
+
+write_file("/tmp/regression297_c1.lua", "local function greet()\n  return \"hello\"\nend\n\nreturn greet\n")
+write_file("/tmp/regression297_c2.py", "def greet():\n    return \"hello\"\n")
+
+vim.cmd("tabonly")
+vim.cmd("only")
+vim.cmd("edit /tmp/regression297_c1.lua")
+local bufnr_c1 = vim.api.nvim_get_current_buf()
+
+vim.cmd("tabnew")
+vim.cmd("edit /tmp/regression297_c2.py")
+local bufnr_c2 = vim.api.nvim_get_current_buf()
+
+local universe_c =
+  round_trip_through_json(dehydration_manager.dehydrate({ uuid = "u297c", name = "u297c", directory = "/tmp" }))
+
+vim.api.nvim_buf_delete(bufnr_c1, { force = true })
+vim.api.nvim_buf_delete(bufnr_c2, { force = true })
+
+vim.cmd("tabonly")
+vim.cmd("only")
+vim.api.nvim_win_set_buf(0, vim.api.nvim_create_buf(false, true))
+
+with_universe(universe_c, function()
+  hydration_manager.hydrate({ uuid = universe_c.uuid })
+end)
+
+local restored_bufnrs_c = {}
+for _, tabpageId in ipairs(vim.api.nvim_list_tabpages()) do
+  for _, win in ipairs(vim.api.nvim_tabpage_list_wins(tabpageId)) do
+    local bufnr = vim.api.nvim_win_get_buf(win)
+    restored_bufnrs_c[vim.api.nvim_buf_get_name(bufnr)] = bufnr
+  end
+end
+
+local restored_bufnr_c1 = restored_bufnrs_c["/tmp/regression297_c1.lua"]
+local restored_bufnr_c2 = restored_bufnrs_c["/tmp/regression297_c2.py"]
+
+assert(
+  restored_bufnr_c1 ~= nil,
+  "expected /tmp/regression297_c1.lua to be restored to a window in some tabpage after hydrate"
+)
+assert(
+  restored_bufnr_c2 ~= nil,
+  "expected /tmp/regression297_c2.py to be restored to a window in some tabpage after hydrate"
+)
+
+-- Records not just whether the late listener fired, but which window it
+-- fired in, so the assertions below can compare that against the buffer's
+-- real, visible window rather than just checking "it fired somewhere".
+local function register_late_window_listener(pattern, expected_bufnr)
+  local fired = false
+  local fired_win = nil
+  vim.api.nvim_create_autocmd("FileType", {
+    pattern = pattern,
+    callback = function(args)
+      if args.buf == expected_bufnr then
+        fired = true
+        fired_win = vim.api.nvim_get_current_win()
+      end
+    end,
+  })
+  return function()
+    return fired, fired_win
+  end
+end
+
+local lua_multi_fired = register_late_window_listener("lua", restored_bufnr_c1)
+local python_multi_fired = register_late_window_listener("python", restored_bufnr_c2)
+
+vim.wait(100, function()
+  return (lua_multi_fired()) and (python_multi_fired())
+end)
+
+local lua_ok, lua_fired_win = lua_multi_fired()
+local python_ok, python_fired_win = python_multi_fired()
+
+assert(
+  lua_ok,
+  "expected the late-registered lua FileType listener to fire for /tmp/regression297_c1.lua across tabpages after hydrate"
+)
+assert(
+  python_ok,
+  "expected the late-registered python FileType listener to fire for /tmp/regression297_c2.py across tabpages after hydrate"
+)
+
+local real_win_c1 = vim.fn.win_findbuf(restored_bufnr_c1)[1]
+local real_win_c2 = vim.fn.win_findbuf(restored_bufnr_c2)[1]
+
+assert(
+  lua_fired_win == real_win_c1,
+  "expected the late lua FileType listener to fire in the buffer's real, visible window ("
+    .. vim.inspect(real_win_c1)
+    .. "), but it fired in "
+    .. vim.inspect(lua_fired_win)
+    .. " -- this is issue #297's re-emission bug: nvim_buf_call falls back to a hidden autocmd "
+    .. "window for buffers displayed on a non-current tabpage"
+)
+assert(
+  python_fired_win == real_win_c2,
+  "expected the late python FileType listener to fire in the buffer's real, visible window ("
+    .. vim.inspect(real_win_c2)
+    .. "), but it fired in "
+    .. vim.inspect(python_fired_win)
+    .. " -- this is issue #297's re-emission bug: nvim_buf_call falls back to a hidden autocmd "
+    .. "window for buffers displayed on a non-current tabpage"
+)
+
 os.remove("/tmp/regression297_a.lua")
 os.remove("/tmp/regression297_b1.lua")
 os.remove("/tmp/regression297_b2.py")
+os.remove("/tmp/regression297_c1.lua")
+os.remove("/tmp/regression297_c2.py")
 
 print("PASS")
 os.exit(0)
