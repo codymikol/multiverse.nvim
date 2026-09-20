@@ -131,6 +131,104 @@ describe("buffer_manager", function()
 		end)
 	end)
 
+	describe("hydrateBuffersForUniverse", function()
+		local created_buffers
+
+		after_each(function()
+			for _, bufnr in ipairs(created_buffers or {}) do
+				pcall(vim.api.nvim_buf_delete, bufnr, { force = true })
+			end
+			created_buffers = nil
+		end)
+
+		--- Hydrates a universe with a single buffer named `name` and returns the
+		--- resulting bufferId, registering it for cleanup in after_each.
+		--- @param name string
+		--- @return number
+		local function hydrateOneBuffer(name)
+			local universe = { uuid = "some-uuid", buffers = { { bufferName = name, bufferId = nil } } }
+
+			buffer_manager.hydrateBuffersForUniverse(universe)
+
+			local bufnr = universe.buffers[1].bufferId
+			created_buffers = created_buffers or {}
+			table.insert(created_buffers, bufnr)
+			return bufnr
+		end
+
+		it("adds a listed buffer for a normal bufferName and records its id", function()
+			local name = "/tmp/buffer_manager_spec_normal.txt"
+
+			local bufnr = hydrateOneBuffer(name)
+
+			assert.are.equal(name, vim.api.nvim_buf_get_name(bufnr))
+			assert.is_true(vim.api.nvim_get_option_value("buflisted", { buf = bufnr }))
+		end)
+
+		local pwned_marker = vim.fn.tempname()
+		local bar_name = "/tmp/buffer_manager_spec_evil.txt | lua buffer_manager_spec_pwned = true"
+		local backtick_name = "/tmp/buffer_manager_spec_evil_`touch " .. pwned_marker .. "`.txt"
+
+		describe("names containing ex-command or filename-expansion special characters", function()
+			-- Excludes a raw "%" sigil: log.debug's string.format(message) call
+			-- (lua/multiverse/log.lua:16) treats any "%" in the logged buffer name
+			-- as a format spec and errors before hydrateBuffersForUniverse ever
+			-- reaches :badd, on main as well as this branch. That's a pre-existing,
+			-- unrelated bug tracked as #290, not the ex-command/filename-expansion
+			-- issue in scope here.
+			local cases = {
+				{ desc = "a bar ex-command separator", name = bar_name },
+				{ desc = "a backtick shell-expansion sequence", name = backtick_name },
+				{ desc = "a hash alternate-file sigil", name = "/tmp/buffer_manager_spec_evil#1.txt" },
+				{ desc = "a dollar environment-variable sigil", name = "/tmp/buffer_manager_spec_evil_$HOME.txt" },
+			}
+
+			for _, case in ipairs(cases) do
+				it("adds a buffer literally named after " .. case.desc .. ", without expanding it", function()
+					local bufnr = hydrateOneBuffer(case.name)
+
+					assert.are.equal(case.name, vim.api.nvim_buf_get_name(bufnr))
+					assert.is_true(vim.api.nvim_get_option_value("buflisted", { buf = bufnr }))
+				end)
+			end
+		end)
+
+		it("does not run a shell command embedded in a backticked bufferName", function()
+			os.remove(pwned_marker)
+
+			hydrateOneBuffer(backtick_name)
+
+			assert.is_nil(io.open(pwned_marker, "r"))
+		end)
+
+		it("does not run an ex command embedded after a bar in a bufferName", function()
+			_G.buffer_manager_spec_pwned = false
+
+			hydrateOneBuffer(bar_name)
+
+			local ran = _G.buffer_manager_spec_pwned
+			_G.buffer_manager_spec_pwned = nil
+			assert.is_false(ran)
+		end)
+
+		it("does not add a buffer for an empty or nil bufferName (scratch buffer)", function()
+			local buffers_before = #vim.api.nvim_list_bufs()
+			local universe = {
+				uuid = "some-uuid",
+				buffers = {
+					{ bufferName = "", bufferId = 1 },
+					{ bufferName = nil, bufferId = 2 },
+				},
+			}
+
+			buffer_manager.hydrateBuffersForUniverse(universe)
+
+			assert.are.equal(buffers_before, #vim.api.nvim_list_bufs())
+			assert.are.equal(1, universe.buffers[1].bufferId)
+			assert.are.equal(2, universe.buffers[2].bufferId)
+		end)
+	end)
+
 	describe("exports", function()
 		it("should not expose a closeAll function", function()
 			assert.is_nil(buffer_manager.closeAll)
