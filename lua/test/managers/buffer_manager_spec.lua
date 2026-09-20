@@ -119,6 +119,14 @@ describe("buffer_manager", function()
 			assert.is_false(buffer_manager.isUniverseBuffer(1))
 		end)
 
+		it("should return false without throwing when the buffer name contains '%'", function()
+			stubs = stubBuffer({ readonly = true, name = "/tmp/a%s.txt" })
+
+			local result
+			assert.has_no.errors(function() result = buffer_manager.isUniverseBuffer(1) end)
+			assert.is_false(result)
+		end)
+
 		it("should return true for an unloaded but otherwise valid, modifiable, normal, listed, non-scratch buffer", function()
 			-- buffers can be unloaded but still a part of the universe (see comment in
 			-- isDesiredUniverseBuffer); explicitly stub nvim_buf_is_loaded to return

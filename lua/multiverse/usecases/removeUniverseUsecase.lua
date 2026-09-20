@@ -32,7 +32,7 @@ M.run = function(name)
 	end)
 	if not success then
 		vim.notify("Failed to remove universe, check MultiverseLog for more information", vim.log.levels.ERROR)
-		log.error("Error removing universe: " .. vim.inspect(err))
+		log.error("Error removing universe: %s", err)
 	end
 end
 

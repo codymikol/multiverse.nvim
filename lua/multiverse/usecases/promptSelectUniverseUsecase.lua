@@ -32,14 +32,14 @@ M.run = function()
 				return
 			end
 
-			log.debug("universe selected" .. selected_universe.directory)
+			log.debug("universe selected %s", selected_universe.directory)
 
 			multiverse_manager.load_universe(multiverse, selected_universe)
 		end)
 	end)
 	if not success then
 		vim.notify("Failed to open universe, check MultiverseLog for more information", vim.log.levels.ERROR)
-		log.error("Error opening universe: " .. vim.inspect(err))
+		log.error("Error opening universe: %s", err)
 	end
 end
 

@@ -7,14 +7,14 @@ local log = require("multiverse.log")
 --- @param universe Universe
 M.hydrateBuffersForUniverse = function(universe)
 
-  log.debug("Hydrating buffers for universe: " .. vim.inspect(universe.uuid))
+  log.debug("Hydrating buffers for universe: %s", universe.uuid)
 
   for _, buffer in ipairs(universe.buffers) do
 
-    log.debug("Hydrating buffer: " .. vim.inspect(buffer.bufferName))
+    log.debug("Hydrating buffer: %s", buffer.bufferName)
 
     if buffer.bufferName == "" or buffer.bufferName == nil then
-      log.debug("Buffer name is empty, assuming it's a scratch buffer and not opening: " .. vim.inspect(buffer.bufferId))
+      log.debug("Buffer name is empty, assuming it's a scratch buffer and not opening: %s", buffer.bufferId)
     else
       vim.api.nvim_command("badd " .. buffer.bufferName)
       local buffer_number = vim.fn.bufnr(buffer.bufferName, true)
@@ -45,11 +45,16 @@ local function isNormalBuffer(buffer_id)
   return vim.api.nvim_get_option_value("buftype", { buf = buffer_id }) == ""
 end
 
+--- Returns three raw values, not a pre-formatted string: log.*'s varargs
+--- already vim.inspect each argument, so pre-formatting here would double-inspect.
+--- @return string name
+--- @return string buftype
+--- @return number bufnr
 local function get_buf_desc(bufnr)
   local name = vim.api.nvim_buf_get_name(bufnr)
   local buftype = vim.api.nvim_get_option_value("buftype", { buf = bufnr })
 
-  return vim.inspect(name) .. " (" .. vim.inspect(buftype) .. ") " .. vim.inspect(bufnr)
+  return name, buftype, bufnr
 
 end
 
@@ -59,17 +64,17 @@ local function isDesiredUniverseBuffer(buffer_id)
   -- buffers can be unloaded, but still a part of the universe, they aren't "loaded" until the user clicks on that buffer.
 
   if not isModifiableBuffer(buffer_id) then
-    log.debug("buffer " .. get_buf_desc(buffer_id) .. " is not modifiable, not closing...")
+    log.debug("buffer %s (%s) %s is not modifiable, not closing...", get_buf_desc(buffer_id))
     return false
   end
 
   if isReadOnlyBuffer(buffer_id) then
-    log.debug("buffer " .. get_buf_desc(buffer_id) .. " is read only, not closing...")
+    log.debug("buffer %s (%s) %s is read only, not closing...", get_buf_desc(buffer_id))
     return false
   end
 
   if not isNormalBuffer(buffer_id) then
-    log.debug("buffer " .. get_buf_desc(buffer_id) .. " is not a normal buffer, not closing...")
+    log.debug("buffer %s (%s) %s is not a normal buffer, not closing...", get_buf_desc(buffer_id))
     return false
   end
 
@@ -103,9 +108,9 @@ M.closeAllBuffers = function()
   for _, buffer in ipairs(buffersToClose) do
     local status, err = pcall(vim.api.nvim_buf_delete, buffer.bufferId, {})
     if status then
-      log.debug("successfully closed buffer " .. vim.inspect(buffer.bufferId))
+      log.debug("successfully closed buffer %s", buffer.bufferId)
     else
-      log.error("error deleting buffer " .. vim.inspect(buffer.bufferId) .. ", error: " .. err)
+      log.error("error deleting buffer %s, error: %s", buffer.bufferId, err)
     end
   end
 end
@@ -140,23 +145,23 @@ M.close_generated_nofile_scratch_buffers = function()
     local buffer_id = buf.bufnr
     local name = vim.api.nvim_buf_get_name(buffer_id)
 
-    log.debug("Checking buffer: " .. vim.inspect(buffer_id) .. ", name: " .. vim.inspect(name) .. " nofile: " .. vim.inspect(vim.api.nvim_get_option_value("buftype", { buf = buffer_id })))
+    log.debug("Checking buffer: %s, name: %s nofile: %s", buffer_id, name, vim.api.nvim_get_option_value("buftype", { buf = buffer_id }))
 
     local is_generated_buffer = name == "" and vim.api.nvim_get_option_value("buftype", { buf = buffer_id }) == ""
 
     if is_generated_buffer then
       local wins = vim.fn.win_findbuf(buffer_id)
-      log.debug("Found windows for generated buffer " .. vim.inspect(buffer_id) .. ": " .. vim.inspect(wins))
-      log.debug("Closing generated scratch buffer: " .. vim.inspect(buffer_id))
+      log.debug("Found windows for generated buffer %s: %s", buffer_id, wins)
+      log.debug("Closing generated scratch buffer: %s", buffer_id)
       local old_switchbuf = vim.o.switchbuf
 
       vim.o.switchbuf = "useopen"
 
       local status, err = pcall(vim.api.nvim_buf_delete, buffer_id, { force = true })
       if status then
-        log.debug("successfully closed generated scratch buffer " .. vim.inspect(buffer_id))
+        log.debug("successfully closed generated scratch buffer %s", buffer_id)
       else
-        log.error("error deleting generated scratch buffer " .. vim.inspect(buffer_id) .. ", error: " .. err)
+        log.error("error deleting generated scratch buffer %s, error: %s", buffer_id, err)
       end
 
       vim.o.switchbuf = old_switchbuf

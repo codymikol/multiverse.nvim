@@ -42,7 +42,7 @@ M.save = function()
       local current_universe, err = universe_repository.get_universe_by_uuid(current_universe_summary.uuid)
 
       if current_universe == nil then
-        log.error("Error dehydrating universe: " .. current_universe_summary.uuid .. ", error details: " .. vim.inspect(err))
+        log.error("Error dehydrating universe: %s, error details: %s", current_universe_summary.uuid, err)
         state_store.set_current_state(state_store.STATES.IDLE)
         return
       end
@@ -80,7 +80,7 @@ end
 --- (e.g. on VimEnter, where the current buffer is just the empty/startup state, not a prior session).
 M.load_universe = function(multiverse, selected_universe_summary, skip_save)
 
-  log.debug("Loading universe: " .. selected_universe_summary.name)
+  log.debug("Loading universe: %s", selected_universe_summary.name)
 
   local success, err = pcall(function()
 
@@ -111,7 +111,7 @@ M.load_universe = function(multiverse, selected_universe_summary, skip_save)
         -- cleanup_manager.cleanup() runs below) is what keeps a missing/
         -- corrupt universe file from wiping the user's open buffers.
         if current_universe == nil then
-          log.error("Error dehydrating universe: " .. current_universe_summary.uuid .. ", error details: " .. vim.inspect(err))
+          log.error("Error dehydrating universe: %s, error details: %s", current_universe_summary.uuid, err)
           return
         end
 
@@ -154,7 +154,7 @@ M.load_universe = function(multiverse, selected_universe_summary, skip_save)
   end)
 
   if not success then
-    log.error("Error loading universe: " .. selected_universe_summary.name .. ", error details: " .. vim.json.encode(err))
+    log.error("Error loading universe: %s, error details: %s", selected_universe_summary.name, err)
     vim.notify("Error loading universe: " .. selected_universe_summary.name, vim.log.levels.ERROR)
   end
 
