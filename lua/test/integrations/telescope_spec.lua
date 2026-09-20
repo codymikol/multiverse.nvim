@@ -98,7 +98,7 @@ describe("telescope.get_universe_preview", function()
 		local shownBuffer = Buffer:new("buffer-1-uuid", 1, "/home/test/shown.lua")
 		local hiddenBuffer = Buffer:new("buffer-2-uuid", 2, "/home/test/hidden.lua")
 
-		local universe = Universe:new("universe-uuid", "test-universe", "/home/test")
+		local universe = Universe:new({ uuid = "universe-uuid", name = "test-universe", workingDirectory = "/home/test" })
 		universe:addTabpage(tabpage1)
 		universe:addTabpage(tabpage2)
 		universe:addBuffer(shownBuffer)

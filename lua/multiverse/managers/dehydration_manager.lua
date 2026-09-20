@@ -13,7 +13,7 @@ local M = {}
 --- @return Universe
 M.dehydrate = function(summary)
 
-	local universe = Universe:new(summary.uuid, summary.name, summary.directory)
+	local universe = Universe:new({ uuid = summary.uuid, name = summary.name, workingDirectory = summary.directory })
 
 	local tabpages = tabpage_manager.getTabpages()
 	local buffers = buffer_manager.get_all_buffers()

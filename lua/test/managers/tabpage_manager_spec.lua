@@ -7,7 +7,7 @@ local stub = require("luassert.stub")
 --- @param n number
 --- @return Universe
 local function makeUniverseWithTabpages(n)
-	local universe = Universe:new("", "example", "/home/foo")
+	local universe = Universe:new({ uuid = "uuid-1", name = "example", workingDirectory = "/home/foo" })
 	for i = 1, n do
 		universe:addTabpage(Tabpage:new("uuid" .. i, nil, ""))
 	end

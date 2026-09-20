@@ -33,7 +33,7 @@ describe("universe_repository", function()
 			local mock_file
 
 			before_each(function()
-				universe = Universe:new("uuid-1", "foo", "/tmp/foo")
+				universe = Universe:new({ uuid = "uuid-1", name = "foo", workingDirectory = "/tmp/foo" })
 				write_stub = stub.new()
 				close_stub = stub.new()
 				mock_file = {
@@ -65,7 +65,7 @@ describe("universe_repository", function()
 			local io_open_stub
 
 			before_each(function()
-				universe = Universe:new("uuid-1", "foo", "/tmp/foo")
+				universe = Universe:new({ uuid = "uuid-1", name = "foo", workingDirectory = "/tmp/foo" })
 				io_open_stub = stub(io, "open", function()
 					return nil, "some os error"
 				end)
