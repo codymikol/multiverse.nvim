@@ -17,14 +17,21 @@ end
 describe("tabpage_manager", function()
 	describe("getTabpages", function()
 		local nvim_list_tabpages_stub
+		local nvim_tabpage_get_win_stub
 
 		before_each(function()
 			nvim_list_tabpages_stub = stub(vim.api, "nvim_list_tabpages")
 			nvim_list_tabpages_stub.returns({ 1000, 1001 })
+
+			nvim_tabpage_get_win_stub = stub(vim.api, "nvim_tabpage_get_win")
+			nvim_tabpage_get_win_stub.invokes(function(tabpageId)
+				return tabpageId + 9000
+			end)
 		end)
 
 		after_each(function()
 			nvim_list_tabpages_stub:revert()
+			nvim_tabpage_get_win_stub:revert()
 		end)
 
 		it("should return one Tabpage per entry returned by nvim_list_tabpages", function()
@@ -48,14 +55,19 @@ describe("tabpage_manager", function()
 			assert.are.equal(1001, tabpages[2].tabpageId)
 		end)
 
-		it("should default activeWindowUuid to an empty string", function()
+		it("should leave activeWindowUuid unresolved until dehydration correlates the active window's uuid", function()
 			local tabpages = tabpage_manager.getTabpages()
 
-			-- This intentionally documents the current placeholder behavior of the
-			-- `-- todo(mikol): We need to find the active windowId for this tabpage and assign it here.`
-			-- comment in tabpage_manager.lua, and will need updating once that TODO is resolved.
+			-- activeWindowUuid is resolved later, during dehydration.
 			assert.are.equal("", tabpages[1].activeWindowUuid)
 			assert.are.equal("", tabpages[2].activeWindowUuid)
+		end)
+
+		it("should capture the raw active window id from nvim_tabpage_get_win for each tabpage", function()
+			local tabpages = tabpage_manager.getTabpages()
+
+			assert.are.equal(10000, tabpages[1].activeWindowId)
+			assert.are.equal(10001, tabpages[2].activeWindowId)
 		end)
 
 		it("should assign each Tabpage a non-empty uuid", function()
