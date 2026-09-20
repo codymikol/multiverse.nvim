@@ -27,15 +27,19 @@ describe("plugins.neotree_plugin", function()
 	describe("context.beforeDehydrate", function()
 		local neotree_plugin
 		local vim_cmd_stub
+		local exists_stub
 
 		before_each(function()
 			package.loaded["plugins.neotree_plugin"] = nil
 			neotree_plugin = require("plugins.neotree_plugin")
 			vim_cmd_stub = stub(vim, "cmd")
+			exists_stub = stub(vim.fn, "exists")
+			exists_stub.returns(2)
 		end)
 
 		after_each(function()
 			vim_cmd_stub:revert()
+			exists_stub:revert()
 			package.loaded["plugins.neotree_plugin"] = nil
 		end)
 
@@ -44,6 +48,14 @@ describe("plugins.neotree_plugin", function()
 
 			assert.stub(vim_cmd_stub).was.called(1)
 			assert.stub(vim_cmd_stub).was.called_with("Neotree close")
+		end)
+
+		it("does nothing when the :Neotree command does not exist", function()
+			exists_stub.returns(0)
+
+			neotree_plugin.context.beforeDehydrate({})
+
+			assert.stub(vim_cmd_stub).was.called(0)
 		end)
 	end)
 
@@ -55,6 +67,7 @@ describe("plugins.neotree_plugin", function()
 		local nvim_win_set_width_stub
 		local getcwd_stub
 		local nvim_get_current_win_stub
+		local exists_stub
 
 		before_each(function()
 			package.loaded["plugins.neotree_plugin"] = nil
@@ -75,6 +88,9 @@ describe("plugins.neotree_plugin", function()
 
 			nvim_get_current_win_stub = stub(vim.api, "nvim_get_current_win")
 			nvim_get_current_win_stub.returns(4242)
+
+			exists_stub = stub(vim.fn, "exists")
+			exists_stub.returns(2)
 		end)
 
 		after_each(function()
@@ -82,6 +98,7 @@ describe("plugins.neotree_plugin", function()
 			nvim_win_set_width_stub:revert()
 			getcwd_stub:revert()
 			nvim_get_current_win_stub:revert()
+			exists_stub:revert()
 			package.loaded["plugins.neotree_plugin"] = nil
 		end)
 
@@ -97,6 +114,15 @@ describe("plugins.neotree_plugin", function()
 				{ name = "cmd", arg = "Neotree close" },
 				{ name = "cmd", arg = "Neotree show" },
 			}, call_log)
+		end)
+
+		it("does nothing when the :Neotree command does not exist", function()
+			exists_stub.returns(0)
+
+			neotree_plugin.context.afterHydrate({})
+
+			assert.stub(vim_cmd_stub).was.called(0)
+			assert.stub(nvim_win_set_width_stub).was.called(0)
 		end)
 	end)
 end)
