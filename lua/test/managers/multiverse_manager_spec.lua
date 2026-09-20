@@ -191,6 +191,8 @@ describe("multiverse_manager.load_universe", function()
 				UniverseSummary:new({ directory = "/tmp/multiverse-selected-dir", uuid = "selected-uuid", name = "selected-universe" })
 			local multiverse = Multiverse:new({ selected_universe_summary })
 
+			save_stub = stub(multiverse_manager, "save")
+
 			multiverse_manager.load_universe(multiverse, selected_universe_summary, true)
 
 			assert.stub(get_universe_by_uuid_stub).was_not.called()
