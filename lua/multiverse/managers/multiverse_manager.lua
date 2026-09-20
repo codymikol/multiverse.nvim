@@ -24,41 +24,36 @@ M.save = function()
 
     local current_directory = vim.fn.getcwd()
 
-    local current_multiverse_summary = multiverse:getUniverseByDirectory(current_directory)
-    if current_multiverse_summary == nil then
-      current_multiverse_summary = multiverse:getUniverseByDirectory(current_directory .. "/")
+    local current_universe_summary = multiverse:getUniverseByDirectory(current_directory)
+    if current_universe_summary == nil then
+      current_universe_summary = multiverse:getUniverseByDirectory(current_directory .. "/")
     end
 
-    if current_multiverse_summary == nil then
+    if current_universe_summary == nil then
       vim.notify("No universe found for current directory: " .. current_directory)
       state_store.set_current_state(state_store.STATES.IDLE)
       return
     end
 
-    local current_universe_summary = multiverse:getUniverseByDirectory(current_directory)
+    local current_universe, err = universe_repository.get_universe_by_uuid(current_universe_summary.uuid)
 
-    if current_universe_summary ~= nil then
-
-      local current_universe, err = universe_repository.get_universe_by_uuid(current_universe_summary.uuid)
-
-      if current_universe == nil then
-        log.error("Error dehydrating universe: " .. current_universe_summary.uuid .. ", error details: " .. vim.inspect(err))
-        state_store.set_current_state(state_store.STATES.IDLE)
-        return
-      end
-
-      plugin_manager.beforeDehydrate({
-        universe = current_universe
-      })
-
-      local dehydrated_universe = dehydration_manager.dehydrate(current_universe_summary)
-
-      plugin_manager.afterDehydrate({
-        universe = current_universe
-      })
-
-      universe_repository.save_universe(dehydrated_universe)
+    if current_universe == nil then
+      log.error("Error dehydrating universe: " .. current_universe_summary.uuid .. ", error details: " .. vim.inspect(err))
+      state_store.set_current_state(state_store.STATES.IDLE)
+      return
     end
+
+    plugin_manager.beforeDehydrate({
+      universe = current_universe
+    })
+
+    local dehydrated_universe = dehydration_manager.dehydrate(current_universe_summary)
+
+    plugin_manager.afterDehydrate({
+      universe = current_universe
+    })
+
+    universe_repository.save_universe(dehydrated_universe)
   end)
 
   if not success then
@@ -100,11 +95,11 @@ M.load_universe = function(multiverse, selected_universe_summary, skip_save)
 
       if current_universe_summary ~= nil then
 
-        -- deliberately shadowed: keeps beforeHydrate/afterHydrate's
-        -- `current_universe` argument at its pre-existing value (nil) here,
-        -- matching MultiverseOpen's behavior prior to this file's skip_save
-        -- change instead of silently altering it.
-        local current_universe, err = universe_repository.get_universe_by_uuid(current_universe_summary.uuid)
+        -- must assign the outer `current_universe` here, not `local`
+        -- redeclare it, so beforeHydrate/afterHydrate below receive the
+        -- resolved universe instead of always seeing nil.
+        local err
+        current_universe, err = universe_repository.get_universe_by_uuid(current_universe_summary.uuid)
 
         -- This abort guard must run whether or not the current directory's
         -- universe is the one being loaded: bailing out here (before
