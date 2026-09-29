@@ -9,8 +9,68 @@ package.loaded["integrations.telescope"] = { prompt_select_universe = function()
 local cli_manager = require("multiverse.managers.cli_manager")
 local log = require("multiverse.log")
 local zellij_manager = require("multiverse.managers.zellij_manager")
+local addNewUniverseUsecase = require("multiverse.usecases.addNewUniverseUsecase")
 
 describe("cli_manager.registerCommands", function()
+	describe("MultiverseAdd", function()
+		local create_user_command_stub
+		local run_stub
+
+		before_each(function()
+			create_user_command_stub = stub(vim.api, "nvim_create_user_command")
+			run_stub = stub(addNewUniverseUsecase, "run")
+		end)
+
+		after_each(function()
+			create_user_command_stub:revert()
+			run_stub:revert()
+		end)
+
+		local function get_callback()
+			cli_manager.registerCommands()
+
+			for _, call in ipairs(create_user_command_stub.calls) do
+				if call.refs[1] == "MultiverseAdd" then
+					return call.refs[2]
+				end
+			end
+		end
+
+		it("registers a MultiverseAdd user command accepting a variable number of args", function()
+			cli_manager.registerCommands()
+
+			assert.stub(create_user_command_stub).was.called_with(
+				"MultiverseAdd",
+				match._,
+				{ nargs = "*", complete = "file" }
+			)
+		end)
+
+		it("passes both fargs through to addNewUniverseUsecase.run when two args are given", function()
+			local callback = get_callback()
+
+			callback({ fargs = { "myname", "/some/dir" } })
+
+			assert.stub(run_stub).was_called_with("myname", "/some/dir")
+		end)
+
+		it("passes nil for the missing directory when only one arg is given", function()
+			local callback = get_callback()
+
+			callback({ fargs = { "myname" } })
+
+			assert.stub(run_stub).was_called_with("myname", nil)
+		end)
+
+		it("passes nil for both name and directory when no args are given", function()
+			local callback = get_callback()
+
+			callback({ fargs = {} })
+
+			assert.stub(run_stub).was_called_with(nil, nil)
+		end)
+	end)
+
 	describe("MultiverseLog", function()
 		local create_user_command_stub
 
