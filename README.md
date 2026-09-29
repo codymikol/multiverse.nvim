@@ -53,6 +53,25 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim). `setup()` registers a `Vi
 
 
 
+## Keymaps
+
+`setup()` accepts an optional `opts.keymaps` table to bind normal-mode keys directly to the commands above. Omitting `opts.keymaps` registers no keymaps, leaving existing configs unaffected:
+
+```lua
+require("multiverse").setup({
+  keymaps = {
+    list = "<leader>ml",
+    terminal = "<leader>mt",
+    add = "<leader>ma",
+    open = "<leader>mo",
+    remove = "<leader>mr",
+    log = "<leader>mL",
+  }
+})
+```
+
+Commands that take an argument (`add`, `open`, `remove`) drop the cursor into the command line (e.g. `:MultiverseOpen `) with completion, rather than executing immediately.
+
 ## Startup Behavior
 
 - **Automatic hydration on directory entry**
