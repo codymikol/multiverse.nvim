@@ -1,13 +1,14 @@
 local M = {}
 
-local multiverse_repository = require("multiverse.repositories.multiverse_repository")
-local universe_repository = require("multiverse.repositories.universe_repository")
-local hydration_manager = require("multiverse.managers.hydration_manager")
-local dehydration_manager = require("multiverse.managers.dehydration_manager")
-local cleanup_manager = require("multiverse.managers.cleanup_manager")
-local plugin_manager = require("multiverse.managers.plugin_manager")
-local log            = require("multiverse.log")
-local state_store    = require("multiverse.store.state_store")
+local multiverse_repository   = require("multiverse.repositories.multiverse_repository")
+local universe_repository     = require("multiverse.repositories.universe_repository")
+local hydration_manager       = require("multiverse.managers.hydration_manager")
+local dehydration_manager     = require("multiverse.managers.dehydration_manager")
+local cleanup_manager         = require("multiverse.managers.cleanup_manager")
+local plugin_manager          = require("multiverse.managers.plugin_manager")
+local log                     = require("multiverse.log")
+local state_store             = require("multiverse.store.state_store")
+local current_universe_store  = require("multiverse.store.current_universe_store")
 
 M.save = function()
 
@@ -145,6 +146,17 @@ M.load_universe = function(multiverse, selected_universe_summary, skip_save)
     hydration_manager.hydrate(selected_universe_summary)
 
     plugin_manager.afterHydrate({ universe = current_universe })
+
+    -- Guard against re-opening the same universe you're already in, which must
+    -- NOT clobber the previous pointer (so alternate-style flip-flopping stays
+    -- stable across a no-op reload). This runs only after hydration succeeds,
+    -- so a thrown error or the abort guard's bare `return` above leaves the
+    -- pointers untouched.
+    local outgoing_universe_name = current_universe_store.get_current_universe()
+    if outgoing_universe_name ~= nil and outgoing_universe_name ~= selected_universe_summary.name then
+      current_universe_store.set_previous_universe(outgoing_universe_name)
+    end
+    current_universe_store.set_current_universe(selected_universe_summary.name)
 
   end)
 

@@ -11,6 +11,7 @@ local log = require("multiverse.log")
 local multiverse_manager = require("multiverse.managers.multiverse_manager")
 local Multiverse = require("multiverse.data.Multiverse")
 local UniverseSummary = require("multiverse.data.UniverseSummary")
+local current_universe_store = require("multiverse.store.current_universe_store")
 
 describe("multiverse_manager.save", function()
 	describe("when saving raises an error", function()
@@ -60,6 +61,9 @@ describe("multiverse_manager.load_universe", function()
 	local save_stub
 	local log_error_stub
 	local log_debug_stub
+	local get_current_universe_stub
+	local set_current_universe_stub
+	local set_previous_universe_stub
 
 	before_each(function()
 		state_store.set_current_state(state_store.STATES.IDLE)
@@ -71,6 +75,10 @@ describe("multiverse_manager.load_universe", function()
 		get_universe_by_uuid_stub = stub(universe_repository, "get_universe_by_uuid")
 		log_error_stub = stub(log, "error")
 		log_debug_stub = stub(log, "debug")
+		get_current_universe_stub = stub(current_universe_store, "get_current_universe")
+		get_current_universe_stub.returns(nil)
+		set_current_universe_stub = stub(current_universe_store, "set_current_universe")
+		set_previous_universe_stub = stub(current_universe_store, "set_previous_universe")
 	end)
 
 	after_each(function()
@@ -82,6 +90,9 @@ describe("multiverse_manager.load_universe", function()
 		get_universe_by_uuid_stub:revert()
 		log_error_stub:revert()
 		log_debug_stub:revert()
+		get_current_universe_stub:revert()
+		set_current_universe_stub:revert()
+		set_previous_universe_stub:revert()
 		if getcwd_stub then
 			getcwd_stub:revert()
 			getcwd_stub = nil
@@ -223,6 +234,84 @@ describe("multiverse_manager.load_universe", function()
 
 			assert.is_nil(beforeHydrate_stub.calls[1].refs[1].universe)
 			assert.is_nil(afterHydrate_stub.calls[1].refs[1].universe)
+		end)
+	end)
+
+	describe("current/previous universe tracking", function()
+		it("on the first-ever call (no current tracked yet), sets current and does not set previous", function()
+			local selected_universe_summary =
+				UniverseSummary:new({ directory = "/tmp/multiverse-selected-dir", uuid = "selected-uuid", name = "universe-a" })
+			local multiverse = Multiverse:new({ selected_universe_summary })
+
+			get_current_universe_stub.returns(nil)
+
+			multiverse_manager.load_universe(multiverse, selected_universe_summary, true)
+
+			assert.stub(set_current_universe_stub).was.called_with("universe-a")
+			assert.stub(set_previous_universe_stub).was_not.called()
+		end)
+
+		it("switching from a different universe sets previous to the old name and current to the new name", function()
+			local selected_universe_summary =
+				UniverseSummary:new({ directory = "/tmp/multiverse-selected-dir", uuid = "selected-uuid", name = "universe-b" })
+			local multiverse = Multiverse:new({ selected_universe_summary })
+
+			get_current_universe_stub.returns("universe-a")
+
+			multiverse_manager.load_universe(multiverse, selected_universe_summary, true)
+
+			assert.stub(set_previous_universe_stub).was.called_with("universe-a")
+			assert.stub(set_current_universe_stub).was.called_with("universe-b")
+		end)
+
+		it("re-opening the same universe does not clobber previous, but still sets current", function()
+			local selected_universe_summary =
+				UniverseSummary:new({ directory = "/tmp/multiverse-selected-dir", uuid = "selected-uuid", name = "universe-a" })
+			local multiverse = Multiverse:new({ selected_universe_summary })
+
+			get_current_universe_stub.returns("universe-a")
+
+			multiverse_manager.load_universe(multiverse, selected_universe_summary, true)
+
+			assert.stub(set_previous_universe_stub).was_not.called()
+			assert.stub(set_current_universe_stub).was.called_with("universe-a")
+		end)
+
+		it("does not update tracking when the abort guard fires (current directory's universe fails to load)", function()
+			local cwd = "/tmp/multiverse-manager-spec/corrupt-tracking"
+			local shared_uuid = "corrupt-tracking-uuid"
+
+			local current_universe_summary =
+				UniverseSummary:new({ directory = cwd, uuid = shared_uuid, name = "corrupt-tracking-universe" })
+			local selected_universe_summary =
+				UniverseSummary:new({ directory = cwd, uuid = shared_uuid, name = "corrupt-tracking-universe" })
+			local multiverse = Multiverse:new({ current_universe_summary })
+
+			getcwd_stub = stub(vim.fn, "getcwd", function() return cwd end)
+			get_universe_by_uuid_stub.returns(nil, "some error")
+			save_stub = stub(multiverse_manager, "save")
+			get_current_universe_stub.returns("universe-a")
+
+			multiverse_manager.load_universe(multiverse, selected_universe_summary)
+
+			assert.stub(set_current_universe_stub).was_not.called()
+			assert.stub(set_previous_universe_stub).was_not.called()
+		end)
+
+		it("does not update tracking when something inside the pcall throws", function()
+			local selected_universe_summary =
+				UniverseSummary:new({ directory = "/tmp/multiverse-selected-dir", uuid = "selected-uuid", name = "universe-b" })
+			local multiverse = Multiverse:new({ selected_universe_summary })
+
+			get_current_universe_stub.returns("universe-a")
+			cleanup_stub.invokes(function()
+				error("boom")
+			end)
+
+			multiverse_manager.load_universe(multiverse, selected_universe_summary, true)
+
+			assert.stub(set_current_universe_stub).was_not.called()
+			assert.stub(set_previous_universe_stub).was_not.called()
 		end)
 	end)
 end)
