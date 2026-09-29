@@ -150,4 +150,43 @@ describe("addNewUniverseUsecase.run", function()
 
 		assert.are.equal("/tmp/some/project", saved_universe.workingDirectory)
 	end)
+
+	it("defaults both name and directory when called with no arguments", function()
+		local directory = "/tmp/some/project"
+		getcwd_stub = stub(vim.fn, "getcwd", function() return directory end)
+
+		addNewUniverseUsecase.run(nil, nil)
+
+		assert.stub(save_universe_stub).was.called(1)
+		local saved_universe = save_universe_stub.calls[1].refs[1]
+
+		assert.are.equal(directory, saved_universe.workingDirectory)
+		assert.are.equal("project", saved_universe.name)
+	end)
+
+	it("defaults the directory to cwd when only a name is given", function()
+		local directory = "/tmp/some/project"
+		getcwd_stub = stub(vim.fn, "getcwd", function() return directory end)
+
+		addNewUniverseUsecase.run("myname", nil)
+
+		assert.stub(save_universe_stub).was.called(1)
+		local saved_universe = save_universe_stub.calls[1].refs[1]
+
+		assert.are.equal(directory, saved_universe.workingDirectory)
+		assert.are.equal("myname", saved_universe.name)
+	end)
+
+	it("treats an empty-string name and directory as unset and defaults them", function()
+		local directory = "/tmp/some/project"
+		getcwd_stub = stub(vim.fn, "getcwd", function() return directory end)
+
+		addNewUniverseUsecase.run("", "")
+
+		assert.stub(save_universe_stub).was.called(1)
+		local saved_universe = save_universe_stub.calls[1].refs[1]
+
+		assert.are.equal(directory, saved_universe.workingDirectory)
+		assert.are.equal("project", saved_universe.name)
+	end)
 end)
