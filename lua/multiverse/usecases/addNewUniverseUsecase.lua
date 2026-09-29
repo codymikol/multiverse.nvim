@@ -16,13 +16,21 @@ local function normalizeDirectory(directory)
 	return trailing_slash_removed
 end
 
----@param name string
----@param directory string
+---@param name string | nil
+---@param directory string | nil
 M.run = function(name, directory)
 	local success, err = pcall(function()
 		local seconds_since_epoch = timestamp_manager.now()
 
+		if nil == directory or "" == directory then
+			directory = vim.fn.getcwd()
+		end
+
 		local normalized_directory = normalizeDirectory(directory)
+
+		if nil == name or "" == name then
+			name = vim.fs.basename(normalized_directory)
+		end
 
 		local new_uuid = uuid_manager.create()
 
