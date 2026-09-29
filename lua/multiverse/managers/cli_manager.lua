@@ -4,6 +4,7 @@ local addNewUniverseUsecase = require("multiverse.usecases.addNewUniverseUsecase
 local promptSelectUniverseUsecase = require("multiverse.usecases.promptSelectUniverseUsecase")
 local removeUniverseUsecase = require("multiverse.usecases.removeUniverseUsecase")
 local openUniverseUsecase = require("multiverse.usecases.openUniverseUsecase")
+local alternateUniverseUsecase = require("multiverse.usecases.alternateUniverseUsecase")
 local multiverse_repository = require("multiverse.repositories.multiverse_repository")
 local zellij_manager = require("multiverse.managers.zellij_manager")
 local log = require("multiverse.log")
@@ -48,6 +49,10 @@ M.registerCommands = function()
 
 	vim.api.nvim_create_user_command("MultiverseList", function()
 		promptSelectUniverseUsecase.run()
+	end, { nargs = 0 })
+
+	vim.api.nvim_create_user_command("MultiverseAlternate", function()
+		alternateUniverseUsecase.run()
 	end, { nargs = 0 })
 
 	vim.api.nvim_create_user_command("MultiverseLog", function()
