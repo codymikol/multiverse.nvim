@@ -1,6 +1,7 @@
 local NeoTreePlugin = require("plugins.neotree_plugin")
 local CopilotChatPlugin = require("plugins.copilot_chat_plugin")
 local ZellijPlugin = require("plugins.zellij_plugin")
+local log = require("multiverse.log")
 
 local M = {}
 
@@ -19,17 +20,30 @@ M.register = function(plugin)
 	table.insert(plugins, plugin)
 end
 
+--- Runs `hookName` on every registered plugin that defines it, isolating each call in its
+--- own pcall so a throwing plugin hook can't skip later plugins or abort the caller.
+--- @param hookName string
+--- @param ctx table
+--- @return nil
+local function dispatch_hook(hookName, ctx)
+	for _, plugin in ipairs(plugins) do
+		local hook = plugin.context[hookName]
+		if hook then
+			local success, err = pcall(hook, ctx)
+			if not success then
+				log.error("Error running %s hook for plugin %s: %s", hookName, plugin.name, err)
+			end
+		end
+	end
+end
+
 --- The first lifecycle event called. This is called before the state of the universe
 --- is saved into persistence. Here when required is a good time to drive the related plugin to saves its own
 --- state, or clean up any resources.
 --- @param beforeDehydrateContext BeforeDehydrateContext
 --- @return nil
 M.beforeDehydrate = function(beforeDehydrateContext)
-	for _, plugin in ipairs(plugins) do
-		if plugin.context.beforeDehydrate then
-			plugin.context.beforeDehydrate(beforeDehydrateContext)
-		end
-	end
+	dispatch_hook("beforeDehydrate", beforeDehydrateContext)
 end
 
 --- `afterDehydrate` is the second lifecycle event called. This is called after the state of the universe
@@ -37,11 +51,7 @@ end
 --- @param afterDehydrateContext AfterDehydrateContext
 --- @return nil
 M.afterDehydrate = function(afterDehydrateContext)
-	for _, plugin in ipairs(plugins) do
-		if plugin.context.afterDehydrate then
-			plugin.context.afterDehydrate(afterDehydrateContext)
-		end
-	end
+	dispatch_hook("afterDehydrate", afterDehydrateContext)
 end
 
 --- The third lifecycle event called. This is called after all tabpages, windows, and buffers
@@ -50,11 +60,7 @@ end
 --- @param beforeHydrateContext BeforeHydrateContext
 --- @return nil
 M.beforeHydrate = function(beforeHydrateContext)
-	for _, plugin in ipairs(plugins) do
-		if plugin.context.beforeHydrate then
-			plugin.context.beforeHydrate(beforeHydrateContext)
-		end
-	end
+	dispatch_hook("beforeHydrate", beforeHydrateContext)
 end
 
 --- The final lifecycle event called. This is called after the universe has been hydrated.
@@ -62,11 +68,7 @@ end
 --- @param afterHydrateContext AfterHydrateContext
 --- @return nil
 M.afterHydrate = function(afterHydrateContext)
-	for _, plugin in ipairs(plugins) do
-		if plugin.context.afterHydrate then
-			plugin.context.afterHydrate(afterHydrateContext)
-		end
-	end
+	dispatch_hook("afterHydrate", afterHydrateContext)
 end
 
 return M
