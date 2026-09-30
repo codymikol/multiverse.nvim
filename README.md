@@ -77,6 +77,16 @@ require("multiverse").setup({
 
 Commands that take an argument (`add`, `open`, `remove`) drop the cursor into the command line (e.g. `:MultiverseOpen `) with completion, rather than executing immediately.
 
+## Terminal Title
+
+`setup()` accepts an optional `opts.title` flag to sync `vim.o.titlestring` to the active *Universe*'s name on each universe switch: it's off by default, and enabling it also forces `vim.o.title = true`, overriding a user who had explicitly set `set notitle`. Each call to `setup()` sets `vim.g.multiverse_title_enabled` from `opts.title`, so omitting `title` (or calling `setup()` more than once without it) always disables the sync, even if the global was set directly beforehand.
+
+```lua
+require("multiverse").setup({
+  title = true,
+})
+```
+
 ## Startup Behavior
 
 - **Automatic hydration on directory entry**

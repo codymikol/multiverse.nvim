@@ -21,6 +21,11 @@ local KEYMAP_COMMANDS = {
 Multiverse.setup = function(opts)
   opts = opts or {}
 
+  if opts.title ~= nil and type(opts.title) ~= "boolean" then
+    vim.notify("multiverse.setup: opts.title must be a boolean, got: " .. type(opts.title), vim.log.levels.WARN)
+  end
+  vim.g.multiverse_title_enabled = opts.title == true
+
   initialize.run()
   cli.registerCommands()
   on_exit.register()
