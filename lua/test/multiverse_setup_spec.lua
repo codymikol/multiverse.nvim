@@ -20,6 +20,7 @@ describe("Multiverse.setup", function()
 	local on_vim_enter_register_stub
 	local keymap_set_stub
 	local notify_stub
+	local original_title_enabled
 
 	before_each(function()
 		initialize_run_stub = stub(initialize, "run")
@@ -29,6 +30,7 @@ describe("Multiverse.setup", function()
 		on_vim_enter_register_stub = stub(on_vim_enter, "register")
 		keymap_set_stub = stub(vim.keymap, "set")
 		notify_stub = stub(vim, "notify")
+		original_title_enabled = vim.g.multiverse_title_enabled
 	end)
 
 	after_each(function()
@@ -39,6 +41,7 @@ describe("Multiverse.setup", function()
 		on_vim_enter_register_stub:revert()
 		keymap_set_stub:revert()
 		notify_stub:revert()
+		vim.g.multiverse_title_enabled = original_title_enabled
 	end)
 
 	it("registers zero keymaps when opts.keymaps is not provided", function()
@@ -114,6 +117,34 @@ describe("Multiverse.setup", function()
 		)
 		assert.stub(notify_stub).was.called_with(
 			"multiverse.setup: unknown keymaps key 'alternate'",
+			vim.log.levels.WARN
+		)
+	end)
+
+	it("enables vim.g.multiverse_title_enabled when opts.title is true", function()
+		Multiverse.setup({ title = true })
+
+		assert.is_true(vim.g.multiverse_title_enabled)
+	end)
+
+	it("disables vim.g.multiverse_title_enabled when opts is not provided", function()
+		Multiverse.setup()
+
+		assert.is_false(vim.g.multiverse_title_enabled)
+	end)
+
+	it("disables vim.g.multiverse_title_enabled when opts is an empty table", function()
+		Multiverse.setup({})
+
+		assert.is_false(vim.g.multiverse_title_enabled)
+	end)
+
+	it("warns and disables vim.g.multiverse_title_enabled for a non-boolean opts.title", function()
+		Multiverse.setup({ title = "yes" })
+
+		assert.is_false(vim.g.multiverse_title_enabled)
+		assert.stub(notify_stub).was.called_with(
+			"multiverse.setup: opts.title must be a boolean, got: string",
 			vim.log.levels.WARN
 		)
 	end)
