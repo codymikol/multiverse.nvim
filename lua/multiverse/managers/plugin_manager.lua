@@ -16,9 +16,21 @@ local plugins = {
 	TitleSyncPlugin,
 }
 
---- @param plugin PluginContext --- The plugin to register and handle lifecycle events with.
+--- @param plugin Plugin|nil --- The plugin to register and handle lifecycle events with.
 --- @return nil
 M.register = function(plugin)
+	if not plugin then
+		return
+	end
+
+	for i, p in ipairs(plugins) do
+		if p.name ~= nil and p.name == plugin.name then
+			log.debug("Replacing existing registration for plugin %s", plugin.name)
+			plugins[i] = plugin
+			return
+		end
+	end
+
 	table.insert(plugins, plugin)
 end
 
