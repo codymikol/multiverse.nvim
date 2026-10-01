@@ -32,6 +32,7 @@ local HOOK_FIELDS = {
 --- @field afterDehydrate? fun(AfterDehydrateContext): nil
 --- @field beforeHydrate? fun(BeforeHydrateContext): nil
 --- @field afterHydrate? fun(AfterHydrateContext): nil
+--- @field priority? number
 
 --- @param opts table
 --- @return PluginContext|nil
@@ -57,6 +58,16 @@ function PluginContext:new(opts)
 			else
 				log.warn("PluginContext hook %s was not a function, got: %s", field, value)
 			end
+		end
+	end
+
+	if opts.priority ~= nil then
+		-- NaN is the only number that fails self-equality; reject it so a NaN
+		-- priority can't silently break every ordering comparison downstream.
+		if type(opts.priority) == "number" and opts.priority == opts.priority then
+			self.priority = opts.priority
+		else
+			log.warn("PluginContext priority must be a valid number, got: %s", opts.priority)
 		end
 	end
 
