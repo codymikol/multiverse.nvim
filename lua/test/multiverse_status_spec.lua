@@ -7,18 +7,24 @@ package.loaded["integrations.telescope"] = { prompt_select_universe = function()
 
 local Multiverse = require("multiverse")
 local multiverse_repository = require("multiverse.repositories.multiverse_repository")
-local multiverse_manager = require("multiverse.managers.multiverse_manager")
 local MultiverseData = require("multiverse.data.Multiverse")
 local UniverseSummary = require("multiverse.data.UniverseSummary")
 
 describe("Multiverse.status", function()
 	local getMultiverse_stub
 	local getcwd_stub
+	local now_stub
+	-- get_current_universe_name()'s failure throttle is a module-local that persists across `it`
+	-- blocks (and across spec files, since they share one require cache). Each test gets its own
+	-- disjoint 10000ms slice of fake time (well past the 1000ms throttle window, and offset from
+	-- multiverse_manager_spec.lua's range) so a failure recorded by one test can never bleed into
+	-- another test's throttle check.
+	local clock_base = 10000000
 
 	before_each(function()
-		-- get_current_universe_name() throttles retries after a failure using real wall-clock
-		-- time, so reset it before each spec to avoid a prior test's failure bleeding into this one.
-		multiverse_manager.__reset_resolve_failure_throttle_for_testing()
+		clock_base = clock_base + 10000
+		now_stub = stub(vim.loop, "now")
+		now_stub.returns(clock_base)
 	end)
 
 	after_each(function()
@@ -30,6 +36,7 @@ describe("Multiverse.status", function()
 			getcwd_stub:revert()
 			getcwd_stub = nil
 		end
+		now_stub:revert()
 	end)
 
 	it("returns the active universe's name when cwd resolves to a registered universe", function()

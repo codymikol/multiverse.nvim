@@ -334,11 +334,17 @@ end)
 describe("multiverse_manager.get_current_universe_name", function()
 	local getMultiverse_stub
 	local getcwd_stub
+	local now_stub
+	-- The throttle's failure timestamp is a module-local that persists across `it` blocks (and
+	-- across spec files, since they share one require cache). Each test gets its own disjoint
+	-- 10000ms slice of fake time (well past the 1000ms throttle window) so a failure recorded by
+	-- one test can never bleed into the next test's throttle check.
+	local clock_base = 0
 
 	before_each(function()
-		-- The throttle's failure timestamp is module-local and tracks real wall-clock time, so
-		-- reset it before each spec to avoid a prior test's failure bleeding into this one.
-		multiverse_manager.__reset_resolve_failure_throttle_for_testing()
+		clock_base = clock_base + 10000
+		now_stub = stub(vim.loop, "now")
+		now_stub.returns(clock_base)
 	end)
 
 	after_each(function()
@@ -350,6 +356,7 @@ describe("multiverse_manager.get_current_universe_name", function()
 			getcwd_stub:revert()
 			getcwd_stub = nil
 		end
+		now_stub:revert()
 	end)
 
 	it("returns the matching universe's name when cwd exactly matches a registered universe's directory", function()
@@ -416,9 +423,26 @@ describe("multiverse_manager.get_current_universe_name", function()
 			error("boom")
 		end)
 
+		now_stub.returns(clock_base)
 		assert.is_nil(multiverse_manager.get_current_universe_name())
+
+		now_stub.returns(clock_base + 999)
 		assert.is_nil(multiverse_manager.get_current_universe_name())
 
 		assert.stub(getMultiverse_stub).was.called(1)
+	end)
+
+	it("re-invokes getMultiverse once the throttle window has expired", function()
+		getMultiverse_stub = stub(multiverse_repository, "getMultiverse", function()
+			error("boom")
+		end)
+
+		now_stub.returns(clock_base)
+		assert.is_nil(multiverse_manager.get_current_universe_name())
+
+		now_stub.returns(clock_base + 1000)
+		assert.is_nil(multiverse_manager.get_current_universe_name())
+
+		assert.stub(getMultiverse_stub).was.called(2)
 	end)
 end)
