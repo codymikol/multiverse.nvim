@@ -1,20 +1,9 @@
 local Plugin = require("multiverse.data.plugin.Plugin")
-local multiverse_repository = require("multiverse.repositories.multiverse_repository")
+local current_universe_resolver = require("multiverse.repositories.current_universe_resolver")
 local sanitize_statusline = require("multiverse.util.sanitize_statusline")
 
 local function resolve_current_universe_name()
-	local multiverse = multiverse_repository.getMultiverse()
-	if multiverse == nil then
-		return nil
-	end
-
-	local cwd = vim.fn.getcwd()
-
-	local summary = multiverse:getUniverseByDirectory(cwd)
-	if summary == nil then
-		summary = multiverse:getUniverseByDirectory(cwd .. "/")
-	end
-
+	local summary = current_universe_resolver.resolve_current_universe_summary()
 	return summary and summary.name
 end
 

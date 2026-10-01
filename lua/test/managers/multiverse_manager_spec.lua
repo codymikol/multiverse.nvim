@@ -329,71 +329,79 @@ describe("multiverse_manager.save", function()
 			assert.are.equal(state_store.STATES.IDLE, state_store.get_current_state())
 		end)
 	end)
+end)
 
-	describe("multiverse_manager.get_current_universe_name", function()
-		local getMultiverse_stub
-		local getcwd_stub
+describe("multiverse_manager.get_current_universe_name", function()
+	local getMultiverse_stub
+	local getcwd_stub
 
-		after_each(function()
-			if getMultiverse_stub then
-				getMultiverse_stub:revert()
-				getMultiverse_stub = nil
-			end
-			if getcwd_stub then
-				getcwd_stub:revert()
-				getcwd_stub = nil
-			end
+	after_each(function()
+		if getMultiverse_stub then
+			getMultiverse_stub:revert()
+			getMultiverse_stub = nil
+		end
+		if getcwd_stub then
+			getcwd_stub:revert()
+			getcwd_stub = nil
+		end
+	end)
+
+	it("returns the matching universe's name when cwd exactly matches a registered universe's directory", function()
+		local cwd = "/tmp/multiverse-manager-spec/current-universe-name"
+		local universe_summary =
+			UniverseSummary:new({ directory = cwd, uuid = "current-uuid", name = "current-universe" })
+		local multiverse = Multiverse:new({ universe_summary })
+
+		getMultiverse_stub = stub(multiverse_repository, "getMultiverse")
+		getMultiverse_stub.returns(multiverse)
+
+		getcwd_stub = stub(vim.fn, "getcwd")
+		getcwd_stub.returns(cwd)
+
+		assert.are.equal("current-universe", multiverse_manager.get_current_universe_name())
+	end)
+
+	it("returns the matching universe's name when cwd matches a registered universe's directory only with a trailing slash", function()
+		local cwd = "/tmp/multiverse-manager-spec/trailing-slash"
+		local universe_summary =
+			UniverseSummary:new({ directory = cwd .. "/", uuid = "trailing-uuid", name = "trailing-universe" })
+		local multiverse = Multiverse:new({ universe_summary })
+
+		getMultiverse_stub = stub(multiverse_repository, "getMultiverse")
+		getMultiverse_stub.returns(multiverse)
+
+		getcwd_stub = stub(vim.fn, "getcwd")
+		getcwd_stub.returns(cwd)
+
+		assert.are.equal("trailing-universe", multiverse_manager.get_current_universe_name())
+	end)
+
+	it("returns nil when cwd matches no registered universe", function()
+		local universe_summary =
+			UniverseSummary:new({ directory = "/tmp/multiverse-manager-spec/other", uuid = "other-uuid", name = "other-universe" })
+		local multiverse = Multiverse:new({ universe_summary })
+
+		getMultiverse_stub = stub(multiverse_repository, "getMultiverse")
+		getMultiverse_stub.returns(multiverse)
+
+		getcwd_stub = stub(vim.fn, "getcwd")
+		getcwd_stub.returns("/tmp/multiverse-manager-spec/unmatched")
+
+		assert.is_nil(multiverse_manager.get_current_universe_name())
+	end)
+
+	it("returns nil when multiverse_repository.getMultiverse() returns nil", function()
+		getMultiverse_stub = stub(multiverse_repository, "getMultiverse")
+		getMultiverse_stub.returns(nil)
+
+		assert.is_nil(multiverse_manager.get_current_universe_name())
+	end)
+
+	it("returns nil instead of raising when resolving the current universe errors", function()
+		getMultiverse_stub = stub(multiverse_repository, "getMultiverse", function()
+			error("boom")
 		end)
 
-		it("returns the matching universe's name when cwd exactly matches a registered universe's directory", function()
-			local cwd = "/tmp/multiverse-manager-spec/current-universe-name"
-			local universe_summary =
-				UniverseSummary:new({ directory = cwd, uuid = "current-uuid", name = "current-universe" })
-			local multiverse = Multiverse:new({ universe_summary })
-
-			getMultiverse_stub = stub(multiverse_repository, "getMultiverse")
-			getMultiverse_stub.returns(multiverse)
-
-			getcwd_stub = stub(vim.fn, "getcwd")
-			getcwd_stub.returns(cwd)
-
-			assert.are.equal("current-universe", multiverse_manager.get_current_universe_name())
-		end)
-
-		it("returns the matching universe's name when cwd matches a registered universe's directory only with a trailing slash", function()
-			local cwd = "/tmp/multiverse-manager-spec/trailing-slash"
-			local universe_summary =
-				UniverseSummary:new({ directory = cwd .. "/", uuid = "trailing-uuid", name = "trailing-universe" })
-			local multiverse = Multiverse:new({ universe_summary })
-
-			getMultiverse_stub = stub(multiverse_repository, "getMultiverse")
-			getMultiverse_stub.returns(multiverse)
-
-			getcwd_stub = stub(vim.fn, "getcwd")
-			getcwd_stub.returns(cwd)
-
-			assert.are.equal("trailing-universe", multiverse_manager.get_current_universe_name())
-		end)
-
-		it("returns nil when cwd matches no registered universe", function()
-			local universe_summary =
-				UniverseSummary:new({ directory = "/tmp/multiverse-manager-spec/other", uuid = "other-uuid", name = "other-universe" })
-			local multiverse = Multiverse:new({ universe_summary })
-
-			getMultiverse_stub = stub(multiverse_repository, "getMultiverse")
-			getMultiverse_stub.returns(multiverse)
-
-			getcwd_stub = stub(vim.fn, "getcwd")
-			getcwd_stub.returns("/tmp/multiverse-manager-spec/unmatched")
-
-			assert.is_nil(multiverse_manager.get_current_universe_name())
-		end)
-
-		it("returns nil when multiverse_repository.getMultiverse() returns nil", function()
-			getMultiverse_stub = stub(multiverse_repository, "getMultiverse")
-			getMultiverse_stub.returns(nil)
-
-			assert.is_nil(multiverse_manager.get_current_universe_name())
-		end)
+		assert.is_nil(multiverse_manager.get_current_universe_name())
 	end)
 end)

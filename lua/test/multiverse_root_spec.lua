@@ -61,6 +61,14 @@ describe("Multiverse.status", function()
 		assert.are.equal("", Multiverse.status())
 	end)
 
+	it("returns an empty string when resolving the current universe raises an error", function()
+		getMultiverse_stub = stub(multiverse_repository, "getMultiverse", function()
+			error("boom")
+		end)
+
+		assert.are.equal("", Multiverse.status())
+	end)
+
 	it("doubles '%' in the universe name so statusline/winbar renderers don't expand it", function()
 		local cwd = "/tmp/multiverse-spec/status-percent"
 		local universe_summary = UniverseSummary:new({ directory = cwd, uuid = "percent-uuid", name = "50% done" })

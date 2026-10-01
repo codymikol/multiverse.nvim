@@ -1,6 +1,7 @@
 local M = {}
 
 local multiverse_repository = require("multiverse.repositories.multiverse_repository")
+local current_universe_resolver = require("multiverse.repositories.current_universe_resolver")
 local universe_repository = require("multiverse.repositories.universe_repository")
 local hydration_manager = require("multiverse.managers.hydration_manager")
 local dehydration_manager = require("multiverse.managers.dehydration_manager")
@@ -10,19 +11,17 @@ local log            = require("multiverse.log")
 local state_store    = require("multiverse.store.state_store")
 
 M.get_current_universe_name = function()
-  local multiverse = multiverse_repository.getMultiverse()
-  if multiverse == nil then
+  local success, result = pcall(function()
+    local summary = current_universe_resolver.resolve_current_universe_summary()
+    return summary and summary.name
+  end)
+
+  if not success then
+    log.error("Error resolving current universe name: %s", result)
     return nil
   end
 
-  local current_directory = vim.fn.getcwd()
-
-  local current_universe_summary = multiverse:getUniverseByDirectory(current_directory)
-  if current_universe_summary == nil then
-    current_universe_summary = multiverse:getUniverseByDirectory(current_directory .. "/")
-  end
-
-  return current_universe_summary and current_universe_summary.name
+  return result
 end
 
 M.save = function()
