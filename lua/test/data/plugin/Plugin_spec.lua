@@ -32,6 +32,23 @@ describe("Plugin", function()
 			it("should have a context that is not the raw input table", function()
 				assert.are_not.equal(rawCtx, plugin.context)
 			end)
+
+			it("should have a nil priority when ctx has no priority", function()
+				assert.is.Nil(plugin.priority)
+			end)
+		end)
+
+		describe("with a valid ctx including a priority", function()
+			local rawCtx = {
+				name = "my-plugin",
+				beforeDehydrate = function() end,
+				priority = 5,
+			}
+			local plugin = Plugin:new(rawCtx)
+
+			it("should have a priority matching the validated context", function()
+				assert.are.equal(5, plugin.priority)
+			end)
 		end)
 
 		describe("with an invalid ctx (missing name)", function()
