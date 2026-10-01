@@ -10,18 +10,37 @@ local plugin_manager = require("multiverse.managers.plugin_manager")
 local log            = require("multiverse.log")
 local state_store    = require("multiverse.store.state_store")
 
+local RESOLVE_FAILURE_THROTTLE_MS = 1000
+local last_resolve_failure_at = nil
+
+-- Lives here (not in multiverse_repository's cache) because this throttle is specific to the
+-- statusline hot path: a persistently bad multiverse.json must not cause unbounded disk I/O /
+-- log growth on every redraw, while save()/load_universe() still need getMultiverse() to retry.
 M.get_current_universe_name = function()
+  if last_resolve_failure_at and (vim.loop.now() - last_resolve_failure_at) < RESOLVE_FAILURE_THROTTLE_MS then
+    return nil
+  end
+
   local success, result = pcall(function()
-    local summary = current_universe_resolver.resolve_current_universe_summary()
+    local summary = current_universe_resolver.resolve_current_universe_summary(vim.fn.getcwd())
     return summary and summary.name
   end)
 
   if not success then
+    last_resolve_failure_at = vim.loop.now()
     log.error("Error resolving current universe name: %s", result)
     return nil
   end
 
+  last_resolve_failure_at = nil
+
   return result
+end
+
+-- Test-only: lets specs reset the throttle's wall-clock state between `it` blocks instead of
+-- relying on real elapsed time (which is unreliable across fast, back-to-back test runs).
+M.__reset_resolve_failure_throttle_for_testing = function()
+  last_resolve_failure_at = nil
 end
 
 M.save = function()

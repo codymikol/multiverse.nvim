@@ -7,12 +7,19 @@ package.loaded["integrations.telescope"] = { prompt_select_universe = function()
 
 local Multiverse = require("multiverse")
 local multiverse_repository = require("multiverse.repositories.multiverse_repository")
+local multiverse_manager = require("multiverse.managers.multiverse_manager")
 local MultiverseData = require("multiverse.data.Multiverse")
 local UniverseSummary = require("multiverse.data.UniverseSummary")
 
 describe("Multiverse.status", function()
 	local getMultiverse_stub
 	local getcwd_stub
+
+	before_each(function()
+		-- get_current_universe_name() throttles retries after a failure using real wall-clock
+		-- time, so reset it before each spec to avoid a prior test's failure bleeding into this one.
+		multiverse_manager.__reset_resolve_failure_throttle_for_testing()
+	end)
 
 	after_each(function()
 		if getMultiverse_stub then

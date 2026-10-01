@@ -335,6 +335,12 @@ describe("multiverse_manager.get_current_universe_name", function()
 	local getMultiverse_stub
 	local getcwd_stub
 
+	before_each(function()
+		-- The throttle's failure timestamp is module-local and tracks real wall-clock time, so
+		-- reset it before each spec to avoid a prior test's failure bleeding into this one.
+		multiverse_manager.__reset_resolve_failure_throttle_for_testing()
+	end)
+
 	after_each(function()
 		if getMultiverse_stub then
 			getMultiverse_stub:revert()
@@ -403,5 +409,16 @@ describe("multiverse_manager.get_current_universe_name", function()
 		end)
 
 		assert.is_nil(multiverse_manager.get_current_universe_name())
+	end)
+
+	it("throttles repeated resolution attempts after a failure, skipping re-invocation within the window", function()
+		getMultiverse_stub = stub(multiverse_repository, "getMultiverse", function()
+			error("boom")
+		end)
+
+		assert.is_nil(multiverse_manager.get_current_universe_name())
+		assert.is_nil(multiverse_manager.get_current_universe_name())
+
+		assert.stub(getMultiverse_stub).was.called(1)
 	end)
 end)

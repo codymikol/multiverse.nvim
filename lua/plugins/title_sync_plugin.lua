@@ -3,7 +3,7 @@ local current_universe_resolver = require("multiverse.repositories.current_unive
 local sanitize_statusline = require("multiverse.util.sanitize_statusline")
 
 local function resolve_current_universe_name()
-	local summary = current_universe_resolver.resolve_current_universe_summary()
+	local summary = current_universe_resolver.resolve_current_universe_summary(vim.fn.getcwd())
 	return summary and summary.name
 end
 

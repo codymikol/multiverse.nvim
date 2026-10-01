@@ -7,8 +7,8 @@ local M = {}
 -- >= 0x80 are left untouched: in a UTF-8 context they only ever occur as
 -- parts of multi-byte sequences, never as standalone control codes.
 M.sanitize = function(value)
-	local without_control_bytes = value:gsub("[%z\1-\31\127]", "")
-	return (without_control_bytes:gsub("%%", "%%%%"))
+  local without_control_bytes = value:gsub("[%z\1-\31\127]", "")
+  return (without_control_bytes:gsub("%%", "%%%%"))
 end
 
 return M
