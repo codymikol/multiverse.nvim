@@ -52,6 +52,10 @@ function M.make(jsonString)
 
 	local universe = Universe:new({ uuid = uuid, name = name, workingDirectory = workingDirectory })
 
+	if isNonEmptyString(universe_json_or_err.currentTabpage) then
+		universe.currentTabpage = universe_json_or_err.currentTabpage
+	end
+
 	if type(universe_json_or_err.buffers) == "table" then
 		for _, buffer_json in pairs(universe_json_or_err.buffers) do
 			if type(buffer_json) == "table" then

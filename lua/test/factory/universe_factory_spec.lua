@@ -632,6 +632,44 @@ describe("universe_factory make", function()
 		end)
 	end)
 
+	describe("a universe json payload with a currentTabpage uuid", function()
+		local universeUuid = "8d1f9c2a-1212-4a2b-9c3d-000000000012"
+		local currentTabpageUuid = "8d1f9c2a-1313-4a2b-9c3d-000000000013"
+
+		local universeTable = {
+			uuid = universeUuid,
+			name = "example",
+			workingDirectory = "/home/foo",
+			currentTabpage = currentTabpageUuid,
+		}
+
+		local jsonString = json.encode(universeTable)
+
+		it("should set currentTabpage to the persisted uuid", function()
+			local universe = universe_factory.make(jsonString)
+			assert.is_not.Nil(universe)
+			assert.are.equal(currentTabpageUuid, universe.currentTabpage)
+		end)
+	end)
+
+	describe("a universe json payload with no currentTabpage key", function()
+		local universeUuid = "8d1f9c2a-1414-4a2b-9c3d-000000000014"
+
+		local universeTable = {
+			uuid = universeUuid,
+			name = "example",
+			workingDirectory = "/home/foo",
+		}
+
+		local jsonString = json.encode(universeTable)
+
+		it("should leave currentTabpage as nil", function()
+			local universe = universe_factory.make(jsonString)
+			assert.is_not.Nil(universe)
+			assert.is.Nil(universe.currentTabpage)
+		end)
+	end)
+
 	describe("a tabpage json payload with a nil layout", function()
 		local universeUuid = "8d1f9c2a-bbbb-4a2b-9c3d-00000000000b"
 		local tabpageUuid = "8d1f9c2a-cccc-4a2b-9c3d-00000000000c"
