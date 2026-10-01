@@ -21,6 +21,26 @@ M.is_available = function()
   return vim.fn.executable("zellij") == 1
 end
 
+--- @return string
+M.socket_dir = function()
+  local existing = vim.env.ZELLIJ_SOCKET_DIR
+  if existing ~= nil and existing ~= "" then
+    return existing
+  end
+  return "/tmp/zellij-" .. vim.loop.getuid()
+end
+
+--- Prefixes a zellij shell command with the resolved ZELLIJ_SOCKET_DIR, so
+--- every zellij invocation in this module shares one socket. This must wrap
+--- *both* `attach --create` and `list-sessions`: otherwise reattach's
+--- `list-sessions` would look in a different socket dir than the one the
+--- session was created under and never find it.
+--- @param command string
+--- @return string
+local function with_socket_dir(command)
+  return "ZELLIJ_SOCKET_DIR=" .. vim.fn.shellescape(M.socket_dir()) .. " " .. command
+end
+
 --- A pure hash of the given directory string, with no other input. Because
 --- it's a pure function of the directory, calling it with the same directory
 --- always produces the same session name, which is what lets a zellij
@@ -28,12 +48,10 @@ end
 --- calling this with `vim.fn.getcwd()`) without needing any shared persistence.
 ---
 --- Truncated to 16 hex chars (64 bits, plenty to avoid collisions across a
---- user's directories): the full 64-char sha256 digest pushes zellij's IPC
---- socket path (~/run/user/<uid>/zellij/contract_version_1/<name>) past the
---- AF_UNIX sun_path limit (108 bytes), which makes `zellij attach --create`
---- fail after it has already sent alt-screen/terminal-query escape codes,
---- leaving the terminal cleared with leftover query-response garbage printed
---- into the shell.
+--- user's directories). This keeps the session name component short; the base
+--- socket directory it hangs off of is pinned separately by `socket_dir()`,
+--- which is what actually keeps the full AF_UNIX socket path under the
+--- platform `sun_path` limit (see `socket_dir` for the macOS details).
 --- @param working_directory string
 --- @return string
 M.session_name_for = function(working_directory)
@@ -68,7 +86,7 @@ M.open_floating_terminal = function(session_name)
     border = "rounded",
   })
 
-  vim.fn.jobstart("zellij attach --create " .. vim.fn.shellescape(session_name), { term = true })
+  vim.fn.jobstart(with_socket_dir("zellij attach --create " .. vim.fn.shellescape(session_name)), { term = true })
 
   -- Drop straight into insert mode so the terminal is ready to type into
   -- without the user pressing `i` first. Relies on the floating window still
@@ -175,7 +193,7 @@ M.reattach_if_running = function(session_name)
     return false
   end
 
-  local command = "zellij list-sessions --short"
+  local command = with_socket_dir("zellij list-sessions --short")
   local sessions = vim.fn.systemlist(command)
 
   if vim.v.shell_error ~= 0 then
