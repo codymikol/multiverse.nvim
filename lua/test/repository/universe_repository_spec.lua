@@ -25,65 +25,247 @@ describe("universe_repository", function()
 	end)
 
 	describe("save_universe", function()
-		describe("when io.open succeeds", function()
+		describe("when writing the temp file and renaming both succeed", function()
 			local universe
 			local io_open_stub
+			local os_rename_stub
 			local write_stub
 			local close_stub
 			local mock_file
+			local calls
 
 			before_each(function()
 				universe = Universe:new({ uuid = "uuid-1", name = "foo", workingDirectory = "/tmp/foo" })
-				write_stub = stub.new()
-				close_stub = stub.new()
-				mock_file = {
-					write = write_stub,
-					close = close_stub,
-				}
+				calls = {}
+				mock_file = {}
+
+				write_stub = stub(mock_file, "write", function()
+					table.insert(calls, "write")
+					return true
+				end)
+
+				close_stub = stub(mock_file, "close", function()
+					table.insert(calls, "close")
+					return true
+				end)
+
 				io_open_stub = stub(io, "open", function()
 					return mock_file
+				end)
+
+				os_rename_stub = stub(os, "rename", function()
+					table.insert(calls, "rename")
+					return true
 				end)
 			end)
 
 			after_each(function()
 				io_open_stub:revert()
+				os_rename_stub:revert()
+				write_stub:revert()
+				close_stub:revert()
 			end)
 
-			it("writes the json-encoded universe to the file and returns the universe with no error", function()
+			it("writes the json-encoded universe to the temp file, closes it, then renames it over the target, returning the universe with no error", function()
 				local returned_universe, err = universe_repository.save_universe(universe)
 
 				assert.are.equal(universe, returned_universe)
 				assert.is_nil(err)
-				assert.stub(io_open_stub).was.called_with(expectedFilename(universe.uuid), "w")
+				assert.stub(io_open_stub).was.called_with(expectedFilename(universe.uuid) .. ".tmp", "w")
 				assert.stub(write_stub).was.called_with(mock_file, json.encode(universe))
-				assert.stub(close_stub).was.called_with(mock_file)
+				assert.are.same({ "write", "close", "rename" }, calls)
+				assert
+					.stub(os_rename_stub).was
+					.called_with(expectedFilename(universe.uuid) .. ".tmp", expectedFilename(universe.uuid))
 			end)
 		end)
 
-		describe("when io.open fails", function()
+		describe("when writing the temp file fails", function()
 			local universe
 			local io_open_stub
+			local os_rename_stub
+			local os_remove_stub
+			local close_stub
+			local mock_file
+
+			before_each(function()
+				universe = Universe:new({ uuid = "uuid-1", name = "foo", workingDirectory = "/tmp/foo" })
+				mock_file = {
+					write = function()
+						return nil, "some os error"
+					end,
+				}
+
+				close_stub = stub(mock_file, "close", function()
+					return true
+				end)
+
+				io_open_stub = stub(io, "open", function()
+					return mock_file
+				end)
+				os_rename_stub = stub(os, "rename", function()
+					return true
+				end)
+				os_remove_stub = stub(os, "remove", function()
+					return true
+				end)
+			end)
+
+			after_each(function()
+				io_open_stub:revert()
+				os_rename_stub:revert()
+				os_remove_stub:revert()
+				close_stub:revert()
+			end)
+
+			it("closes and removes the temp file, does not rename, and returns the universe with a descriptive error", function()
+				local returned_universe, err = universe_repository.save_universe(universe)
+
+				assert.are.equal(universe, returned_universe)
+				assert.stub(close_stub).was.called()
+				assert.stub(os_remove_stub).was.called_with(expectedFilename(universe.uuid) .. ".tmp")
+				assert.stub(os_rename_stub).was_not_called()
+				assert.are.equal(
+					"Failed to write temp file for universe: "
+						.. expectedFilename(universe.uuid)
+						.. ".tmp, os returned error - some os error",
+					err
+				)
+			end)
+		end)
+
+		describe("when closing the temp file fails", function()
+			local universe
+			local io_open_stub
+			local os_rename_stub
+			local os_remove_stub
+			local mock_file
+
+			before_each(function()
+				universe = Universe:new({ uuid = "uuid-1", name = "foo", workingDirectory = "/tmp/foo" })
+				mock_file = {
+					write = function()
+						return true
+					end,
+					close = function()
+						return nil, "some os error"
+					end,
+				}
+
+				io_open_stub = stub(io, "open", function()
+					return mock_file
+				end)
+				os_rename_stub = stub(os, "rename", function()
+					return true
+				end)
+				os_remove_stub = stub(os, "remove", function()
+					return true
+				end)
+			end)
+
+			after_each(function()
+				io_open_stub:revert()
+				os_rename_stub:revert()
+				os_remove_stub:revert()
+			end)
+
+			it("removes the temp file, does not rename, and returns the universe with a descriptive error", function()
+				local returned_universe, err = universe_repository.save_universe(universe)
+
+				assert.are.equal(universe, returned_universe)
+				assert.stub(os_remove_stub).was.called_with(expectedFilename(universe.uuid) .. ".tmp")
+				assert.stub(os_rename_stub).was_not_called()
+				assert.are.equal(
+					"Failed to close temp file for universe: "
+						.. expectedFilename(universe.uuid)
+						.. ".tmp, os returned error - some os error",
+					err
+				)
+			end)
+		end)
+
+		describe("when opening the temp file fails", function()
+			local universe
+			local io_open_stub
+			local os_rename_stub
 
 			before_each(function()
 				universe = Universe:new({ uuid = "uuid-1", name = "foo", workingDirectory = "/tmp/foo" })
 				io_open_stub = stub(io, "open", function()
 					return nil, "some os error"
 				end)
+				os_rename_stub = stub(os, "rename", function()
+					return true
+				end)
 			end)
 
 			after_each(function()
 				io_open_stub:revert()
+				os_rename_stub:revert()
 			end)
 
-			it("returns the universe and a descriptive error", function()
+			it("does not attempt to rename and returns the universe with a descriptive error", function()
 				local returned_universe, err = universe_repository.save_universe(universe)
 
 				assert.are.equal(universe, returned_universe)
+				assert.stub(os_rename_stub).was_not_called()
 				assert.are.equal(
-					"Failed to open universe file: " .. expectedFilename(universe.uuid) .. ", os returned error - some os error",
+					"Failed to open temp file for universe: "
+						.. expectedFilename(universe.uuid)
+						.. ".tmp, os returned error - some os error",
 					err
 				)
-				assert.stub(io_open_stub).was.called_with(expectedFilename(universe.uuid), "w")
+			end)
+		end)
+
+		describe("when renaming the temp file fails", function()
+			local universe
+			local io_open_stub
+			local os_rename_stub
+			local os_remove_stub
+			local mock_file
+
+			before_each(function()
+				universe = Universe:new({ uuid = "uuid-1", name = "foo", workingDirectory = "/tmp/foo" })
+				mock_file = {
+					write = function()
+						return true
+					end,
+					close = function()
+						return true
+					end,
+				}
+
+				io_open_stub = stub(io, "open", function()
+					return mock_file
+				end)
+				os_rename_stub = stub(os, "rename", function()
+					return nil, "some os error"
+				end)
+				os_remove_stub = stub(os, "remove", function()
+					return true
+				end)
+			end)
+
+			after_each(function()
+				io_open_stub:revert()
+				os_rename_stub:revert()
+				os_remove_stub:revert()
+			end)
+
+			it("removes the temp file and returns the universe with a descriptive error", function()
+				local returned_universe, err = universe_repository.save_universe(universe)
+
+				assert.are.equal(universe, returned_universe)
+				assert.stub(os_remove_stub).was.called_with(expectedFilename(universe.uuid) .. ".tmp")
+				assert.are.equal(
+					"Failed to rename universe file: "
+						.. expectedFilename(universe.uuid)
+						.. ".tmp to "
+						.. expectedFilename(universe.uuid)
+						.. ", os returned error - some os error",
+					err
+				)
 			end)
 		end)
 	end)
