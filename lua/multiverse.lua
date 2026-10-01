@@ -4,6 +4,7 @@ local on_exit = require("multiverse.autocmd.on_exit")
 local on_buffer_close = require("multiverse.autocmd.on_buffer_close")
 local on_vim_enter = require("multiverse.autocmd.on_vim_enter")
 local multiverse_manager = require("multiverse.managers.multiverse_manager")
+local sanitize_statusline = require("multiverse.util.sanitize_statusline")
 
 local Multiverse = {}
 
@@ -48,7 +49,11 @@ end
 --- Plain, statusline-agnostic accessor for the active Universe's name.
 --- @return string the active universe's name, or "" when not currently in a universe
 Multiverse.status = function()
-  return multiverse_manager.get_current_universe_name() or ""
+  local name = multiverse_manager.get_current_universe_name()
+  if name == nil then
+    return ""
+  end
+  return sanitize_statusline.sanitize(name)
 end
 
 return Multiverse

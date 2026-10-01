@@ -10,7 +10,10 @@ describe("lualine.component", function()
 	local status_stub
 
 	after_each(function()
-		status_stub:revert()
+		if status_stub then
+			status_stub:revert()
+			status_stub = nil
+		end
 	end)
 
 	it("returns the active universe's name when in a universe", function()

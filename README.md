@@ -98,8 +98,7 @@ require("multiverse").setup({
   - Automatically syncs to the working directory of the loaded universe.
 - **`Lualine`**
   - Add `require("integrations.lualine").component` as a lualine component to show the active Universe's name.
-
-Not using lualine? `require("multiverse").status()` is a plain, statusline-agnostic accessor that returns the active Universe's name (or `""` when not currently in a universe) — use it to wire up heirline, a hand-rolled statusline, or anything else.
+  - Not using lualine? `require("multiverse").status()` is a plain, statusline-agnostic accessor that returns the active Universe's name (or `""` when not currently in a universe) — use it to wire up heirline, a hand-rolled statusline, or anything else.
 
 ## Contributing
 

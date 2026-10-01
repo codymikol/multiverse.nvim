@@ -60,4 +60,33 @@ describe("Multiverse.status", function()
 
 		assert.are.equal("", Multiverse.status())
 	end)
+
+	it("doubles '%' in the universe name so statusline/winbar renderers don't expand it", function()
+		local cwd = "/tmp/multiverse-spec/status-percent"
+		local universe_summary = UniverseSummary:new({ directory = cwd, uuid = "percent-uuid", name = "50% done" })
+		local multiverse = MultiverseData:new({ universe_summary })
+
+		getMultiverse_stub = stub(multiverse_repository, "getMultiverse")
+		getMultiverse_stub.returns(multiverse)
+
+		getcwd_stub = stub(vim.fn, "getcwd")
+		getcwd_stub.returns(cwd)
+
+		assert.are.equal("50%% done", Multiverse.status())
+	end)
+
+	it("strips control bytes from the universe name", function()
+		local cwd = "/tmp/multiverse-spec/status-control"
+		local universe_summary =
+			UniverseSummary:new({ directory = cwd, uuid = "control-uuid", name = "a\027b" })
+		local multiverse = MultiverseData:new({ universe_summary })
+
+		getMultiverse_stub = stub(multiverse_repository, "getMultiverse")
+		getMultiverse_stub.returns(multiverse)
+
+		getcwd_stub = stub(vim.fn, "getcwd")
+		getcwd_stub.returns(cwd)
+
+		assert.are.equal("ab", Multiverse.status())
+	end)
 end)
