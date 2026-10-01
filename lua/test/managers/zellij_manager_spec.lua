@@ -8,6 +8,14 @@ local stub = require("luassert.stub")
 -- set v:shell_error as a side effect.
 local real_systemlist = vim.fn.systemlist
 
+-- Rebuilds the exact shell string open_floating_terminal/reattach_if_running
+-- hand to jobstart/systemlist: the zellij command prefixed with the pinned
+-- ZELLIJ_SOCKET_DIR (see zellij_manager.socket_dir). Derived from the module's
+-- own socket_dir so these assertions can't drift from the implementation.
+local function expected_zellij_command(command)
+	return "ZELLIJ_SOCKET_DIR=" .. vim.fn.shellescape(zellij_manager.socket_dir()) .. " " .. command
+end
+
 -- Stubs the four calls open_floating_terminal always makes (create buf, open
 -- win, jobstart, startinsert) and returns a function that reverts all four
 -- together, so call sites can't drift by forgetting one.
@@ -77,6 +85,57 @@ describe("zellij_manager", function()
 		end)
 	end)
 
+	describe("socket_dir", function()
+		local original_socket_dir_env
+
+		before_each(function()
+			original_socket_dir_env = vim.env.ZELLIJ_SOCKET_DIR
+		end)
+
+		after_each(function()
+			vim.env.ZELLIJ_SOCKET_DIR = original_socket_dir_env
+		end)
+
+		it("honors an existing $ZELLIJ_SOCKET_DIR when the user has set one", function()
+			vim.env.ZELLIJ_SOCKET_DIR = "/custom/socket/dir"
+
+			assert.are.equal("/custom/socket/dir", zellij_manager.socket_dir())
+		end)
+
+		it("falls back to a short per-user /tmp path when $ZELLIJ_SOCKET_DIR is unset", function()
+			vim.env.ZELLIJ_SOCKET_DIR = nil
+
+			assert.are.equal("/tmp/zellij-" .. vim.loop.getuid(), zellij_manager.socket_dir())
+		end)
+
+		it("falls back when $ZELLIJ_SOCKET_DIR is set but empty", function()
+			vim.env.ZELLIJ_SOCKET_DIR = ""
+
+			assert.are.equal("/tmp/zellij-" .. vim.loop.getuid(), zellij_manager.socket_dir())
+		end)
+
+		-- Regression for #345: on macOS zellij builds its AF_UNIX socket as
+		-- <socket_dir>/contract_version_1/<session_name>, and that whole path
+		-- must fit macOS's sun_path limit (104 bytes; zellij reports "max
+		-- 103") or `zellij attach --create` exits 1. The default socket_dir is
+		-- what keeps that path short regardless of how long $TMPDIR/cwd are, so
+		-- pin the worst-case projected length well under the limit.
+		it("keeps the default socket path under the macOS sun_path limit for any working directory", function()
+			vim.env.ZELLIJ_SOCKET_DIR = nil
+
+			-- Longest session name this module can produce: "multiverse-" (11)
+			-- + 16 hex chars. session_name_for truncates the hash, so the name
+			-- length is constant no matter how long the working directory is.
+			local session_name = zellij_manager.session_name_for(string.rep("/deeply/nested/path", 50))
+			local projected_socket_path = zellij_manager.socket_dir() .. "/contract_version_1/" .. session_name
+
+			assert.is_true(
+				#projected_socket_path <= 103,
+				"projected socket path was " .. #projected_socket_path .. " bytes: " .. projected_socket_path
+			)
+		end)
+	end)
+
 	describe("open_floating_terminal", function()
 		local nvim_create_buf_stub
 		local nvim_open_win_stub
@@ -130,7 +189,7 @@ describe("zellij_manager", function()
 			zellij_manager.open_floating_terminal("multiverse-abc")
 
 			assert.stub(jobstart_stub).was_called_with(
-				"zellij attach --create " .. vim.fn.shellescape("multiverse-abc"),
+				expected_zellij_command("zellij attach --create " .. vim.fn.shellescape("multiverse-abc")),
 				{ term = true }
 			)
 		end)
@@ -139,7 +198,7 @@ describe("zellij_manager", function()
 			zellij_manager.open_floating_terminal("multiverse abc")
 
 			assert.stub(jobstart_stub).was_called_with(
-				"zellij attach --create " .. vim.fn.shellescape("multiverse abc"),
+				expected_zellij_command("zellij attach --create " .. vim.fn.shellescape("multiverse abc")),
 				{ term = true }
 			)
 		end)
@@ -307,8 +366,11 @@ describe("zellij_manager", function()
 			local result = zellij_manager.reattach_if_running("multiverse-abc")
 
 			assert.is_true(result)
+			assert.stub(systemlist_stub).was_called_with(
+				expected_zellij_command("zellij list-sessions --short")
+			)
 			assert.stub(jobstart_stub).was_called_with(
-				"zellij attach --create " .. vim.fn.shellescape("multiverse-abc"),
+				expected_zellij_command("zellij attach --create " .. vim.fn.shellescape("multiverse-abc")),
 				{ term = true }
 			)
 			assert.stub(vim_cmd_stub).was_called_with("startinsert")
