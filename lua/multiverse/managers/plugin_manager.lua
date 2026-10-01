@@ -16,6 +16,21 @@ local plugins = {
 	TitleSyncPlugin,
 }
 
+--- Priority used for a plugin that doesn't declare a numeric `priority`. Lower priority
+--- values run earlier. This matches the built-in plugins' own (implicit) priority tier,
+--- so unprioritized user plugins run after all built-ins by default.
+local DEFAULT_PRIORITY = 100
+
+--- @param plugin Plugin
+--- @return number
+local function effective_priority(plugin)
+	if type(plugin.priority) == "number" then
+		return plugin.priority
+	end
+
+	return DEFAULT_PRIORITY
+end
+
 --- @param plugin Plugin|nil --- The plugin to register and handle lifecycle events with.
 --- @return nil
 M.register = function(plugin)
@@ -23,10 +38,27 @@ M.register = function(plugin)
 		return
 	end
 
+	local new_priority = effective_priority(plugin)
+
+	if plugin.name ~= nil then
+		for i, p in ipairs(plugins) do
+			if p.name ~= nil and p.name == plugin.name then
+				log.debug("Replacing existing registration for plugin %s", plugin.name)
+				if effective_priority(p) == new_priority then
+					-- Same priority: keep its current slot instead of moving it to the
+					-- end of its priority tier (e.g. overriding a built-in plugin's hooks).
+					plugins[i] = plugin
+					return
+				end
+				table.remove(plugins, i)
+				break
+			end
+		end
+	end
+
 	for i, p in ipairs(plugins) do
-		if p.name ~= nil and p.name == plugin.name then
-			log.debug("Replacing existing registration for plugin %s", plugin.name)
-			plugins[i] = plugin
+		if effective_priority(p) > new_priority then
+			table.insert(plugins, i, plugin)
 			return
 		end
 	end
@@ -40,7 +72,13 @@ end
 --- @param ctx table
 --- @return nil
 local function dispatch_hook(hookName, ctx)
-	for _, plugin in ipairs(plugins) do
+	-- Snapshot before iterating: a hook can register a new plugin mid-dispatch, and
+	-- `M.register`'s mid-list insert/remove would otherwise shift indices out from under
+	-- a live `ipairs(plugins)` loop, causing a plugin to run twice or be skipped. Any
+	-- registration made during this dispatch takes effect starting next time, not here.
+	local snapshot = vim.list_slice(plugins)
+
+	for _, plugin in ipairs(snapshot) do
 		local hook = plugin.context[hookName]
 		if hook then
 			local success, err = pcall(hook, ctx)
