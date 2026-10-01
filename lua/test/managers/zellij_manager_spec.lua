@@ -8,6 +8,25 @@ local stub = require("luassert.stub")
 -- set v:shell_error as a side effect.
 local real_systemlist = vim.fn.systemlist
 
+-- Stubs the four calls open_floating_terminal always makes (create buf, open
+-- win, jobstart, startinsert) and returns a function that reverts all four
+-- together, so call sites can't drift by forgetting one.
+local function stub_open_floating_terminal_deps(win_id, buf_id)
+	local create_buf_stub = stub(vim.api, "nvim_create_buf")
+	create_buf_stub.returns(buf_id)
+	local open_win_stub = stub(vim.api, "nvim_open_win")
+	open_win_stub.returns(win_id)
+	local jobstart_stub = stub(vim.fn, "jobstart")
+	local vim_cmd_stub = stub(vim, "cmd")
+
+	return function()
+		create_buf_stub:revert()
+		open_win_stub:revert()
+		jobstart_stub:revert()
+		vim_cmd_stub:revert()
+	end
+end
+
 describe("zellij_manager", function()
 	describe("is_available", function()
 		local executable_stub
@@ -62,6 +81,7 @@ describe("zellij_manager", function()
 		local nvim_create_buf_stub
 		local nvim_open_win_stub
 		local jobstart_stub
+		local vim_cmd_stub
 
 		before_each(function()
 			nvim_create_buf_stub = stub(vim.api, "nvim_create_buf")
@@ -71,12 +91,15 @@ describe("zellij_manager", function()
 			nvim_open_win_stub.returns(22)
 
 			jobstart_stub = stub(vim.fn, "jobstart")
+
+			vim_cmd_stub = stub(vim, "cmd")
 		end)
 
 		after_each(function()
 			nvim_create_buf_stub:revert()
 			nvim_open_win_stub:revert()
 			jobstart_stub:revert()
+			vim_cmd_stub:revert()
 
 			-- Stub validity to false so this cleanup call can never reach a real
 			-- window/buffer id that happens to collide with the fabricated ones
@@ -119,6 +142,12 @@ describe("zellij_manager", function()
 				"zellij attach --create " .. vim.fn.shellescape("multiverse abc"),
 				{ term = true }
 			)
+		end)
+
+		it("enters insert mode so the terminal is ready to type into immediately", function()
+			zellij_manager.open_floating_terminal("multiverse-abc")
+
+			assert.stub(vim_cmd_stub).was_called_with("startinsert")
 		end)
 
 		it("returns the new window id and buffer id", function()
@@ -196,17 +225,11 @@ describe("zellij_manager", function()
 		end)
 
 		it("closes the currently tracked floating terminal when called with no arguments", function()
-			local nvim_create_buf_stub = stub(vim.api, "nvim_create_buf")
-			nvim_create_buf_stub.returns(33)
-			local nvim_open_win_stub = stub(vim.api, "nvim_open_win")
-			nvim_open_win_stub.returns(44)
-			local jobstart_stub = stub(vim.fn, "jobstart")
+			local revert_open_deps = stub_open_floating_terminal_deps(44, 33)
 
 			zellij_manager.open_floating_terminal("multiverse-abc")
 
-			nvim_create_buf_stub:revert()
-			nvim_open_win_stub:revert()
-			jobstart_stub:revert()
+			revert_open_deps()
 
 			zellij_manager.close_floating_terminal()
 
@@ -229,6 +252,7 @@ describe("zellij_manager", function()
 		local nvim_create_buf_stub
 		local nvim_open_win_stub
 		local jobstart_stub
+		local vim_cmd_stub
 
 		before_each(function()
 			executable_stub = stub(vim.fn, "executable")
@@ -239,6 +263,7 @@ describe("zellij_manager", function()
 			nvim_open_win_stub = stub(vim.api, "nvim_open_win")
 			nvim_open_win_stub.returns(22)
 			jobstart_stub = stub(vim.fn, "jobstart")
+			vim_cmd_stub = stub(vim, "cmd")
 		end)
 
 		after_each(function()
@@ -247,6 +272,7 @@ describe("zellij_manager", function()
 			nvim_create_buf_stub:revert()
 			nvim_open_win_stub:revert()
 			jobstart_stub:revert()
+			vim_cmd_stub:revert()
 			-- Reset v:shell_error (read-only, so it can't be assigned directly)
 			-- in case the shell_error test below left it non-zero.
 			real_systemlist("exit 0")
@@ -285,6 +311,7 @@ describe("zellij_manager", function()
 				"zellij attach --create " .. vim.fn.shellescape("multiverse-abc"),
 				{ term = true }
 			)
+			assert.stub(vim_cmd_stub).was_called_with("startinsert")
 		end)
 
 		it("does nothing and returns false when the session is not running", function()
@@ -376,11 +403,7 @@ describe("zellij_manager", function()
 		end)
 
 		it("returns true after open_floating_terminal is called", function()
-			local nvim_create_buf_stub = stub(vim.api, "nvim_create_buf")
-			nvim_create_buf_stub.returns(11)
-			local nvim_open_win_stub = stub(vim.api, "nvim_open_win")
-			nvim_open_win_stub.returns(22)
-			local jobstart_stub = stub(vim.fn, "jobstart")
+			local revert_open_deps = stub_open_floating_terminal_deps(22, 11)
 			local nvim_win_is_valid_stub = stub(vim.api, "nvim_win_is_valid")
 			nvim_win_is_valid_stub.returns(true)
 			local nvim_buf_is_valid_stub = stub(vim.api, "nvim_buf_is_valid")
@@ -388,9 +411,7 @@ describe("zellij_manager", function()
 
 			zellij_manager.open_floating_terminal("multiverse-abc")
 
-			nvim_create_buf_stub:revert()
-			nvim_open_win_stub:revert()
-			jobstart_stub:revert()
+			revert_open_deps()
 
 			assert.is_true(zellij_manager.is_floating_terminal_open())
 
@@ -399,11 +420,7 @@ describe("zellij_manager", function()
 		end)
 
 		it("returns false when the tracked window or buffer is no longer valid", function()
-			local nvim_create_buf_stub = stub(vim.api, "nvim_create_buf")
-			nvim_create_buf_stub.returns(11)
-			local nvim_open_win_stub = stub(vim.api, "nvim_open_win")
-			nvim_open_win_stub.returns(22)
-			local jobstart_stub = stub(vim.fn, "jobstart")
+			local revert_open_deps = stub_open_floating_terminal_deps(22, 11)
 			local nvim_win_is_valid_stub = stub(vim.api, "nvim_win_is_valid")
 			nvim_win_is_valid_stub.returns(true)
 			local nvim_buf_is_valid_stub = stub(vim.api, "nvim_buf_is_valid")
@@ -411,9 +428,7 @@ describe("zellij_manager", function()
 
 			zellij_manager.open_floating_terminal("multiverse-abc")
 
-			nvim_create_buf_stub:revert()
-			nvim_open_win_stub:revert()
-			jobstart_stub:revert()
+			revert_open_deps()
 
 			-- Simulate the user manually closing the floating window themselves
 			-- (e.g. `:q`), without going through close_floating_terminal().
