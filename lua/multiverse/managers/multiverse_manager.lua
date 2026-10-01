@@ -9,6 +9,22 @@ local plugin_manager = require("multiverse.managers.plugin_manager")
 local log            = require("multiverse.log")
 local state_store    = require("multiverse.store.state_store")
 
+M.get_current_universe_name = function()
+  local multiverse = multiverse_repository.getMultiverse()
+  if multiverse == nil then
+    return nil
+  end
+
+  local current_directory = vim.fn.getcwd()
+
+  local current_universe_summary = multiverse:getUniverseByDirectory(current_directory)
+  if current_universe_summary == nil then
+    current_universe_summary = multiverse:getUniverseByDirectory(current_directory .. "/")
+  end
+
+  return current_universe_summary and current_universe_summary.name
+end
+
 M.save = function()
 
   local success, err = pcall(function()
