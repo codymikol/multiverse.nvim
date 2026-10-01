@@ -97,6 +97,12 @@ require("multiverse").setup({
 - **`Neotree`**
   - Automatically syncs to the working directory of the loaded universe.
 
+## Plugins
+
+Plugins can hook into the dehydrate/hydrate lifecycle of a *Universe*, and may declare an
+optional `priority` to control the order their lifecycle hooks run relative to other
+plugins. See [lua/docs/PLUGINS.md](lua/docs/PLUGINS.md) for details.
+
 ## Contributing
 
 Contributions are welcome! Please read the [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to contribute to this project.
