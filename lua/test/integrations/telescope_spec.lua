@@ -79,13 +79,13 @@ describe("telescope.get_universe_preview", function()
 	it("does not truncate the preview when an earlier tabpage has an empty layout", function()
 		-- Tabpage 1: empty layout (the edge case that triggers the bug)
 		local emptyLayout = WindowLayout:new()
-		local tabpage1 = Tabpage:new("tabpage-1-uuid", 1, "window-1-uuid")
+		local tabpage1 = Tabpage:new({ uuid = "tabpage-1-uuid", tabpageId = 1, activeWindowUuid = "window-1-uuid" })
 		tabpage1:setLayout(emptyLayout)
 
 		-- Tabpage 2: normal layout with a single leaf window, plus one
 		-- buffer that isn't shown in any layout leaf.
 		local window = Window:new({ uuid = "window-2-uuid", bufferUuid = "buffer-1-uuid", windowId = 2 })
-		local tabpage2 = Tabpage:new("tabpage-2-uuid", 2, "window-2-uuid")
+		local tabpage2 = Tabpage:new({ uuid = "tabpage-2-uuid", tabpageId = 2, activeWindowUuid = "window-2-uuid" })
 		tabpage2:addWindow(window)
 
 		local layout2 = WindowLayout:new()

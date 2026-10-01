@@ -1,26 +1,39 @@
 local Tabpage = {}
 Tabpage.__index = Tabpage
 
+local function isNonEmptyString(value)
+  return type(value) == "string" and value ~= ""
+end
+
 --- @class Tabpage
---- @field new (string, number, number): Tabpage
+--- @field new (table): Tabpage
 --- @field setLayout (WindowLayout) -> nil
 --- @field uuid string -- A unique identifier for this tabpage that is persisted and rehydrated.
 --- @field tabpageId number | nil -- The neovim id for this tabpage that is NOT persisted and is to be set during hydration.
---- @field activeWindowUuid string -- The immutable identifier for the active window in this tabpage.
+--- @field activeWindowUuid string | nil -- The immutable identifier for the active window in this tabpage.
 --- @field windows Window[]
 --- @field layout WindowLayout
 --- @field addWindow (Window) -> nil
 --- @field addAllWindows (Window[]) -> nil
 --- @field getWindowByUuid (string): Window | nil
 
---- @param uuid string
---- @param tabpageId number | nil
---- @param activeWindowUuid string
-function Tabpage:new(uuid, tabpageId, activeWindowUuid)
+--- @param opts table
+--- @param opts.uuid string
+--- @param opts.tabpageId number|nil
+--- @param opts.activeWindowUuid string|nil
+function Tabpage:new(opts)
+  opts = opts or {}
+  if type(opts) ~= "table" then
+    error("Tabpage:new requires a table argument", 2)
+  end
+  if not isNonEmptyString(opts.uuid) then
+    error("Tabpage:new requires opts.uuid to be a non-empty string", 2)
+  end
+
   local self = setmetatable({}, Tabpage)
-  self.uuid = uuid
-  self.tabpageId = tabpageId
-  self.activeWindowUuid = activeWindowUuid
+  self.uuid = opts.uuid
+  self.tabpageId = opts.tabpageId
+  self.activeWindowUuid = opts.activeWindowUuid
   self.windows = {}
   self.layout = nil
   return self

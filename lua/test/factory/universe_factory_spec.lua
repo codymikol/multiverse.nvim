@@ -366,18 +366,36 @@ describe("universe_factory make", function()
 		end)
 	end)
 
+	describe("a universe json payload where a tabpage element is missing uuid", function()
+		it("should not throw when a tabpage element is missing uuid", function()
+			assert.has_no.errors(function()
+				universe_factory.make(
+					'{"uuid":"a","name":"example","workingDirectory":"/home/foo","tabpages":[{"layout":{}}]}'
+				)
+			end)
+		end)
+
+		it("should skip tabpage elements missing uuid", function()
+			local universe = universe_factory.make(
+				'{"uuid":"a","name":"example","workingDirectory":"/home/foo","tabpages":[{"layout":{}}]}'
+			)
+			assert.is_not.Nil(universe)
+			assert.are.equal(0, #universe.tabpages)
+		end)
+	end)
+
 	describe("a tabpage json payload where layout is not a table", function()
 		it("should not throw when layout is a number", function()
 			assert.has_no.errors(function()
 				universe_factory.make(
-					'{"uuid":"a","name":"example","workingDirectory":"/home/foo","tabpages":[{"layout":5}]}'
+					'{"uuid":"a","name":"example","workingDirectory":"/home/foo","tabpages":[{"uuid":"a","layout":5}]}'
 				)
 			end)
 		end)
 
 		it("should default to a layout with no children when layout is a number", function()
 			local universe = universe_factory.make(
-				'{"uuid":"a","name":"example","workingDirectory":"/home/foo","tabpages":[{"layout":5}]}'
+				'{"uuid":"a","name":"example","workingDirectory":"/home/foo","tabpages":[{"uuid":"a","layout":5}]}'
 			)
 			assert.is_not.Nil(universe)
 			local tabpage = universe.tabpages[1]
@@ -558,14 +576,14 @@ describe("universe_factory make", function()
 		it("should not throw when layout is an empty table missing a children key", function()
 			assert.has_no.errors(function()
 				universe_factory.make(
-					'{"uuid":"a","name":"example","workingDirectory":"/home/foo","tabpages":[{"layout":{}}]}'
+					'{"uuid":"a","name":"example","workingDirectory":"/home/foo","tabpages":[{"uuid":"a","layout":{}}]}'
 				)
 			end)
 		end)
 
 		it("should default to a layout with no children when layout is missing a children key", function()
 			local universe = universe_factory.make(
-				'{"uuid":"a","name":"example","workingDirectory":"/home/foo","tabpages":[{"layout":{}}]}'
+				'{"uuid":"a","name":"example","workingDirectory":"/home/foo","tabpages":[{"uuid":"a","layout":{}}]}'
 			)
 			assert.is_not.Nil(universe)
 			local tabpage = universe.tabpages[1]
@@ -578,14 +596,14 @@ describe("universe_factory make", function()
 		it("should not throw when layout has a type but is missing a children key", function()
 			assert.has_no.errors(function()
 				universe_factory.make(
-					'{"uuid":"a","name":"example","workingDirectory":"/home/foo","tabpages":[{"layout":{"type":"row"}}]}'
+					'{"uuid":"a","name":"example","workingDirectory":"/home/foo","tabpages":[{"uuid":"a","layout":{"type":"row"}}]}'
 				)
 			end)
 		end)
 
 		it("should default to a layout with no children when layout is missing a children key", function()
 			local universe = universe_factory.make(
-				'{"uuid":"a","name":"example","workingDirectory":"/home/foo","tabpages":[{"layout":{"type":"row"}}]}'
+				'{"uuid":"a","name":"example","workingDirectory":"/home/foo","tabpages":[{"uuid":"a","layout":{"type":"row"}}]}'
 			)
 			assert.is_not.Nil(universe)
 			local tabpage = universe.tabpages[1]
@@ -598,14 +616,14 @@ describe("universe_factory make", function()
 		it("should not throw when layout children contains non-well-formed elements", function()
 			assert.has_no.errors(function()
 				universe_factory.make(
-					'{"uuid":"a","name":"example","workingDirectory":"/home/foo","tabpages":[{"layout":{"type":"row","children":[1,2]}}]}'
+					'{"uuid":"a","name":"example","workingDirectory":"/home/foo","tabpages":[{"uuid":"a","layout":{"type":"row","children":[1,2]}}]}'
 				)
 			end)
 		end)
 
 		it("should default to a layout with no children when layout children are malformed", function()
 			local universe = universe_factory.make(
-				'{"uuid":"a","name":"example","workingDirectory":"/home/foo","tabpages":[{"layout":{"type":"row","children":[1,2]}}]}'
+				'{"uuid":"a","name":"example","workingDirectory":"/home/foo","tabpages":[{"uuid":"a","layout":{"type":"row","children":[1,2]}}]}'
 			)
 			assert.is_not.Nil(universe)
 			local tabpage = universe.tabpages[1]

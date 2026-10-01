@@ -65,37 +65,41 @@ function M.make(jsonString)
 	if type(universe_json_or_err.tabpages) == "table" then
 		for _, tabpage_json in pairs(universe_json_or_err.tabpages) do
 			if type(tabpage_json) == "table" then
-				local tabpage = Tabpage:new(tabpage_json.uuid, nil, 0) -- todo(mikol): we need to hydrate the active window uuid here.
+				if isNonEmptyString(tabpage_json.uuid) then
+					local tabpage = Tabpage:new({ uuid = tabpage_json.uuid }) -- todo(mikol): we need to hydrate the active window uuid here.
 
-				local layout = tabpage_json.layout
+					local layout = tabpage_json.layout
 
-				if type(layout) ~= "table" then
-					-- Tabpage layout is missing or not a table; fall back to an empty layout.
-					layout = defaultLayout()
-				end
+					if type(layout) ~= "table" then
+						-- Tabpage layout is missing or not a table; fall back to an empty layout.
+						layout = defaultLayout()
+					end
 
-				local layout_ok, made_layout = pcall(window_layout_factory.makeFromJson, layout)
+					local layout_ok, made_layout = pcall(window_layout_factory.makeFromJson, layout)
 
-				if not layout_ok then
-					-- Tabpage layout was a table but not shaped like a valid layout manifest, falling back to the default empty layout.
-					made_layout = window_layout_factory.makeFromJson(defaultLayout())
-				end
+					if not layout_ok then
+						-- Tabpage layout was a table but not shaped like a valid layout manifest, falling back to the default empty layout.
+						made_layout = window_layout_factory.makeFromJson(defaultLayout())
+					end
 
-				tabpage.layout = made_layout
+					tabpage.layout = made_layout
 
-				universe:addTabpage(tabpage)
+					universe:addTabpage(tabpage)
 
-				if type(tabpage_json.windows) == "table" then
-					for _, window_json in pairs(tabpage_json.windows) do
-						if type(window_json) == "table" then
-							if isNonEmptyString(window_json.uuid) then
-								local window = Window:new({ uuid = window_json.uuid, bufferUuid = window_json.bufferUuid })
-								tabpage:addWindow(window)
-							else
-								log.warn("Window json was missing a valid uuid, got: %s", window_json.uuid)
+					if type(tabpage_json.windows) == "table" then
+						for _, window_json in pairs(tabpage_json.windows) do
+							if type(window_json) == "table" then
+								if isNonEmptyString(window_json.uuid) then
+									local window = Window:new({ uuid = window_json.uuid, bufferUuid = window_json.bufferUuid })
+									tabpage:addWindow(window)
+								else
+									log.warn("Window json was missing a valid uuid, got: %s", window_json.uuid)
+								end
 							end
 						end
 					end
+				else
+					log.warn("Tabpage json was missing a valid uuid, got: %s", tabpage_json.uuid)
 				end
 			end
 		end
