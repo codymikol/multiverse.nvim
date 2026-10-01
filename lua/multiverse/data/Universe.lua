@@ -11,7 +11,7 @@ end
 --- @field workingDirectory string
 --- @field tabpages Tabpage[]
 --- @field buffers Buffer[]
---- @field currentTabpage Tabpage
+--- @field currentTabpage string | nil
 --- @field addTabpage (Tabpage) -> nil
 --- @field addAllTabpages (Tabpage[]) -> nil
 --- @field addBuffer (Buffer) -> nil

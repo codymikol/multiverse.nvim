@@ -18,6 +18,7 @@ describe("dehydration_manager.dehydrate", function()
 	local notify_stub
 	local log_error_stub
 	local log_debug_stub
+	local nvim_get_current_tabpage_stub
 
 	local summary = { uuid = "universe-uuid", name = "some-name", directory = "/tmp" }
 	local tabpage
@@ -47,6 +48,9 @@ describe("dehydration_manager.dehydrate", function()
 		-- Stubbed (not asserted) to silence dehydration_manager's unrelated
 		-- log.debug calls further down in dehydrate().
 		log_debug_stub = stub(log, "debug")
+		nvim_get_current_tabpage_stub = stub(vim.api, "nvim_get_current_tabpage", function()
+			return 1
+		end)
 	end)
 
 	after_each(function()
@@ -58,6 +62,7 @@ describe("dehydration_manager.dehydrate", function()
 		notify_stub:revert()
 		log_error_stub:revert()
 		log_debug_stub:revert()
+		nvim_get_current_tabpage_stub:revert()
 	end)
 
 	it("notifies a short message without dumping the universe object, and logs the details", function()
@@ -73,5 +78,22 @@ describe("dehydration_manager.dehydrate", function()
 			999,
 			"universe-uuid"
 		)
+	end)
+
+	it("should set universe.currentTabpage to the uuid of the currently active tabpage", function()
+		local universe = dehydration_manager.dehydrate(summary)
+
+		assert.are.equal("tabpage-uuid", universe.currentTabpage)
+	end)
+
+	it("should leave universe.currentTabpage nil when the active tabpage id matches no known tabpage", function()
+		nvim_get_current_tabpage_stub:revert()
+		nvim_get_current_tabpage_stub = stub(vim.api, "nvim_get_current_tabpage", function()
+			return 999
+		end)
+
+		local universe = dehydration_manager.dehydrate(summary)
+
+		assert.is_nil(universe.currentTabpage)
 	end)
 end)

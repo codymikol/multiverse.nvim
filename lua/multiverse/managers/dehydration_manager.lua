@@ -21,7 +21,13 @@ M.dehydrate = function(summary)
 	universe:addAllBuffers(buffers)
 	universe:addAllTabpages(tabpages)
 
-	for _, tabpage in pairs(tabpages) do
+	local currentTabpageId = vim.api.nvim_get_current_tabpage()
+
+	for _, tabpage in ipairs(tabpages) do
+		if tabpage.tabpageId == currentTabpageId then
+			universe.currentTabpage = tabpage.uuid
+		end
+
 		local windows = window_manager.getAllVisibleWindowsForTabpage(tabpage.tabpageId)
 
 		tabpage:addAllWindows(windows)
