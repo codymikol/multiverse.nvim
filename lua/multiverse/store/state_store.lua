@@ -19,6 +19,8 @@ M.set_current_state = function(state)
     error("Invalid state: " .. tostring(state))
   end
   current_state = state
+
+  vim.api.nvim_exec_autocmds("User", { pattern = "MultiverseStateChanged", data = { state = state } })
 end
 
 return M
