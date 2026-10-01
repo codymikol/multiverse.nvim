@@ -90,6 +90,18 @@ M.hydrate = function(universe)
 	for _, tabpage in ipairs(universe.tabpages) do
 		hydrateTabpage(universe, tabpage)
 	end
+
+	-- tabpage_manager.hydrate() has already overwritten every tabpageId with a
+	-- fresh id from :tabnew by this point, so the persisted currentTabpage uuid
+	-- must be re-resolved against universe.tabpages rather than trusted as-is.
+	if type(universe.currentTabpage) == "string" and universe.currentTabpage ~= "" then
+		for _, tabpage in ipairs(universe.tabpages) do
+			if tabpage.uuid == universe.currentTabpage then
+				vim.api.nvim_set_current_tabpage(tabpage.tabpageId)
+				break
+			end
+		end
+	end
 end
 
 return M
