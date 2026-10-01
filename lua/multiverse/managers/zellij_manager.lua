@@ -70,6 +70,12 @@ M.open_floating_terminal = function(session_name)
 
   vim.fn.jobstart("zellij attach --create " .. vim.fn.shellescape(session_name), { term = true })
 
+  -- Drop straight into insert mode so the terminal is ready to type into
+  -- without the user pressing `i` first. Relies on the floating window still
+  -- being current here, so a later afterHydrate hook that steals focus
+  -- before this unwinds would land insert mode in the wrong buffer.
+  vim.cmd("startinsert")
+
   floating_terminal.win_id = win_id
   floating_terminal.buf_id = buf_id
 
