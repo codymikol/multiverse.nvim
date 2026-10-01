@@ -3,6 +3,7 @@ local cli = require("multiverse.managers.cli_manager")
 local on_exit = require("multiverse.autocmd.on_exit")
 local on_buffer_close = require("multiverse.autocmd.on_buffer_close")
 local on_vim_enter = require("multiverse.autocmd.on_vim_enter")
+local multiverse_manager = require("multiverse.managers.multiverse_manager")
 
 local Multiverse = {}
 
@@ -42,6 +43,12 @@ Multiverse.setup = function(opts)
       vim.notify("multiverse.setup: unknown keymaps key '" .. key .. "'", vim.log.levels.WARN)
     end
   end
+end
+
+--- Plain, statusline-agnostic accessor for the active Universe's name.
+--- @return string the active universe's name, or "" when not currently in a universe
+Multiverse.status = function()
+  return multiverse_manager.get_current_universe_name() or ""
 end
 
 return Multiverse
