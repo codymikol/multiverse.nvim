@@ -1,6 +1,7 @@
 local M = {}
 
 local multiverse_repository = require("multiverse.repositories.multiverse_repository")
+local current_universe_resolver = require("multiverse.repositories.current_universe_resolver")
 local universe_repository = require("multiverse.repositories.universe_repository")
 local hydration_manager = require("multiverse.managers.hydration_manager")
 local dehydration_manager = require("multiverse.managers.dehydration_manager")
@@ -8,6 +9,34 @@ local cleanup_manager = require("multiverse.managers.cleanup_manager")
 local plugin_manager = require("multiverse.managers.plugin_manager")
 local log            = require("multiverse.log")
 local state_store    = require("multiverse.store.state_store")
+
+local RESOLVE_FAILURE_THROTTLE_MS = 1000
+local last_resolve_failure_at = nil
+
+-- Lives here (not in multiverse_repository's cache) because this throttle is specific to the
+-- statusline hot path: it bounds the rate of disk I/O / log growth from a persistently bad
+-- multiverse.json being re-read on every redraw, while save()/load_universe() still need
+-- getMultiverse() to retry on every call.
+M.get_current_universe_name = function()
+  if last_resolve_failure_at and (vim.loop.now() - last_resolve_failure_at) < RESOLVE_FAILURE_THROTTLE_MS then
+    return nil
+  end
+
+  local success, result = pcall(function()
+    local summary = current_universe_resolver.resolve_current_universe_summary(vim.fn.getcwd())
+    return summary and summary.name
+  end)
+
+  if not success then
+    last_resolve_failure_at = vim.loop.now()
+    log.error("Error resolving current universe name: %s", result)
+    return nil
+  end
+
+  last_resolve_failure_at = nil
+
+  return result
+end
 
 M.save = function()
 

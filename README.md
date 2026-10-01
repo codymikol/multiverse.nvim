@@ -96,6 +96,10 @@ require("multiverse").setup({
 
 - **`Neotree`**
   - Automatically syncs to the working directory of the loaded universe.
+- **`Lualine`**
+  - Add `require("integrations.lualine").component` as a lualine component to show the active Universe's name.
+  - Not using lualine? `require("multiverse").status()` is a plain, statusline-agnostic accessor that returns the active Universe's name, already sanitized for safe statusline/winbar/titlestring rendering (or `""` when not currently in a universe). This sanitization doubles any `%` so it renders correctly inside a `%{...}` statusline/winbar/titlestring expression — printing the result elsewhere (e.g. `:echo`, `vim.notify`) will show a literal `%%`.
+  - Use it to wire up heirline, a hand-rolled statusline, or anything else.
 
 ## Contributing
 

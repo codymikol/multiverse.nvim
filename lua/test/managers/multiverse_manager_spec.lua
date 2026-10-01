@@ -330,3 +330,119 @@ describe("multiverse_manager.save", function()
 		end)
 	end)
 end)
+
+describe("multiverse_manager.get_current_universe_name", function()
+	local getMultiverse_stub
+	local getcwd_stub
+	local now_stub
+	-- The throttle's failure timestamp is a module-local that persists across `it` blocks (and
+	-- across spec files, since they share one require cache). Each test gets its own disjoint
+	-- 10000ms slice of fake time (well past the 1000ms throttle window) so a failure recorded by
+	-- one test can never bleed into the next test's throttle check.
+	local clock_base = 0
+
+	before_each(function()
+		clock_base = clock_base + 10000
+		now_stub = stub(vim.loop, "now")
+		now_stub.returns(clock_base)
+	end)
+
+	after_each(function()
+		if getMultiverse_stub then
+			getMultiverse_stub:revert()
+			getMultiverse_stub = nil
+		end
+		if getcwd_stub then
+			getcwd_stub:revert()
+			getcwd_stub = nil
+		end
+		now_stub:revert()
+	end)
+
+	it("returns the matching universe's name when cwd exactly matches a registered universe's directory", function()
+		local cwd = "/tmp/multiverse-manager-spec/current-universe-name"
+		local universe_summary =
+			UniverseSummary:new({ directory = cwd, uuid = "current-uuid", name = "current-universe" })
+		local multiverse = Multiverse:new({ universe_summary })
+
+		getMultiverse_stub = stub(multiverse_repository, "getMultiverse")
+		getMultiverse_stub.returns(multiverse)
+
+		getcwd_stub = stub(vim.fn, "getcwd")
+		getcwd_stub.returns(cwd)
+
+		assert.are.equal("current-universe", multiverse_manager.get_current_universe_name())
+	end)
+
+	it("returns the matching universe's name when cwd matches a registered universe's directory only with a trailing slash", function()
+		local cwd = "/tmp/multiverse-manager-spec/trailing-slash"
+		local universe_summary =
+			UniverseSummary:new({ directory = cwd .. "/", uuid = "trailing-uuid", name = "trailing-universe" })
+		local multiverse = Multiverse:new({ universe_summary })
+
+		getMultiverse_stub = stub(multiverse_repository, "getMultiverse")
+		getMultiverse_stub.returns(multiverse)
+
+		getcwd_stub = stub(vim.fn, "getcwd")
+		getcwd_stub.returns(cwd)
+
+		assert.are.equal("trailing-universe", multiverse_manager.get_current_universe_name())
+	end)
+
+	it("returns nil when cwd matches no registered universe", function()
+		local universe_summary =
+			UniverseSummary:new({ directory = "/tmp/multiverse-manager-spec/other", uuid = "other-uuid", name = "other-universe" })
+		local multiverse = Multiverse:new({ universe_summary })
+
+		getMultiverse_stub = stub(multiverse_repository, "getMultiverse")
+		getMultiverse_stub.returns(multiverse)
+
+		getcwd_stub = stub(vim.fn, "getcwd")
+		getcwd_stub.returns("/tmp/multiverse-manager-spec/unmatched")
+
+		assert.is_nil(multiverse_manager.get_current_universe_name())
+	end)
+
+	it("returns nil when multiverse_repository.getMultiverse() returns nil", function()
+		getMultiverse_stub = stub(multiverse_repository, "getMultiverse")
+		getMultiverse_stub.returns(nil)
+
+		assert.is_nil(multiverse_manager.get_current_universe_name())
+	end)
+
+	it("returns nil instead of raising when resolving the current universe errors", function()
+		getMultiverse_stub = stub(multiverse_repository, "getMultiverse", function()
+			error("boom")
+		end)
+
+		assert.is_nil(multiverse_manager.get_current_universe_name())
+	end)
+
+	it("throttles repeated resolution attempts after a failure, skipping re-invocation within the window", function()
+		getMultiverse_stub = stub(multiverse_repository, "getMultiverse", function()
+			error("boom")
+		end)
+
+		now_stub.returns(clock_base)
+		assert.is_nil(multiverse_manager.get_current_universe_name())
+
+		now_stub.returns(clock_base + 999)
+		assert.is_nil(multiverse_manager.get_current_universe_name())
+
+		assert.stub(getMultiverse_stub).was.called(1)
+	end)
+
+	it("re-invokes getMultiverse once the throttle window has expired", function()
+		getMultiverse_stub = stub(multiverse_repository, "getMultiverse", function()
+			error("boom")
+		end)
+
+		now_stub.returns(clock_base)
+		assert.is_nil(multiverse_manager.get_current_universe_name())
+
+		now_stub.returns(clock_base + 1000)
+		assert.is_nil(multiverse_manager.get_current_universe_name())
+
+		assert.stub(getMultiverse_stub).was.called(2)
+	end)
+end)
