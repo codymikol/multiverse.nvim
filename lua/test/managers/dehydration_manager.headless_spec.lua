@@ -62,6 +62,10 @@ local resolvedWindow = happyUniverse.tabpages[1].windows[1]
 assert(resolvedWindow ~= nil, "expected a window to be collected for the current tabpage")
 assert(resolvedWindow.bufferUuid ~= nil and resolvedWindow.bufferUuid ~= "",
   "expected the window's buffer to resolve to a bufferUuid on the happy path")
+assert(happyUniverse.tabpages[1].activeWindowUuid == resolvedWindow.uuid,
+  "expected the tabpage's activeWindowUuid to resolve to the current window's uuid")
+assert(happyUniverse.tabpages[1].activeWindowId == nil,
+  "expected the transient activeWindowId to be cleared after dehydrate")
 
 print("PASS")
 os.exit(0)

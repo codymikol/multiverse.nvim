@@ -26,6 +26,8 @@ M.dehydrate = function(summary)
 
 		tabpage:addAllWindows(windows)
 
+		tabpage:resolveActiveWindowUuid(windows)
+
 		for _, window in pairs(windows) do
 			local windowBufferId = vim.api.nvim_win_get_buf(window.windowId)
 			local windowBuffer = universe:getBufferById(windowBufferId)
