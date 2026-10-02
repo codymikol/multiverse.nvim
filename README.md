@@ -48,6 +48,10 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim). `setup()` registers a `Vi
   - **Description**: Opens a *Telescope* picker that lists all *Universes* and loads one upon selection.
   - **Arguments**: None.
 
+- **`MultiverseAlternate`**
+  - **Description**: Switches back to the previously active *Universe*, like `<C-^>` for buffers. Repeated invocations flip-flop between the two most recently active *Universes*. No-ops with a notification if there is no previous *Universe* (e.g. only one has been opened this session) or if it was since removed. Session-scoped only; does not persist across restarts.
+  - **Arguments**: None.
+
 - **`MultiverseLog`**
   - **Description**: Opens the plugin's log file, which contains detailed diagnostic information for errors reported via notifications.
   - **Arguments**: None.

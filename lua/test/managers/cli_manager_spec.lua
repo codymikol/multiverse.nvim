@@ -10,6 +10,7 @@ local cli_manager = require("multiverse.managers.cli_manager")
 local log = require("multiverse.log")
 local zellij_manager = require("multiverse.managers.zellij_manager")
 local addNewUniverseUsecase = require("multiverse.usecases.addNewUniverseUsecase")
+local alternateUniverseUsecase = require("multiverse.usecases.alternateUniverseUsecase")
 
 describe("cli_manager.registerCommands", function()
 	describe("MultiverseAdd", function()
@@ -202,6 +203,46 @@ describe("cli_manager.registerCommands", function()
 			assert.stub(session_name_for_stub).was_not_called()
 			assert.stub(open_floating_terminal_stub).was_not_called()
 			assert.stub(notify_stub).was_not_called()
+		end)
+	end)
+
+	describe("MultiverseAlternate", function()
+		local create_user_command_stub
+		local run_stub
+
+		before_each(function()
+			create_user_command_stub = stub(vim.api, "nvim_create_user_command")
+			run_stub = stub(alternateUniverseUsecase, "run")
+		end)
+
+		after_each(function()
+			create_user_command_stub:revert()
+			run_stub:revert()
+		end)
+
+		it("registers a MultiverseAlternate user command with nargs = 0", function()
+			cli_manager.registerCommands()
+
+			assert.stub(create_user_command_stub).was.called_with(
+				"MultiverseAlternate",
+				match._,
+				{ nargs = 0 }
+			)
+		end)
+
+		it("delegates to alternateUniverseUsecase.run", function()
+			cli_manager.registerCommands()
+
+			local callback
+			for _, call in ipairs(create_user_command_stub.calls) do
+				if call.refs[1] == "MultiverseAlternate" then
+					callback = call.refs[2]
+				end
+			end
+
+			callback()
+
+			assert.stub(run_stub).was_called(1)
 		end)
 	end)
 end)
