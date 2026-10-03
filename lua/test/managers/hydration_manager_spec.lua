@@ -51,7 +51,9 @@ describe("hydration_manager", function()
 			end)
 
 			it("should notify the user and not hydrate anything", function()
-				hydration_manager.hydrate({ uuid = "abc" })
+				local result = hydration_manager.hydrate({ uuid = "abc" })
+
+				assert.is_false(result)
 
 				assert.stub(get_universe_by_uuid_stub).was.called_with("abc")
 
@@ -74,7 +76,9 @@ describe("hydration_manager", function()
 			end)
 
 			it("should hydrate the current neovim environment with the universe", function()
-				hydration_manager.hydrate({ uuid = "abc" })
+				local result = hydration_manager.hydrate({ uuid = "abc" })
+
+				assert.is_true(result)
 
 				assert.stub(get_universe_by_uuid_stub).was.called_with("abc")
 
@@ -134,9 +138,12 @@ describe("hydration_manager", function()
 			end)
 
 			it("should notify the user and still run cleanup instead of propagating the error", function()
+				local result
 				assert.has_no.errors(function()
-					hydration_manager.hydrate({ uuid = "abc" })
+					result = hydration_manager.hydrate({ uuid = "abc" })
 				end)
+
+				assert.is_false(result)
 
 				assert.stub(close_generated_nofile_scratch_buffers_stub).was.called()
 				assert.stub(neotree_hydrate_stub).was_not.called()
