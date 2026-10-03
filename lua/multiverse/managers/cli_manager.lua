@@ -13,6 +13,10 @@ local function complete_universe(arglead, cmdline, cursorpos)
 
   local multiverse = multiverse_repository.getMultiverse()
 
+	if multiverse == nil then
+		return {}
+	end
+
 	local universes = multiverse.universes
 
 	local completions = {}
