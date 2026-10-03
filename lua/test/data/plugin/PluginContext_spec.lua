@@ -112,6 +112,66 @@ describe("PluginContext", function()
 			end)
 		end)
 
+		describe("with a valid name and a numeric priority", function()
+			it("should have the correct priority", function()
+				local context = PluginContext:new({ name = "my-plugin", priority = 10 })
+
+				assert.is_not.Nil(context)
+				assert.are.equal(10, context.priority)
+			end)
+		end)
+
+		describe("with a valid name and no priority", function()
+			it("should have a nil priority", function()
+				local context = PluginContext:new({ name = "my-plugin" })
+
+				assert.is_not.Nil(context)
+				assert.is.Nil(context.priority)
+			end)
+		end)
+
+		describe("with a valid name and a non-number priority", function()
+			it("should still construct a context with the valid name", function()
+				local context = PluginContext:new({ name = "my-plugin", priority = "not-a-number" })
+
+				assert.is_not.Nil(context)
+				assert.are.equal("my-plugin", context.name)
+			end)
+
+			it("should have a nil priority", function()
+				local context = PluginContext:new({ name = "my-plugin", priority = "not-a-number" })
+
+				assert.is.Nil(context.priority)
+			end)
+
+			it("should call log.warn naming the field", function()
+				PluginContext:new({ name = "my-plugin", priority = "not-a-number" })
+				assert.stub(log_warn_stub).was.called()
+			end)
+		end)
+
+		describe("with a NaN priority", function()
+			local nan = 0 / 0
+
+			it("should still construct a context with the valid name", function()
+				local context = PluginContext:new({ name = "my-plugin", priority = nan })
+
+				assert.is_not.Nil(context)
+				assert.are.equal("my-plugin", context.name)
+			end)
+
+			it("should have a nil priority", function()
+				local context = PluginContext:new({ name = "my-plugin", priority = nan })
+
+				assert.is.Nil(context.priority)
+			end)
+
+			it("should call log.warn naming the field", function()
+				PluginContext:new({ name = "my-plugin", priority = nan })
+				assert.stub(log_warn_stub).was.called()
+			end)
+		end)
+
 		describe("with a hook field present but not a function", function()
 			it("should still construct a context with the valid name", function()
 				local context = PluginContext:new({ name = "my-plugin", beforeDehydrate = "not-a-function" })

@@ -5,6 +5,7 @@ Plugin.__index = Plugin
 
 --- @class Plugin
 --- @field name string
+--- @field priority? number
 --- @field context PluginContext
 
 --- @param ctx table
@@ -18,6 +19,7 @@ function Plugin:new(ctx)
 
 	local self = setmetatable({}, Plugin)
 	self.name = context.name
+	self.priority = context.priority
 	self.context = context
 	return self
 end
