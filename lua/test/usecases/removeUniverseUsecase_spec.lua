@@ -1,6 +1,8 @@
 local stub = require("luassert.stub")
 local multiverse_repository = require("multiverse.repositories.multiverse_repository")
 local universe_repository = require("multiverse.repositories.universe_repository")
+local zellij_manager = require("multiverse.managers.zellij_manager")
+local persistance = require("multiverse.repositories.persistance")
 local Multiverse = require("multiverse.data.Multiverse")
 local UniverseSummary = require("multiverse.data.UniverseSummary")
 local removeUniverseUsecase = require("multiverse.usecases.removeUniverseUsecase")
@@ -13,6 +15,7 @@ describe("removeUniverseUsecase.run", function()
 		local delete_universe_stub
 		local notify_stub
 		local confirm_stub
+		local mark_closed_stub
 
 		before_each(function()
 			multiverse = Multiverse:new({
@@ -25,6 +28,7 @@ describe("removeUniverseUsecase.run", function()
 			delete_universe_stub = stub(universe_repository, "deleteUniverse")
 			notify_stub = stub(vim, "notify")
 			confirm_stub = stub(vim.fn, "confirm")
+			mark_closed_stub = stub(zellij_manager, "mark_closed")
 		end)
 
 		after_each(function()
@@ -33,6 +37,7 @@ describe("removeUniverseUsecase.run", function()
 			delete_universe_stub:revert()
 			notify_stub:revert()
 			confirm_stub:revert()
+			mark_closed_stub:revert()
 		end)
 
 		it("notifies an ERROR and does not attempt to delete or save", function()
@@ -42,6 +47,7 @@ describe("removeUniverseUsecase.run", function()
 			assert.stub(confirm_stub).was_not_called()
 			assert.stub(delete_universe_stub).was_not_called()
 			assert.stub(save_multiverse_stub).was_not_called()
+			assert.stub(mark_closed_stub).was_not_called()
 		end)
 	end)
 
@@ -53,6 +59,9 @@ describe("removeUniverseUsecase.run", function()
 		local delete_universe_stub
 		local notify_stub
 		local confirm_stub
+		local mark_closed_stub
+		local getDir_stub
+		local temp_dir
 
 		before_each(function()
 			target_universe = UniverseSummary:new({ directory = "/tmp/foo", uuid = "uuid-1", name = "foo", lastExplored = 0 })
@@ -71,6 +80,11 @@ describe("removeUniverseUsecase.run", function()
 			confirm_stub = stub(vim.fn, "confirm", function()
 				return 1
 			end)
+			mark_closed_stub = stub(zellij_manager, "mark_closed")
+			temp_dir = vim.fn.tempname()
+			getDir_stub = stub(persistance, "getDir", function()
+				return temp_dir
+			end)
 		end)
 
 		after_each(function()
@@ -79,6 +93,9 @@ describe("removeUniverseUsecase.run", function()
 			delete_universe_stub:revert()
 			notify_stub:revert()
 			confirm_stub:revert()
+			mark_closed_stub:revert()
+			getDir_stub:revert()
+			vim.fn.delete(temp_dir, "rf")
 		end)
 
 		it("prompts for confirmation, calls deleteUniverse with the matching universe, removes it and saves", function()
@@ -91,6 +108,23 @@ describe("removeUniverseUsecase.run", function()
 			assert.stub(save_multiverse_stub).was.called_with(multiverse)
 			assert.stub(notify_stub).was_not_called()
 		end)
+
+		it("cleans up the orphaned zellij open-flag for the removed universe's directory", function()
+			removeUniverseUsecase.run("foo")
+
+			assert.stub(mark_closed_stub).was.called_with(zellij_manager.session_name_for(target_universe.directory))
+		end)
+
+		it("actually deletes the on-disk zellij open-flag file for the removed universe", function()
+			mark_closed_stub:revert()
+			local session_name = zellij_manager.session_name_for(target_universe.directory)
+			zellij_manager.mark_open(session_name)
+			assert.is_true(zellij_manager.was_open(session_name))
+
+			removeUniverseUsecase.run("foo")
+
+			assert.is_false(zellij_manager.was_open(session_name))
+		end)
 	end)
 
 	describe("when the universe is found and delete fails", function()
@@ -101,6 +135,7 @@ describe("removeUniverseUsecase.run", function()
 		local delete_universe_stub
 		local notify_stub
 		local confirm_stub
+		local mark_closed_stub
 		local delete_err = "Failed to delete universe file: /tmp/foo/universe-uuid-1.json, os returned error - permission denied"
 
 		before_each(function()
@@ -119,6 +154,7 @@ describe("removeUniverseUsecase.run", function()
 			confirm_stub = stub(vim.fn, "confirm", function()
 				return 1
 			end)
+			mark_closed_stub = stub(zellij_manager, "mark_closed")
 		end)
 
 		after_each(function()
@@ -127,6 +163,7 @@ describe("removeUniverseUsecase.run", function()
 			delete_universe_stub:revert()
 			notify_stub:revert()
 			confirm_stub:revert()
+			mark_closed_stub:revert()
 		end)
 
 		it("notifies an ERROR with the delete error, does not save and does not remove the entry", function()
@@ -137,6 +174,7 @@ describe("removeUniverseUsecase.run", function()
 			assert.stub(save_multiverse_stub).was_not_called()
 			assert.are.equal(1, #multiverse.universes)
 			assert.are.equal(target_universe, multiverse.universes[1])
+			assert.stub(mark_closed_stub).was_not_called()
 		end)
 	end)
 
@@ -149,6 +187,7 @@ describe("removeUniverseUsecase.run", function()
 		local notify_stub
 		local confirm_stub
 		local confirm_choice
+		local mark_closed_stub
 
 		before_each(function()
 			target_universe = UniverseSummary:new({ directory = "/tmp/foo", uuid = "uuid-1", name = "foo", lastExplored = 0 })
@@ -167,6 +206,7 @@ describe("removeUniverseUsecase.run", function()
 			confirm_stub = stub(vim.fn, "confirm", function()
 				return confirm_choice
 			end)
+			mark_closed_stub = stub(zellij_manager, "mark_closed")
 		end)
 
 		after_each(function()
@@ -175,6 +215,7 @@ describe("removeUniverseUsecase.run", function()
 			delete_universe_stub:revert()
 			notify_stub:revert()
 			confirm_stub:revert()
+			mark_closed_stub:revert()
 		end)
 
 		it("does not delete, remove or save the universe", function()
@@ -185,6 +226,7 @@ describe("removeUniverseUsecase.run", function()
 			assert.stub(save_multiverse_stub).was_not_called()
 			assert.are.equal(1, #multiverse.universes)
 			assert.are.equal(target_universe, multiverse.universes[1])
+			assert.stub(mark_closed_stub).was_not_called()
 		end)
 
 		it("also aborts when the prompt is dismissed instead of explicitly declined", function()
@@ -194,6 +236,7 @@ describe("removeUniverseUsecase.run", function()
 
 			assert.stub(delete_universe_stub).was_not_called()
 			assert.stub(save_multiverse_stub).was_not_called()
+			assert.stub(mark_closed_stub).was_not_called()
 		end)
 	end)
 
