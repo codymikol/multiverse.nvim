@@ -26,7 +26,7 @@ M.save_multiverse = function(multiverse)
 
 end
 
----@return Multiverse
+---@return Multiverse | nil
 M.getMultiverse = function()
 
   if cache ~= nil then return cache end
