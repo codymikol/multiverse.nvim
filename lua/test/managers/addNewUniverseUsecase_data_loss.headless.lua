@@ -56,13 +56,12 @@ end
 
 local multiverse_repository = require("multiverse.repositories.multiverse_repository")
 local state_store = require("multiverse.store.state_store")
-local neotree_integration = require("integrations.neotree")
 local neotree_plugin = require("plugins.neotree_plugin")
 -- Require this now (before `cd`-ing below), since package.path is set up
 -- with relative paths resolved against the process cwd at require-time.
 local addNewUniverseUsecase = require("multiverse.usecases.addNewUniverseUsecase")
 
--- Stub out the Neotree integration/plugin hooks so save/dehydrate/hydrate
+-- Stub out the Neotree plugin hooks so save/dehydrate/hydrate
 -- don't attempt to run `:Neotree ...` ex commands, which don't exist in this
 -- `-u NONE` headless session (and would otherwise short-circuit `M.save()`
 -- via its own pcall before it ever reaches the destructive
@@ -70,9 +69,6 @@ local addNewUniverseUsecase = require("multiverse.usecases.addNewUniverseUsecase
 -- load_universe/save wrap these in a pcall regardless, but stubbing them
 -- keeps the test deterministic and focused on the save/hydrate data-loss
 -- interaction rather than incidental plugin-command errors.
-local original_neotree_hydrate = neotree_integration.hydrate
-neotree_integration.hydrate = function() end
-
 local original_neotree_beforeDehydrate = neotree_plugin.context.beforeDehydrate
 local original_neotree_afterHydrate = neotree_plugin.context.afterHydrate
 neotree_plugin.context.beforeDehydrate = function() end
@@ -147,7 +143,6 @@ assert(hydrated_marker_buffer_found,
 
 -- restore originals for hygiene, even though this is a one-shot process
 persistance.getDir = original_getDir
-neotree_integration.hydrate = original_neotree_hydrate
 neotree_plugin.context.beforeDehydrate = original_neotree_beforeDehydrate
 neotree_plugin.context.afterHydrate = original_neotree_afterHydrate
 
