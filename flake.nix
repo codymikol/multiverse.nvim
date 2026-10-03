@@ -48,6 +48,8 @@
               concurrency = { maxParallel = 3; };
             };
 
+            dispatch.butler.chores = "bugs refactor docs-drift";
+
           };
 
           devShells.default = pkgs.mkShell {
