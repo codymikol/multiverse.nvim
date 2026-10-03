@@ -50,6 +50,10 @@
 
             dispatch.butler.chores = "bugs refactor docs-drift";
 
+            # Provisions the Filer subagent so butler findings get relayed as
+            # issues instead of staying unprovisioned (empty is the default).
+            agents.models.filer = "claude-haiku-4-5-20251001";
+
           };
 
           devShells.default = pkgs.mkShell {
