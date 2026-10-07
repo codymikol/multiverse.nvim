@@ -1,20 +1,19 @@
 {
   "lastSwept": "67d5ae55b1e72cb8724477ce30585e646cd1e5ed",
-  "cursor": "lua/test/integrations/telescope_spec.lua",
-  "phase": "claimed",
-  "claimedBy": {
-    "host": "nixos",
-    "slot": 0,
-    "start": "2026-10-07T11:43:37.950661683-04:00"
-  },
+  "phase": "done",
+  "filed": [
+    "https://github.com/codymikol/multiverse.nvim/issues/378",
+    "https://github.com/codymikol/multiverse.nvim/issues/379",
+    "https://github.com/codymikol/multiverse.nvim/issues/380"
+  ],
   "usage": {
-    "input_tokens": 0,
-    "output_tokens": 0,
-    "cache_read_input_tokens": 0,
-    "cache_creation_input_tokens": 0,
-    "total_cost_usd": 0,
-    "duration_ms": 0,
-    "duration_api_ms": 0,
-    "num_turns": 0
+    "input_tokens": 22,
+    "output_tokens": 9485,
+    "cache_read_input_tokens": 407951,
+    "cache_creation_input_tokens": 36628,
+    "total_cost_usd": 1.32841375,
+    "duration_ms": 403670,
+    "duration_api_ms": 403241,
+    "num_turns": 11
   }
 }
