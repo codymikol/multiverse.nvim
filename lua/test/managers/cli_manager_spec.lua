@@ -8,7 +8,7 @@ package.loaded["integrations.telescope"] = { prompt_select_universe = function()
 
 local cli_manager = require("multiverse.managers.cli_manager")
 local log = require("multiverse.log")
-local zellij_manager = require("multiverse.managers.zellij_manager")
+local zellij_manager = require("plugins.zellij.zellij_manager")
 local addNewUniverseUsecase = require("multiverse.usecases.addNewUniverseUsecase")
 local alternateUniverseUsecase = require("multiverse.usecases.alternateUniverseUsecase")
 local multiverse_repository = require("multiverse.repositories.multiverse_repository")

@@ -1,5 +1,5 @@
 local Plugin = require("multiverse.data.plugin.Plugin")
-local zellij_manager = require("multiverse.managers.zellij_manager")
+local zellij_manager = require("plugins.zellij.zellij_manager")
 
 return Plugin:new({
 

@@ -1,6 +1,6 @@
 local stub = require("luassert.stub")
 
-describe("plugins.zellij_plugin", function()
+describe("plugins.zellij.zellij_plugin", function()
 	describe("context.beforeDehydrate", function()
 		local zellij_plugin
 		local zellij_manager
@@ -13,9 +13,9 @@ describe("plugins.zellij_plugin", function()
 		local ctx
 
 		before_each(function()
-			package.loaded["plugins.zellij_plugin"] = nil
-			package.loaded["multiverse.managers.zellij_manager"] = nil
-			zellij_manager = require("multiverse.managers.zellij_manager")
+			package.loaded["plugins.zellij.zellij_plugin"] = nil
+			package.loaded["plugins.zellij.zellij_manager"] = nil
+			zellij_manager = require("plugins.zellij.zellij_manager")
 
 			is_available_stub = stub(zellij_manager, "is_available")
 			is_floating_terminal_open_stub = stub(zellij_manager, "is_floating_terminal_open")
@@ -25,7 +25,7 @@ describe("plugins.zellij_plugin", function()
 			mark_open_stub = stub(zellij_manager, "mark_open")
 			mark_closed_stub = stub(zellij_manager, "mark_closed")
 
-			zellij_plugin = require("plugins.zellij_plugin")
+			zellij_plugin = require("plugins.zellij.zellij_plugin")
 
 			ctx = { universe = { workingDirectory = "/some/dir" } }
 		end)
@@ -37,8 +37,8 @@ describe("plugins.zellij_plugin", function()
 			session_name_for_stub:revert()
 			mark_open_stub:revert()
 			mark_closed_stub:revert()
-			package.loaded["plugins.zellij_plugin"] = nil
-			package.loaded["multiverse.managers.zellij_manager"] = nil
+			package.loaded["plugins.zellij.zellij_plugin"] = nil
+			package.loaded["plugins.zellij.zellij_manager"] = nil
 		end)
 
 		it("closes the tracked floating terminal when zellij is available and one is open", function()
@@ -102,9 +102,9 @@ describe("plugins.zellij_plugin", function()
 		local getcwd_stub
 
 		before_each(function()
-			package.loaded["plugins.zellij_plugin"] = nil
-			package.loaded["multiverse.managers.zellij_manager"] = nil
-			zellij_manager = require("multiverse.managers.zellij_manager")
+			package.loaded["plugins.zellij.zellij_plugin"] = nil
+			package.loaded["plugins.zellij.zellij_manager"] = nil
+			zellij_manager = require("plugins.zellij.zellij_manager")
 
 			is_available_stub = stub(zellij_manager, "is_available")
 			session_name_for_stub = stub(zellij_manager, "session_name_for")
@@ -112,7 +112,7 @@ describe("plugins.zellij_plugin", function()
 			was_open_stub = stub(zellij_manager, "was_open")
 			getcwd_stub = stub(vim.fn, "getcwd")
 
-			zellij_plugin = require("plugins.zellij_plugin")
+			zellij_plugin = require("plugins.zellij.zellij_plugin")
 		end)
 
 		after_each(function()
@@ -121,8 +121,8 @@ describe("plugins.zellij_plugin", function()
 			reattach_if_running_stub:revert()
 			was_open_stub:revert()
 			getcwd_stub:revert()
-			package.loaded["plugins.zellij_plugin"] = nil
-			package.loaded["multiverse.managers.zellij_manager"] = nil
+			package.loaded["plugins.zellij.zellij_plugin"] = nil
+			package.loaded["plugins.zellij.zellij_manager"] = nil
 		end)
 
 		it("reattaches using the session name derived from the current cwd when zellij is available and was_open is true", function()

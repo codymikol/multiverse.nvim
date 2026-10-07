@@ -6,7 +6,8 @@ local removeUniverseUsecase = require("multiverse.usecases.removeUniverseUsecase
 local openUniverseUsecase = require("multiverse.usecases.openUniverseUsecase")
 local alternateUniverseUsecase = require("multiverse.usecases.alternateUniverseUsecase")
 local multiverse_repository = require("multiverse.repositories.multiverse_repository")
-local zellij_manager = require("multiverse.managers.zellij_manager")
+-- Known exception to the plugin-placement rule (lua/docs/PLUGINS.md); see #367.
+local zellij_manager = require("plugins.zellij.zellij_manager")
 local log = require("multiverse.log")
 
 local function complete_universe(arglead, cmdline, cursorpos)

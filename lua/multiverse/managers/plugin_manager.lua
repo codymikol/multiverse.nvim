@@ -1,6 +1,6 @@
 local NeoTreePlugin = require("plugins.neotree_plugin")
 local CopilotChatPlugin = require("plugins.copilot_chat_plugin")
-local ZellijPlugin = require("plugins.zellij_plugin")
+local ZellijPlugin = require("plugins.zellij.zellij_plugin")
 local TitleSyncPlugin = require("plugins.title_sync_plugin")
 local log = require("multiverse.log")
 
