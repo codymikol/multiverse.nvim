@@ -11,6 +11,7 @@ local log = require("multiverse.log")
 local zellij_manager = require("multiverse.managers.zellij_manager")
 local addNewUniverseUsecase = require("multiverse.usecases.addNewUniverseUsecase")
 local alternateUniverseUsecase = require("multiverse.usecases.alternateUniverseUsecase")
+local multiverse_repository = require("multiverse.repositories.multiverse_repository")
 
 describe("cli_manager.registerCommands", function()
 	describe("MultiverseAdd", function()
@@ -203,6 +204,60 @@ describe("cli_manager.registerCommands", function()
 			assert.stub(session_name_for_stub).was_not_called()
 			assert.stub(open_floating_terminal_stub).was_not_called()
 			assert.stub(notify_stub).was_not_called()
+		end)
+	end)
+
+	describe("complete_universe", function()
+		local create_user_command_stub
+		local get_multiverse_stub
+
+		before_each(function()
+			create_user_command_stub = stub(vim.api, "nvim_create_user_command")
+			get_multiverse_stub = stub(multiverse_repository, "getMultiverse")
+		end)
+
+		after_each(function()
+			create_user_command_stub:revert()
+			get_multiverse_stub:revert()
+		end)
+
+		local function get_callback()
+			cli_manager.registerCommands()
+
+			for _, call in ipairs(create_user_command_stub.calls) do
+				if call.refs[1] == "MultiverseOpen" then
+					return call.refs[3].complete
+				end
+			end
+		end
+
+		it("returns matching universe names when the multiverse has universes", function()
+			get_multiverse_stub.returns({
+				universes = {
+					{ name = "foo" },
+					{ name = "bar" },
+					{ name = "foobar" },
+				},
+			})
+
+			local callback = get_callback()
+
+			local completions = callback("foo", "", 0)
+
+			assert.are.same({ "foo", "foobar" }, completions)
+		end)
+
+		it("returns an empty table without erroring when getMultiverse returns nil", function()
+			get_multiverse_stub.returns(nil)
+
+			local callback = get_callback()
+
+			local completions
+			assert.has_no.errors(function()
+				completions = callback("", "", 0)
+			end)
+
+			assert.are.same({}, completions)
 		end)
 	end)
 
