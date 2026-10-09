@@ -27,15 +27,9 @@ matching `lua/test/plugins/<name>/` subdirectory.
 Keeping plugin logic out of `lua/multiverse/` keeps core functionality
 independent of any specific editor plugin integration.
 
-**Known exceptions, tracked separately rather than blocking this convention
+**Known exception, tracked separately rather than blocking this convention
 on a full resolution:**
 
-- `lua/multiverse/managers/cli_manager.lua` requires
-  `plugins.zellij.zellij_manager` directly, and its `:MultiverseTerminal`
-  command body itself calls zellij-specific functions (`is_available`,
-  `session_name_for`, `open_floating_terminal`, etc.), independent of the
-  plugin lifecycle hooks. This couples core to a plugin and violates the
-  rule above; untangling it is tracked in #367.
 - `lua/multiverse/plugins/neotree.lua` is a `Plugin:new({...})` object
   that sits in core rather than under `lua/plugins/`. It is not wired into
   `plugin_manager.lua`'s registered plugin list, and its disposition is

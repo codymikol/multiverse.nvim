@@ -6,8 +6,6 @@ local removeUniverseUsecase = require("multiverse.usecases.removeUniverseUsecase
 local openUniverseUsecase = require("multiverse.usecases.openUniverseUsecase")
 local alternateUniverseUsecase = require("multiverse.usecases.alternateUniverseUsecase")
 local multiverse_repository = require("multiverse.repositories.multiverse_repository")
--- Known exception to the plugin-placement rule (lua/docs/PLUGINS.md); see #367.
-local zellij_manager = require("plugins.zellij.zellij_manager")
 local log = require("multiverse.log")
 
 local function complete_universe(arglead, cmdline, cursorpos)
@@ -63,21 +61,6 @@ M.registerCommands = function()
 	vim.api.nvim_create_user_command("MultiverseLog", function()
 		vim.cmd.split(vim.fn.fnameescape(log.get_log_file()))
 		vim.bo.modifiable = false
-	end, { nargs = 0 })
-
-	vim.api.nvim_create_user_command("MultiverseTerminal", function()
-		if not zellij_manager.is_available() then
-			vim.notify("zellij is not installed", vim.log.levels.WARN)
-			return
-		end
-
-		if zellij_manager.is_floating_terminal_open() then
-			zellij_manager.close_floating_terminal()
-			return
-		end
-
-		local session_name = zellij_manager.session_name_for(vim.fn.getcwd())
-		zellij_manager.open_floating_terminal(session_name)
 	end, { nargs = 0 })
 end
 

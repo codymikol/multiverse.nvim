@@ -1,5 +1,6 @@
 local initialize = require("multiverse.usecases.initialize")
 local cli = require("multiverse.managers.cli_manager")
+local plugin_manager = require("multiverse.managers.plugin_manager")
 local on_exit = require("multiverse.autocmd.on_exit")
 local on_buffer_close = require("multiverse.autocmd.on_buffer_close")
 local on_vim_enter = require("multiverse.autocmd.on_vim_enter")
@@ -28,6 +29,7 @@ Multiverse.setup = function(opts)
 
   initialize.run()
   cli.registerCommands()
+  plugin_manager.setupCommands()
   on_exit.register()
   on_buffer_close.register()
   on_vim_enter.register()
@@ -35,9 +37,16 @@ Multiverse.setup = function(opts)
   for key, mapping in pairs(type(opts.keymaps) == "table" and opts.keymaps or {}) do
     local entry = KEYMAP_COMMANDS[key]
     if entry and type(mapping) == "string" then
-      local rhs = entry.needs_input and (":" .. entry.command .. " ") or ("<cmd>" .. entry.command .. "<cr>")
-      local desc = entry.needs_input and (entry.command .. " (prompt)") or entry.command
-      vim.keymap.set("n", mapping, rhs, { desc = desc })
+      if vim.fn.exists(":" .. entry.command) ~= 2 then
+        vim.notify(
+          "multiverse.setup: cannot map keymaps key '" .. key .. "' to missing command '" .. entry.command .. "'",
+          vim.log.levels.WARN
+        )
+      else
+        local rhs = entry.needs_input and (":" .. entry.command .. " ") or ("<cmd>" .. entry.command .. "<cr>")
+        local desc = entry.needs_input and (entry.command .. " (prompt)") or entry.command
+        vim.keymap.set("n", mapping, rhs, { desc = desc })
+      end
     elseif entry == nil then
       vim.notify("multiverse.setup: unknown keymaps key '" .. key .. "'", vim.log.levels.WARN)
     end
