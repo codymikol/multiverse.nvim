@@ -12,6 +12,7 @@ local HOOK_FIELDS = {
 	"afterDehydrate",
 	"beforeHydrate",
 	"afterHydrate",
+	"setupCommands",
 }
 
 --- @class BeforeDehydrateContext
@@ -32,6 +33,7 @@ local HOOK_FIELDS = {
 --- @field afterDehydrate? fun(AfterDehydrateContext): nil
 --- @field beforeHydrate? fun(BeforeHydrateContext): nil
 --- @field afterHydrate? fun(AfterHydrateContext): nil
+--- @field setupCommands? fun(ctx: table?): nil
 
 --- @param opts table
 --- @return PluginContext|nil

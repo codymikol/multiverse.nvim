@@ -85,4 +85,12 @@ M.afterHydrate = function(afterHydrateContext)
 	dispatch_hook("afterHydrate", afterHydrateContext)
 end
 
+--- The hook plugins use to register their own `vim.api.nvim_create_user_command` calls,
+--- called once during `Multiverse.setup()` with no arguments, so hooks receive `{}`.
+--- @param ctx table?
+--- @return nil
+M.setupCommands = function(ctx)
+	dispatch_hook("setupCommands", ctx or {})
+end
+
 return M
