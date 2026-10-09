@@ -100,6 +100,7 @@ require("multiverse").setup({
 
 - **`Neotree`**
   - Automatically syncs to the working directory of the loaded universe.
+  - Remembers which directories were expanded and which node was highlighted, restoring both the next time that universe is hydrated.
 
 ## Contributing
 
