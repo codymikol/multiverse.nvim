@@ -8,6 +8,7 @@ package.loaded["integrations.telescope"] = { prompt_select_universe = function()
 local Multiverse = require("multiverse")
 local initialize = require("multiverse.usecases.initialize")
 local cli = require("multiverse.managers.cli_manager")
+local plugin_manager = require("multiverse.managers.plugin_manager")
 local on_exit = require("multiverse.autocmd.on_exit")
 local on_buffer_close = require("multiverse.autocmd.on_buffer_close")
 local on_vim_enter = require("multiverse.autocmd.on_vim_enter")
@@ -15,32 +16,39 @@ local on_vim_enter = require("multiverse.autocmd.on_vim_enter")
 describe("Multiverse.setup", function()
 	local initialize_run_stub
 	local cli_register_commands_stub
+	local plugin_manager_setup_commands_stub
 	local on_exit_register_stub
 	local on_buffer_close_register_stub
 	local on_vim_enter_register_stub
 	local keymap_set_stub
 	local notify_stub
+	local exists_stub
 	local original_title_enabled
 
 	before_each(function()
 		initialize_run_stub = stub(initialize, "run")
 		cli_register_commands_stub = stub(cli, "registerCommands")
+		plugin_manager_setup_commands_stub = stub(plugin_manager, "setupCommands")
 		on_exit_register_stub = stub(on_exit, "register")
 		on_buffer_close_register_stub = stub(on_buffer_close, "register")
 		on_vim_enter_register_stub = stub(on_vim_enter, "register")
 		keymap_set_stub = stub(vim.keymap, "set")
 		notify_stub = stub(vim, "notify")
+		exists_stub = stub(vim.fn, "exists")
+		exists_stub.returns(2)
 		original_title_enabled = vim.g.multiverse_title_enabled
 	end)
 
 	after_each(function()
 		initialize_run_stub:revert()
 		cli_register_commands_stub:revert()
+		plugin_manager_setup_commands_stub:revert()
 		on_exit_register_stub:revert()
 		on_buffer_close_register_stub:revert()
 		on_vim_enter_register_stub:revert()
 		keymap_set_stub:revert()
 		notify_stub:revert()
+		exists_stub:revert()
 		vim.g.multiverse_title_enabled = original_title_enabled
 	end)
 
@@ -54,6 +62,12 @@ describe("Multiverse.setup", function()
 		Multiverse.setup({ keymaps = { list = "<leader>ml" } })
 
 		assert.stub(cli_register_commands_stub).was.called(1)
+	end)
+
+	it("sets up plugin-registered commands regardless of opts.keymaps", function()
+		Multiverse.setup({ keymaps = { list = "<leader>ml" } })
+
+		assert.stub(plugin_manager_setup_commands_stub).was.called(1)
 	end)
 
 	it("registers zero keymaps when opts is an empty table", function()
@@ -81,6 +95,18 @@ describe("Multiverse.setup", function()
 			"<leader>mt",
 			"<cmd>MultiverseTerminal<cr>",
 			{ desc = "MultiverseTerminal" }
+		)
+	end)
+
+	it("warns and does not set a keymap when the mapped command is not registered", function()
+		exists_stub.returns(0)
+
+		Multiverse.setup({ keymaps = { terminal = "<leader>mt" } })
+
+		assert.stub(keymap_set_stub).was.called(0)
+		assert.stub(notify_stub).was.called_with(
+			"multiverse.setup: cannot map keymaps key 'terminal' to missing command 'MultiverseTerminal'",
+			vim.log.levels.WARN
 		)
 	end)
 

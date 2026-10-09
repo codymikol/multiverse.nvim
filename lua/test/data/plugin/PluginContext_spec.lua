@@ -24,11 +24,12 @@ describe("PluginContext", function()
 			end)
 		end)
 
-		describe("with a valid name and all four valid hooks", function()
+		describe("with a valid name and all five valid hooks", function()
 			local beforeDehydrate = function() end
 			local afterDehydrate = function() end
 			local beforeHydrate = function() end
 			local afterHydrate = function() end
+			local setupCommands = function() end
 
 			local context = PluginContext:new({
 				name = "my-plugin",
@@ -36,6 +37,7 @@ describe("PluginContext", function()
 				afterDehydrate = afterDehydrate,
 				beforeHydrate = beforeHydrate,
 				afterHydrate = afterHydrate,
+				setupCommands = setupCommands,
 			})
 
 			it("should return a non-nil context with the correct name", function()
@@ -57,6 +59,10 @@ describe("PluginContext", function()
 
 			it("should have the correct afterHydrate hook", function()
 				assert.are.equal(afterHydrate, context.afterHydrate)
+			end)
+
+			it("should have the correct setupCommands hook", function()
+				assert.are.equal(setupCommands, context.setupCommands)
 			end)
 		end)
 

@@ -1,6 +1,6 @@
 local NeoTreePlugin = require("plugins.neotree_plugin")
 local CopilotChatPlugin = require("plugins.copilot_chat_plugin")
-local ZellijPlugin = require("plugins.zellij_plugin")
+local ZellijPlugin = require("plugins.zellij.zellij_plugin")
 local TitleSyncPlugin = require("plugins.title_sync_plugin")
 local log = require("multiverse.log")
 
@@ -83,6 +83,14 @@ end
 --- @return nil
 M.afterHydrate = function(afterHydrateContext)
 	dispatch_hook("afterHydrate", afterHydrateContext)
+end
+
+--- The hook plugins use to register their own `vim.api.nvim_create_user_command` calls,
+--- called once during `Multiverse.setup()` with no arguments, so hooks receive `{}`.
+--- @param ctx table?
+--- @return nil
+M.setupCommands = function(ctx)
+	dispatch_hook("setupCommands", ctx or {})
 end
 
 return M

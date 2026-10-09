@@ -1,4 +1,4 @@
-local zellij_manager = require("multiverse.managers.zellij_manager")
+local zellij_manager = require("plugins.zellij.zellij_manager")
 local persistance = require("multiverse.repositories.persistance")
 local stub = require("luassert.stub")
 
