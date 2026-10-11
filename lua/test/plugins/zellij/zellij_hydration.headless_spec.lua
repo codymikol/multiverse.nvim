@@ -25,7 +25,7 @@
 -- included) -- a pre-existing gap unrelated to this slice's zellij work.
 --
 -- Run from the repository root with:
---   nvim --headless -u NONE -l lua/test/managers/zellij_hydration.headless_spec.lua
+--   nvim --headless -u NONE -l lua/test/plugins/zellij/zellij_hydration.headless_spec.lua
 
 package.path = "./lua/?.lua;./lua/?/init.lua;" .. package.path
 
@@ -36,7 +36,7 @@ package.path = "./lua/?.lua;./lua/?/init.lua;" .. package.path
 -- and hang this "headless" run.
 vim.o.swapfile = false
 
-local zellij_plugin = require("plugins.zellij_plugin")
+local zellij_plugin = require("plugins.zellij.zellij_plugin")
 local plugin_manager = require("multiverse.managers.plugin_manager")
 local dehydration_manager = require("multiverse.managers.dehydration_manager")
 local hydration_manager = require("multiverse.managers.hydration_manager")
@@ -44,7 +44,7 @@ local cleanup_manager = require("multiverse.managers.cleanup_manager")
 local universe_repository = require("multiverse.repositories.universe_repository")
 local persistance = require("multiverse.repositories.persistance")
 local UniverseSummary = require("multiverse.data.UniverseSummary")
-local zellij_manager = require("multiverse.managers.zellij_manager")
+local zellij_manager = require("plugins.zellij.zellij_manager")
 
 -- Force the zellij-not-installed path deterministically, regardless of
 -- whether the zellij binary happens to be on this machine's PATH: this

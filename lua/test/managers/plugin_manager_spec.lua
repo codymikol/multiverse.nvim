@@ -21,7 +21,7 @@ describe("plugin_manager", function()
 		package.loaded["multiverse.managers.plugin_manager"] = nil
 	end)
 
-	local hook_names = { "beforeDehydrate", "afterDehydrate", "beforeHydrate", "afterHydrate" }
+	local hook_names = { "beforeDehydrate", "afterDehydrate", "beforeHydrate", "afterHydrate", "setupCommands" }
 
 	for _, hookName in ipairs(hook_names) do
 		describe(hookName, function()
@@ -90,6 +90,26 @@ describe("plugin_manager", function()
 			end)
 		end)
 	end
+
+	describe("setupCommands dispatches the real default plugin registry", function()
+		local create_user_command_stub
+
+		before_each(function()
+			create_user_command_stub = stub(vim.api, "nvim_create_user_command")
+		end)
+
+		after_each(function()
+			create_user_command_stub:revert()
+		end)
+
+		it("should register the MultiverseTerminal command via the real ZellijPlugin", function()
+			plugin_manager.setupCommands()
+
+			assert
+				.stub(create_user_command_stub).was
+				.called_with("MultiverseTerminal", match._, match._)
+		end)
+	end)
 
 	describe("register", function()
 		it("should append plugins with distinct names so both of their hooks fire", function()
