@@ -121,7 +121,7 @@ M.get_all_buffers = function()
 
       local name = vim.api.nvim_buf_get_name(buffer_id)
       local bufferUuid = uuid_manager.create()
-      local buffer = Buffer:new(bufferUuid, buffer_id, name)
+      local buffer = Buffer:new({ uuid = bufferUuid, bufferId = buffer_id, bufferName = name })
 
       table.insert(bufferList, buffer)
 
