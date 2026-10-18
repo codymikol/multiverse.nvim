@@ -2,6 +2,7 @@ local M = {}
 
 local multiverse_repository = require("multiverse.repositories.multiverse_repository")
 local universe_repository = require("multiverse.repositories.universe_repository")
+local zellij_manager = require("multiverse.managers.zellij_manager")
 local log = require("multiverse.log")
 
 M.run = function(name)
@@ -29,6 +30,11 @@ M.run = function(name)
 		multiverse:removeUniverse(name)
 
 		multiverse_repository.save_multiverse(multiverse)
+
+		-- Deletes the orphaned zellij-open-<hash> flag file this universe's
+		-- directory is keyed to. Unconditional, not behind is_available(): it's a
+		-- plain file delete with no zellij binary dependency.
+		zellij_manager.mark_closed(zellij_manager.session_name_for(universe.directory))
 	end)
 	if not success then
 		vim.notify("Failed to remove universe, check MultiverseLog for more information", vim.log.levels.ERROR)
