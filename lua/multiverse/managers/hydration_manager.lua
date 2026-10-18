@@ -1,6 +1,5 @@
 local universe_repository = require("multiverse.repositories.universe_repository")
 local buffer_manager = require("multiverse.managers.buffer_manager")
-local neotree_integration = require("integrations.neotree")
 local tabpage_manager = require("multiverse.managers.tabpage_manager")
 local window_layout_manager = require("multiverse.managers.window_layout_manager")
 local log = require("multiverse.log")
@@ -29,8 +28,6 @@ M.hydrate = function(selected_universe)
 		tabpage_manager.hydrate(universe)
 
 		window_layout_manager.hydrate(universe)
-
-		neotree_integration.hydrate()
 	end)
 
 	if not success then
@@ -44,4 +41,4 @@ end
 return M
 
 -- todo(mikol): Add an adapter layer that allows developers who wish to add support for external plugins to create adapters and have a configuration that allows you to enable/disable them.
--- todo(mikol): before v1.0.0, we should check to see if these plugins have been loaded before trying to hydrate them. :D realted ^^ (done for neotree, other integrations still unguarded)
+-- todo(mikol): before v1.0.0, we should check to see if these plugins have been loaded before trying to hydrate them. :D realted ^^

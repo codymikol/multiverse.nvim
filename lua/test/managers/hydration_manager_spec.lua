@@ -3,7 +3,6 @@ local match = require("luassert.match")
 
 local universe_repository = require("multiverse.repositories.universe_repository")
 local buffer_manager = require("multiverse.managers.buffer_manager")
-local neotree_integration = require("integrations.neotree")
 local tabpage_manager = require("multiverse.managers.tabpage_manager")
 local window_layout_manager = require("multiverse.managers.window_layout_manager")
 local hydration_manager = require("multiverse.managers.hydration_manager")
@@ -14,22 +13,22 @@ describe("hydration_manager", function()
 		local get_universe_by_uuid_stub
 		local hydrateBuffersForUniverse_stub
 		local close_generated_nofile_scratch_buffers_stub
-		local neotree_hydrate_stub
 		local tabpage_hydrate_stub
 		local window_layout_hydrate_stub
 		local notify_stub
 		local nvim_command_stub
+		local vim_cmd_stub
 		local log_error_stub
 
 		before_each(function()
 			get_universe_by_uuid_stub = stub(universe_repository, "get_universe_by_uuid")
 			hydrateBuffersForUniverse_stub = stub(buffer_manager, "hydrateBuffersForUniverse")
 			close_generated_nofile_scratch_buffers_stub = stub(buffer_manager, "close_generated_nofile_scratch_buffers")
-			neotree_hydrate_stub = stub(neotree_integration, "hydrate")
 			tabpage_hydrate_stub = stub(tabpage_manager, "hydrate")
 			window_layout_hydrate_stub = stub(window_layout_manager, "hydrate")
 			notify_stub = stub(vim, "notify")
 			nvim_command_stub = stub(vim.api, "nvim_command")
+			vim_cmd_stub = stub(vim, "cmd")
 			log_error_stub = stub(log, "error")
 		end)
 
@@ -37,11 +36,11 @@ describe("hydration_manager", function()
 			get_universe_by_uuid_stub:revert()
 			hydrateBuffersForUniverse_stub:revert()
 			close_generated_nofile_scratch_buffers_stub:revert()
-			neotree_hydrate_stub:revert()
 			tabpage_hydrate_stub:revert()
 			window_layout_hydrate_stub:revert()
 			notify_stub:revert()
 			nvim_command_stub:revert()
+			vim_cmd_stub:revert()
 			log_error_stub:revert()
 		end)
 
@@ -60,7 +59,6 @@ describe("hydration_manager", function()
 				assert.stub(hydrateBuffersForUniverse_stub).was_not.called()
 				assert.stub(tabpage_hydrate_stub).was_not.called()
 				assert.stub(window_layout_hydrate_stub).was_not.called()
-				assert.stub(neotree_hydrate_stub).was_not.called()
 				assert.stub(close_generated_nofile_scratch_buffers_stub).was_not.called()
 			end)
 		end)
@@ -83,10 +81,15 @@ describe("hydration_manager", function()
 				assert.stub(hydrateBuffersForUniverse_stub).was.called_with(universe)
 				assert.stub(tabpage_hydrate_stub).was.called_with(universe)
 				assert.stub(window_layout_hydrate_stub).was.called_with(universe)
-				assert.stub(neotree_hydrate_stub).was.called()
 				assert.stub(close_generated_nofile_scratch_buffers_stub).was.called()
 
 				assert.stub(notify_stub).was_not.called()
+			end)
+
+			it("should not invoke vim.cmd directly", function()
+				hydration_manager.hydrate({ uuid = "abc" })
+
+				assert.stub(vim_cmd_stub).was_not_called()
 			end)
 
 			describe("when the universe's working directory contains characters that require escaping", function()
@@ -102,7 +105,6 @@ describe("hydration_manager", function()
 					assert.stub(hydrateBuffersForUniverse_stub).was.called_with(universe)
 					assert.stub(tabpage_hydrate_stub).was.called_with(universe)
 					assert.stub(window_layout_hydrate_stub).was.called_with(universe)
-					assert.stub(neotree_hydrate_stub).was.called()
 					assert.stub(close_generated_nofile_scratch_buffers_stub).was.called()
 
 					assert.stub(notify_stub).was_not.called()
@@ -139,7 +141,6 @@ describe("hydration_manager", function()
 				end)
 
 				assert.stub(close_generated_nofile_scratch_buffers_stub).was.called()
-				assert.stub(neotree_hydrate_stub).was_not.called()
 			end)
 
 			it("should notify with a short generic message and log the detailed error separately", function()
