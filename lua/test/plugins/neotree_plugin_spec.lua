@@ -99,4 +99,26 @@ describe("plugins.neotree_plugin", function()
 			}, call_log)
 		end)
 	end)
+
+	describe("context", function()
+		local neotree_plugin
+
+		before_each(function()
+			package.loaded["plugins.neotree_plugin"] = nil
+			neotree_plugin = require("plugins.neotree_plugin")
+		end)
+
+		after_each(function()
+			package.loaded["plugins.neotree_plugin"] = nil
+		end)
+
+		it("should be named Neotree", function()
+			assert.are.equal("Neotree", neotree_plugin.context.name)
+		end)
+
+		it("should not implement beforeHydrate or afterDehydrate", function()
+			assert.is_nil(neotree_plugin.context.beforeHydrate)
+			assert.is_nil(neotree_plugin.context.afterDehydrate)
+		end)
+	end)
 end)
