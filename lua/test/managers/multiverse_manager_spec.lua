@@ -70,6 +70,7 @@ describe("multiverse_manager.load_universe", function()
 		save_multiverse_stub = stub(multiverse_repository, "save_multiverse")
 		cleanup_stub = stub(cleanup_manager, "cleanup")
 		hydrate_stub = stub(hydration_manager, "hydrate")
+		hydrate_stub.returns(true)
 		beforeHydrate_stub = stub(plugin_manager, "beforeHydrate")
 		afterHydrate_stub = stub(plugin_manager, "afterHydrate")
 		get_universe_by_uuid_stub = stub(universe_repository, "get_universe_by_uuid")
@@ -294,6 +295,21 @@ describe("multiverse_manager.load_universe", function()
 
 			multiverse_manager.load_universe(multiverse, selected_universe_summary)
 
+			assert.stub(set_current_universe_stub).was_not.called()
+			assert.stub(set_previous_universe_stub).was_not.called()
+		end)
+
+		it("does not call afterHydrate or update tracking when hydrate itself fails", function()
+			local selected_universe_summary =
+				UniverseSummary:new({ directory = "/tmp/multiverse-selected-dir", uuid = "selected-uuid", name = "universe-b" })
+			local multiverse = Multiverse:new({ selected_universe_summary })
+
+			get_current_universe_stub.returns("universe-a")
+			hydrate_stub.returns(false)
+
+			multiverse_manager.load_universe(multiverse, selected_universe_summary, true)
+
+			assert.stub(afterHydrate_stub).was_not.called()
 			assert.stub(set_current_universe_stub).was_not.called()
 			assert.stub(set_previous_universe_stub).was_not.called()
 		end)
