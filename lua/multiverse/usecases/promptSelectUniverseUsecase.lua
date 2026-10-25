@@ -4,6 +4,7 @@ local telescope_integration = require("integrations.telescope")
 local multiverse_repository = require("multiverse.repositories.multiverse_repository")
 local multiverse_manager = require("multiverse.managers.multiverse_manager")
 local log = require("multiverse.log")
+local usecases_helper = require("multiverse.usecases.usecases_helper")
 
 
 local function lastExplored(universe)
@@ -11,7 +12,7 @@ local function lastExplored(universe)
 end
 
 M.run = function()
-	local success, err = pcall(function()
+	usecases_helper.run_safely("open universe", "opening universe", function()
 
 		local multiverse = multiverse_repository.getMultiverse()
 
@@ -37,10 +38,6 @@ M.run = function()
 			multiverse_manager.load_universe(multiverse, selected_universe)
 		end)
 	end)
-	if not success then
-		vim.notify("Failed to open universe, check MultiverseLog for more information", vim.log.levels.ERROR)
-		log.error("Error opening universe: " .. vim.inspect(err))
-	end
 end
 
 return M

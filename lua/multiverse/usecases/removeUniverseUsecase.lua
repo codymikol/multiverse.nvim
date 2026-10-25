@@ -2,10 +2,10 @@ local M = {}
 
 local multiverse_repository = require("multiverse.repositories.multiverse_repository")
 local universe_repository = require("multiverse.repositories.universe_repository")
-local log = require("multiverse.log")
+local usecases_helper = require("multiverse.usecases.usecases_helper")
 
 M.run = function(name)
-	local success, err = pcall(function()
+	usecases_helper.run_safely("remove universe", "removing universe", function()
 		local multiverse = multiverse_repository.getMultiverse()
 
 		local universe = multiverse:getUniverseByName(name)
@@ -30,10 +30,6 @@ M.run = function(name)
 
 		multiverse_repository.save_multiverse(multiverse)
 	end)
-	if not success then
-		vim.notify("Failed to remove universe, check MultiverseLog for more information", vim.log.levels.ERROR)
-		log.error("Error removing universe: " .. vim.inspect(err))
-	end
 end
 
 return M

@@ -8,6 +8,7 @@ local timestamp_manager = require("multiverse.managers.timestamp_manager")
 local UniverseSummary = require("multiverse.data.UniverseSummary")
 local Universe = require("multiverse.data.Universe")
 local log = require("multiverse.log")
+local usecases_helper = require("multiverse.usecases.usecases_helper")
 
 local function normalizeDirectory(directory)
 	-- vim.fn.expand executes backtick-quoted shell commands (injection risk); vim.fs.normalize does not.
@@ -19,7 +20,7 @@ end
 ---@param name string | nil
 ---@param directory string | nil
 M.run = function(name, directory)
-	local success, err = pcall(function()
+	usecases_helper.run_safely("add new universe", "adding new universe", function()
 		local seconds_since_epoch = timestamp_manager.now()
 
 		if nil == directory or "" == directory then
@@ -70,10 +71,6 @@ M.run = function(name, directory)
 
 		multiverse_manager.load_universe(multiverse, new_universe_summary)
 	end)
-  if not success then
-    vim.notify("Failed to add new universe, check MultiverseLog for more information", vim.log.levels.ERROR)
-    log.error("Error adding new universe: %s", err)
-  end
 end
 
 return M
